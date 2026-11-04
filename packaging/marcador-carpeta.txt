@@ -1,0 +1,2 @@
+Archivo vacío a propósito: obliga a PyInstaller a crear la carpeta pptx/oxml.
+Ver scripts/empaquetar.py.

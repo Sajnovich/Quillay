@@ -78,6 +78,10 @@ Luego impórtala en `tools/__init__.py`. Listo: aparece en la barra lateral, en 
 | **pypdfium2** para renderizar PDF | Envuelve PDFium, el motor de PDF de Chrome. Rápido y con licencia permisiva. |
 | **pikepdf** para manipular PDF | Envuelve qpdf: une, divide, rota, cifra y repara sin re-dibujar nada, así que no pierde calidad. |
 | **reportlab** para dibujar sobre PDF | Genera una capa (números, marca de agua) que pikepdf superpone a cada página compensando su rotación. |
+| **pdfplumber** para PDF → Word/Excel | Agrupa letras sueltas en líneas y detecta tablas; con el tamaño de letra deducimos qué es título. |
+| **Censura rasterizando la página** | Tapar con un rectángulo deja el texto debajo; convertir la página en imagen con las cajas "quemadas" lo elimina de verdad. |
+| **pyHanko** para firma digital | Firma con escritura incremental: cualquier cambio posterior invalida la firma y el lector lo muestra. |
+| **LibreOffice / Edge / Chrome externos** | Convertir Office y HTML con fidelidad exige un motor completo; usamos los instalados en modo *headless* y vigilamos el archivo de salida, porque Chrome a veces no cierra su proceso. |
 | **No usamos PyMuPDF** | Es excelente, pero su licencia AGPL obligaría a cambiar la licencia MIT de todo Quillay. |
 | **OpenCV < 5** para caras | Trae clasificadores Haar listos y sin internet. La versión 5 los dejó de incluir. |
 | **dHash** para duplicados | Implementado a mano (12 líneas): huella de 64 bits resistente a cambios de tamaño y formato. Se compara con distancia de Hamming. |

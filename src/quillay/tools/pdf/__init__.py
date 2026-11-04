@@ -14,7 +14,13 @@ Evitamos PyMuPDF a propósito: es excelente, pero su licencia AGPL obligaría
 a cambiar la licencia de todo Quillay.
 """
 
-from quillay.tools.pdf import convertir, editar, optimizar, organizar, seguridad  # noqa: F401
+# El orden de importación define el orden de las herramientas dentro de cada categoría.
+from quillay.tools.pdf import organizar  # noqa: F401, I001
+from quillay.tools.pdf import optimizar  # noqa: F401
+from quillay.tools.pdf import convertir, desde_pdf, externas  # noqa: F401
+from quillay.tools.pdf import editar, formularios  # noqa: F401
+from quillay.tools.pdf import revisar  # noqa: F401
+from quillay.tools.pdf import seguridad, firma, censura  # noqa: F401
 from quillay.tools.pdf.comun import parse_order, parse_pages
 
 __all__ = ["parse_order", "parse_pages"]

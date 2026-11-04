@@ -54,6 +54,11 @@ FORMATS: dict[str, str] = {
 }
 IMAGE_EXTS = frozenset(FORMATS)
 PDF_EXTS = frozenset({"pdf"})
+OFFICE_EXTS = frozenset({"doc", "docx", "odt", "rtf", "txt", "ppt", "pptx", "odp", "xls", "xlsx", "ods", "csv"})
+HTML_EXTS = frozenset({"html", "htm"})
+# Tipo de entrada de cada herramienta → extensiones que acepta.
+ACCEPTS = {"images": IMAGE_EXTS, "pdf": PDF_EXTS, "office": OFFICE_EXTS, "html": HTML_EXTS}
+ALL_EXTS = IMAGE_EXTS | PDF_EXTS | OFFICE_EXTS | HTML_EXTS
 
 # Formatos ofrecidos para guardar (el primero es "mantener el original").
 OUTPUT_FORMATS = ("igual", "jpg", "png", "webp", "avif", "heic", "tiff", "bmp", "gif")
@@ -74,7 +79,8 @@ def is_pdf(path: Path) -> bool:
 
 def collect_files(items: Iterable[str | Path], accepts: str = "images", recursive: bool = False) -> list[Path]:
     """Expande carpetas y filtra por tipo, sin duplicados y en orden estable."""
-    check = {"images": is_image, "pdf": is_pdf}.get(accepts, lambda p: True)
+    exts = ACCEPTS.get(accepts)
+    check = (lambda p: p.suffix.lower().lstrip(".") in exts) if exts else (lambda p: True)
     seen: set[Path] = set()
     result: list[Path] = []
     for item in items:

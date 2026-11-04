@@ -32,7 +32,7 @@ from quillay.core.registry import STEPS, Context, Report, Tool, tools_by_categor
 from quillay.gui.widgets import FileList, ParamForm, Worker
 
 ICONS = {"Edición": "◧", "Web": "◎", "Privacidad y orden": "◐", "PDF · Organizar": "▤", "PDF · Optimizar": "▤",
-         "PDF · Convertir": "▤", "PDF · Editar": "▤", "PDF · Seguridad": "▤"}
+         "PDF · Convertir": "▤", "PDF · Editar": "▤", "PDF · Revisar": "▤", "PDF · Seguridad": "▤"}
 
 
 def _title(text: str, sub: str) -> QWidget:
@@ -172,7 +172,8 @@ class ToolPage(QWidget):
         self.panel.preview_requested.connect(self.preview)
         self.form.page_order_requested.connect(self._order_pages)
 
-        need = {"pdf": "PDF", "images": "imágenes"}.get(tool.accepts, "archivos")
+        need = {"pdf": "PDF", "images": "imágenes", "office": "documentos de Office",
+                "html": "páginas HTML"}.get(tool.accepts, "archivos")
         self.files_note = QLabel()
         self.files_note.setObjectName("Muted")
         files.changed.connect(lambda: self._update_note(need))

@@ -44,7 +44,7 @@ Quillay automates what you do before uploading a photo to your website or social
 | **Web** | Favicons & app icons · Responsive images (`<picture>`/`srcset`) · Social media sizes · Brand colors (CSS variables) · Loading placeholders (LQIP) |
 | **Privacy** | GPS & metadata check and cleanup · Face blurring · Duplicate finder |
 | **Editing** | Convert · Compress · Resize · Crop · Fit to size · Watermark · Batch rename |
-| **PDF** | Merge · Split · Reorder & delete pages (drag thumbnails) · Rotate · Crop margins · Compress · Repair · Images ↔ PDF · Extract images · Page numbers · Watermark · Password protect · Unlock · Properties |
+| **PDF** | Merge · Split · Reorder & delete pages (drag thumbnails) · Rotate · Crop margins · Compress · Repair · Images ↔ PDF · Extract images · PDF → Word/PowerPoint/Excel · Office/HTML → PDF · Page numbers · Watermark · Fill forms from a spreadsheet · Compare · Password protect · Unlock · Properties · Sign (visual + digital certificate) · True redaction |
 
 Supported formats: JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP, GIF and ICO.
 

@@ -55,9 +55,10 @@ Quillay automatiza lo que haces antes de subir una foto a tu sitio o a redes: la
 | | Renombrar | Patrones con `{nombre}` `{n}` `{fecha}` `{ancho}` `{alto}`, con vista previa. |
 | **PDF · Organizar** | Unir · Dividir · Ordenar y eliminar páginas · Rotar · Recortar márgenes | Ordena arrastrando miniaturas; divide por página, rangos o cada N; recorte automático del blanco. |
 | **PDF · Optimizar** | Comprimir · Reparar | Tres niveles de compresión de las imágenes internas; reconstruye PDF dañados. |
-| **PDF · Convertir** | Imágenes → PDF · PDF → imágenes | A4, Carta u Oficio; páginas a JPG/PNG/WebP o extrae las fotos originales que contiene. |
-| **PDF · Editar** | Números de página · Marca de agua | Formatos como «Página 3 de 10»; texto o logo, centrado o en mosaico, con transparencia. |
-| **PDF · Seguridad** | Proteger · Desbloquear · Propiedades | Cifrado AES-256 con permisos; quita contraseñas que conoces; ve, edita o borra autor y programa. |
+| **PDF · Convertir** | Imágenes ↔ PDF · PDF → Word, PowerPoint y Excel · Office → PDF · HTML → PDF | Word con títulos y tablas; Excel con números en formato chileno; Office y web usan LibreOffice, Edge o Chrome si los tienes. |
+| **PDF · Editar** | Números de página · Marca de agua · Formularios | «Página 3 de 10»; marca en mosaico; rellena un formulario por cada fila de un Excel o CSV. |
+| **PDF · Revisar** | Comparar PDF | Informe de diferencias de texto y páginas lado a lado con los cambios en rojo. |
+| **PDF · Seguridad** | Proteger · Desbloquear · Propiedades · Firmar · Censurar | AES-256; firma visual y digital con certificado `.p12`/`.pfx`; censura real de RUT, correos, teléfonos y patentes. |
 
 <table>
   <tr>
@@ -158,13 +159,16 @@ quillay receta carpeta            # dónde se guardan tus recetas
 - **Detección de caras:** usa clasificadores Haar de OpenCV (rápidos y sin internet, pero clásicos). Pueden omitir caras pequeñas, de perfil o con poca luz. **Revisa siempre el resultado antes de publicar.**
 - **Patentes:** experimental. El modelo incluido fue entrenado con patentes rusas y falla con frecuencia en las chilenas.
 - **AVIF:** requiere Pillow 11.3 o superior (ya incluido en los ejecutables).
+- **PDF escaneados:** sin OCR, PDF → Word/Excel y Censurar no "leen" texto dentro de imágenes. El OCR está en la hoja de ruta.
+- **Office → PDF y HTML → PDF** necesitan LibreOffice o Edge/Chrome instalados (Quillay te avisa si faltan).
 - **Tamaño del ejecutable:** ~155 MB comprimido, en buena parte por OpenCV. Está en la hoja de ruta reducirlo.
 
 ## Hoja de ruta
 
 - [ ] Detector de caras moderno (YuNet/ONNX), más preciso y liviano que OpenCV completo
 - [ ] Quitar fondo con IA (descarga opcional del modelo)
-- [ ] OCR (extraer texto de imágenes)
+- [ ] OCR (extraer texto de imágenes y PDF escaneados)
+- [ ] Editor visual de PDF (agregar texto e imágenes donde hagas clic)
 - [ ] Constructor visual de recetas (sin escribir YAML)
 - [ ] Vista previa antes/después en la ventana
 - [ ] Interfaz en inglés y portugués

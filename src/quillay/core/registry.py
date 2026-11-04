@@ -138,7 +138,7 @@ TOOLS: dict[str, Tool] = {}
 # Orden de las categorías en la barra lateral y en ``quillay herramientas``.
 CATEGORIES = (
     "Web", "Privacidad y orden", "Edición",
-    "PDF · Organizar", "PDF · Optimizar", "PDF · Convertir", "PDF · Editar", "PDF · Seguridad",
+    "PDF · Organizar", "PDF · Optimizar", "PDF · Convertir", "PDF · Editar", "PDF · Revisar", "PDF · Seguridad",
 )
 
 

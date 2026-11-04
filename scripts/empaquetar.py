@@ -15,6 +15,7 @@ Resultado en ``dist/``:
 
 from __future__ import annotations
 
+import os
 import platform
 import shutil
 import subprocess
@@ -45,6 +46,14 @@ def main() -> None:
         "--collect-all", "pillow_heif",
         "--collect-all", "pikepdf",         # incluye la librería nativa qpdf
         "--collect-data", "reportlab",      # fuentes y datos de reportlab
+        "--collect-data", "docx",           # plantilla base de Word
+        "--collect-data", "pptx",           # plantilla base de PowerPoint
+        # python-pptx busca sus plantillas con la ruta "pptx/oxml/../templates". Para que
+        # el sistema resuelva ese "..", la carpeta pptx/oxml debe existir en disco; como
+        # PyInstaller guarda el código comprimido, la forzamos con un archivo marcador.
+        "--add-data", f"{ROOT / 'packaging' / 'marcador-carpeta.txt'}{os.pathsep}pptx/oxml",
+        "--collect-all", "pyhanko",         # firma digital
+        "--collect-all", "pyhanko_certvalidator",
         "--hidden-import", "quillay.tools",
         "--osx-bundle-identifier", "cl.quillay.app",
         "--distpath", str(ROOT / "dist"),

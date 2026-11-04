@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from quillay.core.imageio import IMAGE_EXTS, PDF_EXTS, collect_files, human_size
+from quillay.core.imageio import ACCEPTS, ALL_EXTS, IMAGE_EXTS, PDF_EXTS, collect_files, human_size
 from quillay.core.params import Param
 
 # ---------------------------------------------------------------- lista
@@ -46,7 +46,7 @@ class FileList(QWidget):
 
         title = QLabel("Archivos")
         title.setStyleSheet("font-weight: 700; font-size: 15px;")
-        self.count = QLabel("Arrastra imágenes o PDF aquí")
+        self.count = QLabel("Arrastra imágenes, PDF o documentos aquí")
         self.count.setObjectName("Muted")
 
         self.list = QListWidget()
@@ -57,7 +57,7 @@ class FileList(QWidget):
         self.list.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         self.list.model().rowsMoved.connect(self._sync_from_widget)
 
-        self.hint = QLabel("Suelta aquí tus\nimágenes, carpetas o PDF")
+        self.hint = QLabel("Suelta aquí tus imágenes,\nPDF, documentos o carpetas")
         self.hint.setObjectName("DropHint")
         self.hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -90,7 +90,7 @@ class FileList(QWidget):
 
     # --- API pública -------------------------------------------------------
     def paths(self, accepts: str = "any") -> list[Path]:
-        exts = {"images": IMAGE_EXTS, "pdf": PDF_EXTS}.get(accepts)
+        exts = ACCEPTS.get(accepts)
         return [p for p in self._paths if exts is None or p.suffix.lower().lstrip(".") in exts]
 
     def add_paths(self, items: list[str | Path]) -> None:
@@ -98,7 +98,7 @@ class FileList(QWidget):
         known = set(self._paths)
         for path in new:
             ext = path.suffix.lower().lstrip(".")
-            if path in known or (ext not in IMAGE_EXTS and ext not in PDF_EXTS):
+            if path in known or ext not in ALL_EXTS:
                 continue
             known.add(path)
             self._paths.append(path)
@@ -148,12 +148,19 @@ class FileList(QWidget):
             total = sum(p.stat().st_size for p in self._paths if p.exists())
             self.count.setText(f"{n} archivo(s) · {human_size(total)}")
         else:
-            self.count.setText("Arrastra imágenes o PDF aquí")
+            self.count.setText("Arrastra imágenes, PDF o documentos aquí")
         self.changed.emit()
 
     def _pick_files(self) -> None:
-        exts = " ".join(f"*.{e}" for e in sorted(IMAGE_EXTS | PDF_EXTS))
-        files, _ = QFileDialog.getOpenFileNames(self, "Elegir archivos", "", f"Imágenes y PDF ({exts})")
+        def pattern(group):
+            return " ".join(f"*.{e}" for e in sorted(group))
+
+        filters = ";;".join([
+            f"Todos los compatibles ({pattern(ALL_EXTS)})", f"Imágenes ({pattern(IMAGE_EXTS)})",
+            f"PDF ({pattern(PDF_EXTS)})", f"Documentos de Office ({pattern(ACCEPTS['office'])})",
+            f"Páginas web ({pattern(ACCEPTS['html'])})",
+        ])
+        files, _ = QFileDialog.getOpenFileNames(self, "Elegir archivos", "", filters)
         self.add_paths(files)
 
     def _pick_folder(self) -> None:
