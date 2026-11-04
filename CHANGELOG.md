@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Quitado
+- Dependabot: abría un pull request por cada dependencia y cada uno disparaba las pruebas en los tres sistemas, lo que llenaba la cola de GitHub Actions. Las dependencias se actualizarán a mano y por versión.
+
 ## [0.3.1] — 2026-11-04
 
 Primera versión publicada en GitHub. Corrige errores de Windows y ordena el menú por uso.
