@@ -41,7 +41,7 @@ jobs:
           elif [ "$RUNNER_OS" = "Windows" ]; then BIN=dist/Quillay/Quillay.exe
           else BIN=dist/Quillay/Quillay; fi
           python scripts/autoprueba.py "$BIN"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: quillay-${{ matrix.os }}
           path: |
