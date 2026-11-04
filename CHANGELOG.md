@@ -2,6 +2,20 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
+## [0.3.0] — 2026-11-04
+
+Segunda etapa del módulo PDF: Quillay llega a 38 herramientas.
+
+### Agregado
+- **PDF → Word** (títulos, párrafos y tablas editables), **PDF → PowerPoint** (una diapositiva por página, texto en las notas) y **PDF → Excel** (tablas con números en formato chileno).
+- **Office → PDF** (Word, Excel, PowerPoint, OpenDocument) usando LibreOffice y **HTML → PDF** usando Edge, Chrome o Chromium, si están instalados.
+- **Firmar PDF:** firma visual (imagen, nombre, RUT/cargo y fecha) y firma digital con certificado `.p12`/`.pfx`.
+- **Censurar datos:** elimina de verdad RUT, correos, teléfonos, tarjetas, patentes, palabras o expresiones regulares.
+- **Comparar PDF:** informe HTML de diferencias de texto y PDF con las páginas lado a lado y los cambios en rojo.
+- **Formularios PDF:** lista los campos, genera una plantilla CSV y crea un PDF relleno por cada fila de un Excel o CSV.
+- El panel de archivos acepta documentos de Office y páginas HTML.
+- Dependencias nuevas: pdfplumber, python-docx, python-pptx, openpyxl, pypdf y pyHanko (todas MIT o BSD).
+
 ## [0.2.0] — 2026-11-03
 
 Módulo PDF completo: Quillay pasa de 17 a 30 herramientas.
@@ -39,5 +53,6 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
+[0.3.0]: https://github.com/sajnovich/quillay/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sajnovich/quillay/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sajnovich/quillay/releases/tag/v0.1.0
