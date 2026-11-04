@@ -9,7 +9,9 @@ Quillay se distribuye bajo licencia MIT. Los ejecutables publicados incluyen las
 | [Pillow](https://python-pillow.org) | Lectura y escritura de imágenes | MIT-CMU (HPND) |
 | [pillow-heif](https://github.com/bigcat88/pillow_heif) / libheif | Formato HEIC/HEIF | BSD-3-Clause / LGPL-3.0 |
 | [OpenCV](https://opencv.org) | Detección de caras (clasificadores Haar) | Apache-2.0 |
-| [pypdfium2](https://github.com/pypdfium2-team/pypdfium2) / PDFium | Lectura de PDF | Apache-2.0 o BSD-3-Clause |
+| [pypdfium2](https://github.com/pypdfium2-team/pypdfium2) / PDFium | Renderizado de PDF | Apache-2.0 o BSD-3-Clause |
+| [pikepdf](https://github.com/pikepdf/pikepdf) / qpdf | Manipulación de PDF (unir, cifrar, rotar, reparar) | MPL-2.0 / Apache-2.0 |
+| [ReportLab](https://www.reportlab.com/opensource/) | Números de página y marcas de agua en PDF | BSD-3-Clause |
 | [NumPy](https://numpy.org) | Cálculo numérico | BSD-3-Clause |
 | [PyYAML](https://pyyaml.org) | Recetas | MIT |
 | [platformdirs](https://github.com/tox-dev/platformdirs) | Carpetas de configuración | MIT |

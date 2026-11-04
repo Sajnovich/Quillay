@@ -145,7 +145,13 @@ def main() -> int:
     # Permite abrir archivos pasados como argumentos: quillay-gui foto.jpg
     if len(sys.argv) > 1:
         window.files.add_paths(sys.argv[1:])
-    return app.exec()
+    code = app.exec()
+    # Liberamos la ventana antes que la aplicación: si Python las destruye en
+    # otro orden al salir, Qt (C++) puede liberar memoria dos veces y caerse.
+    window.deleteLater()
+    app.processEvents()
+    del window
+    return code
 
 
 if __name__ == "__main__":

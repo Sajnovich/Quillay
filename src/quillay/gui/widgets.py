@@ -120,6 +120,10 @@ class FileList(QWidget):
 
     # --- internos ----------------------------------------------------------
     def _thumb(self, path: Path) -> QIcon:
+        if path.suffix.lower() == ".pdf":
+            pix = pdf_thumbnail(path, 0, self.THUMB * 2)
+            if pix is not None:
+                return QIcon(pix)
         reader = QImageReader(str(path))
         reader.setAutoTransform(True)  # respeta la orientación EXIF
         size = reader.size()
@@ -171,6 +175,27 @@ class FileList(QWidget):
         self.add_paths([u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()])
 
 
+def pdf_thumbnail(path: Path, index: int, size: int) -> QPixmap | None:
+    """Dibuja una página de PDF como miniatura (con pypdfium2)."""
+    try:
+        import pypdfium2 as pdfium
+
+        doc = pdfium.PdfDocument(path)
+        try:
+            page = doc[index]
+            scale = size / max(page.get_width(), page.get_height())
+            pil = page.render(scale=scale).to_pil().convert("RGB")
+        finally:
+            doc.close()
+    except Exception:  # noqa: BLE001 - PDF con contraseña o dañado: sin miniatura
+        return None
+    from PySide6.QtGui import QImage
+
+    data = pil.tobytes()
+    image = QImage(data, pil.width, pil.height, pil.width * 3, QImage.Format.Format_RGB888)
+    return QPixmap.fromImage(image.copy())  # copy(): Qt deja de depender del buffer de Python
+
+
 # --------------------------------------------------------------- formulario
 
 
@@ -205,6 +230,10 @@ class ColorButton(QPushButton):
 
 class ParamForm(QWidget):
     """Construye el formulario automáticamente a partir de una lista de ``Param``."""
+
+    # La página de la herramienta sabe qué PDF está cargado; el formulario no.
+    # Por eso el formulario solo "pide" el ordenador visual con esta señal.
+    page_order_requested = Signal(QLineEdit)
 
     def __init__(self, params: tuple[Param, ...], parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -260,6 +289,22 @@ class ParamForm(QWidget):
         elif p.kind == "color":
             widget = ColorButton(p.default)
             self.getters[p.name] = widget.value
+        elif p.kind == "password":
+            widget = QLineEdit()
+            widget.setEchoMode(QLineEdit.EchoMode.Password)  # se muestran puntos
+            widget.setPlaceholderText("••••••")
+            self.getters[p.name] = widget.text
+        elif p.kind == "pageorder":
+            widget = QWidget()
+            row = QHBoxLayout(widget)
+            row.setContentsMargins(0, 0, 0, 0)
+            edit = QLineEdit(p.default or "")
+            edit.setPlaceholderText("ej. 3,1,2,5-7")
+            btn = QPushButton("Ordenar con miniaturas…")
+            btn.clicked.connect(lambda: self.page_order_requested.emit(edit))
+            row.addWidget(edit, 1)
+            row.addWidget(btn)
+            self.getters[p.name] = edit.text
         elif p.kind == "file":
             widget = QWidget()
             row = QHBoxLayout(widget)

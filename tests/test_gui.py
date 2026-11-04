@@ -36,7 +36,11 @@ def window(app, tmp_path, monkeypatch):
     w = MainWindow(app)
     w.show()
     yield w
+    # Destruir la ventana mientras Qt sigue vivo. Si se deja al recolector de
+    # Python al cerrar el intérprete, el orden es impredecible y Qt puede caerse.
     w.close()
+    w.deleteLater()
+    app.processEvents()
 
 
 def test_hay_una_pagina_por_herramienta(window):
@@ -62,3 +66,25 @@ def test_formulario_oculta_campos_dependientes(window):
     form = window.stack.currentWidget().form
     assert form.values()["modo"] == "caja"
     assert form.form.isRowVisible(form.rows["porcentaje"][0]) is False
+
+
+def test_ordenar_paginas_con_miniaturas(app, tmp_path):
+    from reportlab.pdfgen import canvas
+
+    from quillay.gui.paginas import PageOrderDialog
+
+    path = tmp_path / "doc.pdf"
+    c = canvas.Canvas(str(path))
+    for i in range(4):
+        c.drawString(72, 720, f"Pagina {i + 1}")
+        c.showPage()
+    c.save()
+    dialog = PageOrderDialog(path, "4,1-3")
+    assert dialog.spec() == "4,1-3"
+    dialog.list.item(0).setSelected(True)  # selecciona la página 4 y la quita
+    dialog.remove_selected()
+    dialog.reverse()
+    assert dialog.spec() == "3,2,1"
+    assert "1 quitadas" in dialog.count.text()
+    dialog.deleteLater()
+    app.processEvents()

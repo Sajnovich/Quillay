@@ -53,7 +53,11 @@ Quillay automatiza lo que haces antes de subir una foto a tu sitio o a redes: la
 | | Redimensionar · Recortar · Encajar | Por caja, ancho, alto o porcentaje; a proporción (1:1, 4:5, 9:16…); o a un tamaño exacto con bordes. |
 | | Marca de agua | Tu logo PNG o un texto en cualquiera de 9 ubicaciones, con transparencia ajustable. |
 | | Renombrar | Patrones con `{nombre}` `{n}` `{fecha}` `{ancho}` `{alto}`, con vista previa. |
-| **PDF** | Imágenes → PDF · PDF → imágenes | Une fotos o escaneos en A4, Carta u Oficio; exporta páginas (`1-3,5`) con el DPI que elijas. |
+| **PDF · Organizar** | Unir · Dividir · Ordenar y eliminar páginas · Rotar · Recortar márgenes | Ordena arrastrando miniaturas; divide por página, rangos o cada N; recorte automático del blanco. |
+| **PDF · Optimizar** | Comprimir · Reparar | Tres niveles de compresión de las imágenes internas; reconstruye PDF dañados. |
+| **PDF · Convertir** | Imágenes → PDF · PDF → imágenes | A4, Carta u Oficio; páginas a JPG/PNG/WebP o extrae las fotos originales que contiene. |
+| **PDF · Editar** | Números de página · Marca de agua | Formatos como «Página 3 de 10»; texto o logo, centrado o en mosaico, con transparencia. |
+| **PDF · Seguridad** | Proteger · Desbloquear · Propiedades | Cifrado AES-256 con permisos; quita contraseñas que conoces; ve, edita o borra autor y programa. |
 
 <table>
   <tr>
@@ -63,6 +67,10 @@ Quillay automatiza lo que haces antes de subir una foto a tu sitio o a redes: la
   <tr>
     <td><img src="docs/capturas/difuminar.webp" alt="Difuminar caras y patentes" /></td>
     <td><img src="docs/capturas/recetas.webp" alt="Editor de recetas con la lista de pasos disponibles" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/capturas/pdf-marca-agua.webp" alt="Marca de agua en PDF con opciones de mosaico, giro y opacidad" /></td>
+    <td><img src="docs/capturas/pdf-ordenar.webp" alt="Ordenar páginas de un PDF arrastrando miniaturas" /></td>
   </tr>
 </table>
 

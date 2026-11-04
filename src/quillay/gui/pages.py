@@ -31,7 +31,8 @@ from quillay.core.params import ParamError
 from quillay.core.registry import STEPS, Context, Report, Tool, tools_by_category
 from quillay.gui.widgets import FileList, ParamForm, Worker
 
-ICONS = {"Edición": "◧", "Web": "◎", "PDF": "▤", "Privacidad y orden": "◐"}
+ICONS = {"Edición": "◧", "Web": "◎", "Privacidad y orden": "◐", "PDF · Organizar": "▤", "PDF · Optimizar": "▤",
+         "PDF · Convertir": "▤", "PDF · Editar": "▤", "PDF · Seguridad": "▤"}
 
 
 def _title(text: str, sub: str) -> QWidget:
@@ -169,6 +170,7 @@ class ToolPage(QWidget):
         self.panel.run_btn.setText(f"{tool.name}")
         self.panel.run_requested.connect(self.run)
         self.panel.preview_requested.connect(self.preview)
+        self.form.page_order_requested.connect(self._order_pages)
 
         need = {"pdf": "PDF", "images": "imágenes"}.get(tool.accepts, "archivos")
         self.files_note = QLabel()
@@ -203,6 +205,19 @@ class ToolPage(QWidget):
             text = f"Agrega al menos {self.tool.min_files} {need} en el panel de archivos."
         self.files_note.setText(text)
         self.panel.run_btn.setEnabled(n >= self.tool.min_files)
+
+    def _order_pages(self, edit: QLineEdit) -> None:
+        from quillay.gui.paginas import PageOrderDialog
+
+        pdfs = self.files.paths("pdf")
+        if not pdfs:
+            QMessageBox.information(self, "Sin PDF", "Agrega primero un PDF en el panel de archivos.")
+            return
+        dialog = PageOrderDialog(pdfs[0], edit.text(), self)
+        if len(pdfs) > 1:
+            dialog.setWindowTitle(dialog.windowTitle() + "  (el orden se aplicará a todos los PDF)")
+        if dialog.exec():
+            edit.setText(dialog.spec())
 
     def _context(self) -> Context | None:
         try:

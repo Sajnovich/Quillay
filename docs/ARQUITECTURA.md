@@ -75,7 +75,10 @@ Luego impórtala en `tools/__init__.py`. Listo: aparece en la barra lateral, en 
 | **PySide6** (Qt) en vez de Tkinter | Interfaz más moderna y nativa en los tres sistemas; es la librería oficial de Qt para Python (licencia LGPL). |
 | **Pillow** para imágenes | Estándar de Python; soporta JPEG, PNG, WebP, AVIF, TIFF, GIF, ICO, ICNS y PDF. |
 | **pillow-heif** | Leer y escribir HEIC (fotos de iPhone). |
-| **pypdfium2** para leer PDF | Envuelve PDFium, el motor de PDF de Chrome. Rápido y con licencia permisiva. |
+| **pypdfium2** para renderizar PDF | Envuelve PDFium, el motor de PDF de Chrome. Rápido y con licencia permisiva. |
+| **pikepdf** para manipular PDF | Envuelve qpdf: une, divide, rota, cifra y repara sin re-dibujar nada, así que no pierde calidad. |
+| **reportlab** para dibujar sobre PDF | Genera una capa (números, marca de agua) que pikepdf superpone a cada página compensando su rotación. |
+| **No usamos PyMuPDF** | Es excelente, pero su licencia AGPL obligaría a cambiar la licencia MIT de todo Quillay. |
 | **OpenCV < 5** para caras | Trae clasificadores Haar listos y sin internet. La versión 5 los dejó de incluir. |
 | **dHash** para duplicados | Implementado a mano (12 líneas): huella de 64 bits resistente a cambios de tamaño y formato. Se compara con distancia de Hamming. |
 | **YAML con `safe_load`** | Las recetas se comparten entre personas; `safe_load` impide ejecutar código escondido en el archivo. |

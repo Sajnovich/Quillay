@@ -43,6 +43,8 @@ def main() -> None:
         "--collect-data", "cv2",            # clasificadores de caras (Haar)
         "--collect-all", "pypdfium2_raw",   # el motor PDFium (librería nativa)
         "--collect-all", "pillow_heif",
+        "--collect-all", "pikepdf",         # incluye la librería nativa qpdf
+        "--collect-data", "reportlab",      # fuentes y datos de reportlab
         "--hidden-import", "quillay.tools",
         "--osx-bundle-identifier", "cl.quillay.app",
         "--distpath", str(ROOT / "dist"),

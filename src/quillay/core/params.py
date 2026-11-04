@@ -17,7 +17,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-Kind = Literal["int", "float", "str", "bool", "choice", "multichoice", "color", "file"]
+# "password" se comporta como texto pero se oculta en la ventana.
+# "pageorder" es texto tipo "3,1,2,5-7"; la ventana agrega un ordenador visual.
+Kind = Literal["int", "float", "str", "bool", "choice", "multichoice", "color", "file", "password", "pageorder"]
 
 _HEX_COLOR = re.compile(r"^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 

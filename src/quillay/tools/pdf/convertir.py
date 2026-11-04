@@ -1,19 +1,23 @@
-"""Herramientas PDF: unir imágenes en un PDF y extraer páginas como imágenes.
+"""PDF · Convertir: imágenes ↔ PDF y extracción de imágenes incrustadas.
 
-- Para *crear* PDFs basta Pillow.
-- Para *leer* PDFs usamos pypdfium2, que envuelve PDFium: el mismo motor de
-  renderizado de PDF que usa Google Chrome (licencia Apache/BSD).
+- Para *crear* PDFs desde imágenes basta Pillow.
+- Para *renderizar* páginas usamos pypdfium2 (el motor de PDF de Chrome).
+- Para *extraer* las imágenes originales usamos pikepdf, que las saca tal
+  cual están guardadas, sin volver a comprimirlas.
 """
 
 from __future__ import annotations
+
+from pathlib import Path
 
 from PIL import Image
 
 from quillay.core.imageio import SaveOptions, flatten, human_size, open_image, save_image, unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
+from quillay.tools.pdf.comun import abrir, imagenes, parse_pages
 
-CAT = "PDF"
+CAT = "PDF · Convertir"
 
 # Tamaños de página en milímetros (ancho, alto) en orientación vertical.
 PAGES_MM = {"a4": (210, 297), "carta": (215.9, 279.4), "oficio": (215.9, 330.2)}
@@ -72,12 +76,14 @@ def imagenes_a_pdf(ctx: Context) -> Report:
 
 @tool(
     "pdf_a_imagenes", "PDF → imágenes",
-    "Convierte cada página de uno o más PDF en una imagen.",
+    "Convierte cada página en una imagen, o extrae las fotos que contiene el PDF.",
     CAT,
     (
-        Param("dpi", "Resolución (DPI)", "int", 150, min=36, max=600),
-        Param("formato", "Formato", "choice", "png", ("png", "jpg", "webp")),
-        Param("calidad", "Calidad", "int", 90, min=1, max=100),
+        Param("modo", "Qué obtener", "choice", "paginas", ("paginas", "imagenes"),
+              choice_labels=("Cada página como imagen", "Las imágenes incrustadas (calidad original)")),
+        Param("dpi", "Resolución (DPI)", "int", 150, min=36, max=600, visible_if=("modo", ("paginas",))),
+        Param("formato", "Formato", "choice", "jpg", ("png", "jpg", "webp"), visible_if=("modo", ("paginas",))),
+        Param("calidad", "Calidad", "int", 90, min=1, max=100, visible_if=("modo", ("paginas",))),
         Param("paginas", "Páginas", "str", "",
               help="Vacío = todas. Ej: 1-3,5"),
     ),
@@ -88,6 +94,8 @@ def pdf_a_imagenes(ctx: Context) -> Report:
 
     o = ctx.options
     report = Report()
+    if o["modo"] == "imagenes":
+        return _extraer_imagenes(ctx, report)
     for src in ctx.files:
         try:
             pdf = pdfium.PdfDocument(src)
@@ -111,20 +119,33 @@ def pdf_a_imagenes(ctx: Context) -> Report:
     return report
 
 
-def parse_pages(spec: str, count: int) -> list[int]:
-    """'1-3,5' → [0, 1, 2, 4] (índices desde 0), validando contra ``count``."""
-    if not spec.strip():
-        return list(range(count))
-    pages: list[int] = []
-    for part in spec.replace(" ", "").split(","):
-        if not part:
-            continue
-        if "-" in part:
-            a, b = part.split("-", 1)
-            start, end = int(a or 1), int(b or count)
-        else:
-            start = end = int(part)
-        if not (1 <= start <= end <= count):
-            raise ValueError(f"rango de páginas inválido «{part}» (el PDF tiene {count})")
-        pages.extend(range(start - 1, end))
-    return sorted(set(pages))
+def _extraer_imagenes(ctx: Context, report: Report) -> Report:
+    import pikepdf
+
+    for src in ctx.files:
+        try:
+            with abrir(src) as pdf:
+                selected = parse_pages(ctx.options["paginas"], len(pdf.pages))
+                out = ctx.output_dir() / f"{src.stem}-imagenes"
+                out.mkdir(parents=True, exist_ok=True)
+                seen: set[tuple[int, int]] = set()
+                count = 0
+                for n, i in enumerate(selected):
+                    ctx.tick(n, len(selected), f"{src.name} p.{i + 1}")
+                    for raw in imagenes(pdf.pages[i]):
+                        if raw.objgen in seen:  # el mismo logo repetido se extrae una vez
+                            continue
+                        seen.add(raw.objgen)
+                        try:
+                            # extract_to elige la extensión según cómo está guardada (.jpg, .png, .tif…)
+                            prefix = str(out / f"p{i + 1:03d}-{count + 1:03d}")
+                            path = pikepdf.PdfImage(raw).extract_to(fileprefix=prefix)
+                        except Exception:  # noqa: BLE001 - formatos raros de escáner
+                            continue
+                        report.outputs.append(Path(path))
+                        count += 1
+            report.lines.append(f"✓ {src.name}: {count} imagen(es) en {out.name}/" if count
+                                else f"• {src.name}: no contiene imágenes")
+        except ValueError as exc:
+            report.fail(src, exc)
+    return report

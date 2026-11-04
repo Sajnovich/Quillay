@@ -53,7 +53,9 @@ class Context:
         """Carpeta de salida; si no se indicó, ``<carpeta del 1er archivo>/quillay``."""
         if self.out_dir is None:
             base = self.files[0].parent if self.files else Path.cwd()
-            self.out_dir = base / "quillay"
+            # Si el archivo ya es un resultado anterior (está en «quillay/»), seguimos
+            # en esa carpeta: así encadenar herramientas no crea quillay/quillay/...
+            self.out_dir = base if base.name == "quillay" else base / "quillay"
         self.out_dir.mkdir(parents=True, exist_ok=True)
         return self.out_dir
 
@@ -134,7 +136,10 @@ class Tool:
 TOOLS: dict[str, Tool] = {}
 
 # Orden de las categorías en la barra lateral y en ``quillay herramientas``.
-CATEGORIES = ("Web", "Privacidad y orden", "Edición", "PDF")
+CATEGORIES = (
+    "Web", "Privacidad y orden", "Edición",
+    "PDF · Organizar", "PDF · Optimizar", "PDF · Convertir", "PDF · Editar", "PDF · Seguridad",
+)
 
 
 def tool(
