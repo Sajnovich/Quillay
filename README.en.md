@@ -10,13 +10,13 @@
 
 A free multi-tool with 35+ features: convert, merge, compress, sign and redact PDFs; transform and shrink images; get files ready for the web and social media. Unlike online services, **it never uploads your documents to anyone's server**.
 
-[![CI](https://github.com/sajnovich/quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/sajnovich/quillay/actions/workflows/ci.yml)
+[![CI](https://github.com/Sajnovich/Quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/Sajnovich/Quillay/actions/workflows/ci.yml)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-2f7d5b)
 ![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2f7d5b)
 [![MIT License](https://img.shields.io/badge/license-MIT-1f5c42)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/sajnovich/quillay?style=social)](https://github.com/sajnovich/quillay/stargazers)
+[![Stars](https://img.shields.io/github/stars/Sajnovich/Quillay?style=social)](https://github.com/Sajnovich/Quillay/stargazers)
 
-**[Download](https://github.com/sajnovich/quillay/releases/latest)** · [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/sajnovich/quillay/issues/new/choose)
+**[Download](https://github.com/Sajnovich/Quillay/releases/latest)** · [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/Sajnovich/Quillay/issues/new/choose)
 
 <img src="docs/capturas/inicio-oscuro.webp" width="860" alt="Quillay home screen with tools grouped by category, starting with PDF" />
 
@@ -52,13 +52,13 @@ Supported formats: JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP, GIF and ICO.
 
 ## Install
 
-**Ready-to-run app:** grab the file for Windows, macOS or Linux from [Releases](https://github.com/sajnovich/quillay/releases/latest).
+**Ready-to-run app:** grab the file for Windows, macOS or Linux from [Releases](https://github.com/Sajnovich/Quillay/releases/latest).
 
 **With Python 3.11+:**
 
 ```bash
-git clone https://github.com/sajnovich/quillay.git
-cd quillay
+git clone https://github.com/Sajnovich/Quillay.git
+cd Quillay
 python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[gui]"
 quillay-gui
@@ -78,7 +78,7 @@ Commands and options are in Spanish for now; `quillay <tool> --help` lists every
 
 ## Contributing
 
-Contributions of every size are welcome: bug reports, ideas, recipes, docs, **translations** and code. Start with [CONTRIBUTING.md](CONTRIBUTING.md) (in Spanish; feel free to open issues and PRs in English) and look for issues labeled [`buena primera tarea`](https://github.com/sajnovich/quillay/labels/buena%20primera%20tarea) (good first issue).
+Contributions of every size are welcome: bug reports, ideas, recipes, docs, **translations** and code. Start with [CONTRIBUTING.md](CONTRIBUTING.md) (in Spanish; feel free to open issues and PRs in English) and look for issues labeled [`buena primera tarea`](https://github.com/Sajnovich/Quillay/labels/buena%20primera%20tarea) (good first issue).
 
 ## License
 

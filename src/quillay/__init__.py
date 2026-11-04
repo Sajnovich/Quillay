@@ -10,6 +10,6 @@ Gracias a esta separación, la terminal y la ventana nunca se contradicen:
 ambas llaman exactamente a las mismas funciones.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __app_name__ = "Quillay"
-__url__ = "https://github.com/sajnovich/quillay"
+__url__ = "https://github.com/Sajnovich/Quillay"

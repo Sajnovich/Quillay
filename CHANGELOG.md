@@ -2,12 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.3.1] — 2026-11-04
+
+Primera versión publicada en GitHub. Corrige errores de Windows y ordena el menú por uso.
 
 ### Cambiado
 - Menú, pantalla de inicio y `quillay herramientas` ordenados de lo más usado a lo más específico: primero convertir, organizar y comprimir PDF; Recetas pasa al final, en «Automatizar».
 - El orden vive en una sola lista (`TOOL_ORDER` en `core/registry.py`) en vez de depender del orden de importación.
 - Las categorías «Edición» y «Web» se llaman ahora «Imágenes» y «Web y redes».
+- Los enlaces apuntan a `github.com/Sajnovich/Quillay` y las instrucciones usan la carpeta `Quillay` que crea `git clone`.
 - Nuevo eslogan: «Todo para tus PDF e imágenes. Nada sale de tu equipo.», con la historia del nombre en el README.
 
 ### Corregido
@@ -71,6 +74,4 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
-[0.3.0]: https://github.com/sajnovich/quillay/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/sajnovich/quillay/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/sajnovich/quillay/releases/tag/v0.1.0
+[0.3.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.1

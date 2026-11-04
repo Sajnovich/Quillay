@@ -4,8 +4,8 @@
 
 ## Formas de aportar
 
-- **Sin programar:** reporta errores, propone ideas, mejora la documentación, comparte recetas en [Conversaciones](https://github.com/sajnovich/quillay/discussions) o ayuda a traducir.
-- **Programando:** busca los issues con la etiqueta [`buena primera tarea`](https://github.com/sajnovich/quillay/labels/buena%20primera%20tarea): son acotados y vienen con pistas de por dónde empezar.
+- **Sin programar:** reporta errores, propone ideas, mejora la documentación, comparte recetas en [Conversaciones](https://github.com/Sajnovich/Quillay/discussions) o ayuda a traducir.
+- **Programando:** busca los issues con la etiqueta [`buena primera tarea`](https://github.com/Sajnovich/Quillay/labels/buena%20primera%20tarea): son acotados y vienen con pistas de por dónde empezar.
 
 Antes de trabajar en algo grande, comenta en el issue para que nadie duplique esfuerzo.
 
@@ -15,8 +15,8 @@ Necesitas **Python 3.11 o superior** y **git**.
 
 ```bash
 # 1. Haz un fork en GitHub (botón "Fork") y clona TU copia
-git clone https://github.com/TU_USUARIO/quillay.git
-cd quillay
+git clone https://github.com/TU_USUARIO/Quillay.git
+cd Quillay
 
 # 2. Crea un entorno virtual e instala en modo editable
 python3 -m venv .venv

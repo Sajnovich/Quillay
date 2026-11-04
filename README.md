@@ -10,14 +10,14 @@
 
 Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, firma y censura PDF; transforma y aliviana imágenes; prepara archivos para la web y las redes. A diferencia de los sitios en línea, **no sube tus documentos a ningún servidor**: todo pasa en tu computador.
 
-[![CI](https://github.com/sajnovich/quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/sajnovich/quillay/actions/workflows/ci.yml)
+[![CI](https://github.com/Sajnovich/Quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/Sajnovich/Quillay/actions/workflows/ci.yml)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-2f7d5b)
 ![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2f7d5b)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-1f5c42)](LICENSE)
-[![Estrellas](https://img.shields.io/github/stars/sajnovich/quillay?style=social)](https://github.com/sajnovich/quillay/stargazers)
+[![Estrellas](https://img.shields.io/github/stars/Sajnovich/Quillay?style=social)](https://github.com/Sajnovich/Quillay/stargazers)
 [![Contribuciones bienvenidas](https://img.shields.io/badge/contribuciones-bienvenidas-2f7d5b)](CONTRIBUTING.md)
 
-**[Descargar](https://github.com/sajnovich/quillay/releases/latest)** · [Guía de contribución](CONTRIBUTING.md) · [Reportar un problema](https://github.com/sajnovich/quillay/issues/new/choose) · [Conversaciones](https://github.com/sajnovich/quillay/discussions)
+**[Descargar](https://github.com/Sajnovich/Quillay/releases/latest)** · [Guía de contribución](CONTRIBUTING.md) · [Reportar un problema](https://github.com/Sajnovich/Quillay/issues/new/choose) · [Conversaciones](https://github.com/Sajnovich/Quillay/discussions)
 
 <img src="docs/capturas/inicio-oscuro.webp" width="860" alt="Pantalla de inicio de Quillay con las herramientas agrupadas por categoría, partiendo por PDF" />
 
@@ -70,7 +70,7 @@ Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, f
 
 ### Opción 1 · Descargar el ejecutable (sin instalar Python)
 
-Ve a **[Releases](https://github.com/sajnovich/quillay/releases)** y descarga el archivo de tu sistema:
+Ve a **[Releases](https://github.com/Sajnovich/Quillay/releases)** y descarga el archivo de tu sistema:
 
 | Sistema | Archivo | Cómo abrirlo |
 |---|---|---|
@@ -112,8 +112,8 @@ sudo apt install libegl1 libxkbcommon0 libxcb-cursor0
 Requiere Python 3.11 o superior.
 
 ```bash
-git clone https://github.com/sajnovich/quillay.git
-cd quillay
+git clone https://github.com/Sajnovich/Quillay.git
+cd Quillay
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e ".[gui]"
@@ -201,22 +201,22 @@ Quillay es un proyecto comunitario: **cualquier aporte suma, programes o no.**
 |---|---|
 | 1 segundo | Darle una ⭐ al repositorio. |
 | 5 minutos | Compartirlo con alguien que publica fotos, maneja un sitio web o una tienda en línea. |
-| 15 minutos | [Reportar un error](https://github.com/sajnovich/quillay/issues/new?template=error.md) o [proponer una idea](https://github.com/sajnovich/quillay/issues/new?template=idea.md). |
+| 15 minutos | [Reportar un error](https://github.com/Sajnovich/Quillay/issues/new?template=error.md) o [proponer una idea](https://github.com/Sajnovich/Quillay/issues/new?template=idea.md). |
 | Una tarde | Escribir una receta útil, mejorar la documentación o traducir la interfaz. |
-| Ganas de programar | Tomar un issue marcado [`buena primera tarea`](https://github.com/sajnovich/quillay/labels/buena%20primera%20tarea). |
+| Ganas de programar | Tomar un issue marcado [`buena primera tarea`](https://github.com/Sajnovich/Quillay/labels/buena%20primera%20tarea). |
 
 Para programar, lee [CONTRIBUTING.md](CONTRIBUTING.md) y [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Agregar una herramienta nueva es escribir una función con un decorador: aparece sola en la ventana, la terminal y las recetas.
 
 ### Personas que han contribuido
 
-<a href="https://github.com/sajnovich/quillay/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=sajnovich/quillay" alt="Avatares de las personas que contribuyen a Quillay" />
+<a href="https://github.com/Sajnovich/Quillay/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Sajnovich/Quillay" alt="Avatares de las personas que contribuyen a Quillay" />
 </a>
 
 ### Estrellas en el tiempo
 
-<a href="https://star-history.com/#sajnovich/quillay&Date">
-  <img src="https://api.star-history.com/svg?repos=sajnovich/quillay&type=Date" width="600" alt="Gráfico de estrellas de Quillay en GitHub a lo largo del tiempo" />
+<a href="https://star-history.com/#Sajnovich/Quillay&Date">
+  <img src="https://api.star-history.com/svg?repos=Sajnovich/Quillay&type=Date" width="600" alt="Gráfico de estrellas de Quillay en GitHub a lo largo del tiempo" />
 </a>
 
 ## Créditos

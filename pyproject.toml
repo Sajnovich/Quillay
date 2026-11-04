@@ -55,8 +55,8 @@ quillay = "quillay.cli:main"
 quillay-gui = "quillay.gui.app:main"
 
 [project.urls]
-Repositorio = "https://github.com/sajnovich/quillay"
-Problemas = "https://github.com/sajnovich/quillay/issues"
+Repositorio = "https://github.com/Sajnovich/Quillay"
+Problemas = "https://github.com/Sajnovich/Quillay/issues"
 
 [tool.hatch.version]
 path = "src/quillay/__init__.py"
