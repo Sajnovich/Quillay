@@ -6,9 +6,9 @@
 
 # Quillay
 
-**Prepara tus imágenes para publicar: livianas, del tamaño justo y sin datos que no quieres compartir.**
+### Todo para tus PDF e imágenes. Nada sale de tu equipo.
 
-Quillay automatiza lo que haces antes de subir una foto a tu sitio o a redes: la adapta, la aliviana, le quita la ubicación GPS y genera el código listo para pegar. Guarda esos pasos como **recetas** y repítelos con un clic o un comando.
+Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, firma y censura PDF; transforma y aliviana imágenes; prepara archivos para la web y las redes. A diferencia de los sitios en línea, **no sube tus documentos a ningún servidor**: todo pasa en tu computador.
 
 [![CI](https://github.com/sajnovich/quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/sajnovich/quillay/actions/workflows/ci.yml)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-2f7d5b)
@@ -19,22 +19,22 @@ Quillay automatiza lo que haces antes de subir una foto a tu sitio o a redes: la
 
 **[Descargar](https://github.com/sajnovich/quillay/releases/latest)** · [Guía de contribución](CONTRIBUTING.md) · [Reportar un problema](https://github.com/sajnovich/quillay/issues/new/choose) · [Conversaciones](https://github.com/sajnovich/quillay/discussions)
 
-<img src="docs/capturas/inicio-oscuro.webp" width="860" alt="Pantalla de inicio de Quillay con las herramientas agrupadas en Web, Privacidad, Edición y PDF" />
+<img src="docs/capturas/inicio-oscuro.webp" width="860" alt="Pantalla de inicio de Quillay con las herramientas agrupadas por categoría, partiendo por PDF" />
 
 </div>
 
-> El *quillay* es un árbol nativo de Chile cuya corteza se usaba para limpiar. Esta app hace lo mismo con tus imágenes: las limpia antes de que salgan al mundo.
+> 🌿 **¿Por qué «Quillay»?** El quillay es un árbol nativo de Chile de muchos usos: su corteza fue jabón por generaciones, hoy está en alimentos y bebidas, y sus compuestos se usan incluso en vacunas. Quillay, la app, es igual: una sola herramienta para casi todo lo que haces con tus PDF e imágenes.
 
 > [!TIP]
 > **¿Quillay te sirve?** Dale una ⭐ arriba a la derecha. Es gratis, toma un segundo y ayuda a que más personas lo encuentren.
 
 ## Lo que hace distinto a Quillay
 
-- **Recetas reutilizables.** Una receta es un archivo YAML con varios pasos (encajar → marca de agua → WebP sin GPS) que corres desde la ventana, la terminal o un script, y que puedes compartir con tu equipo.
-- **Terminal de primera clase.** Cada herramienta es también un comando (`quillay favicons logo.png`), generado automáticamente desde el mismo código que la ventana, así que nunca se contradicen.
-- **Hecho para la web.** Entrega archivos *y* el código: el `<head>` de los favicons, el `<picture>` con `srcset`, las variables CSS de tus colores y los marcadores de carga.
-- **Privacidad antes de publicar.** Avisa qué fotos revelan dónde se tomaron, difumina rostros y encuentra duplicados sin borrar nada.
-- **Local y sin cuentas.** Todo se procesa en tu equipo; no se sube nada a internet.
+- **Nada sale de tu equipo.** Contratos con RUT, documentos firmados o fotos con GPS no viajan a servidores ajenos. Sin cuentas, sin límites diarios y funciona sin internet.
+- **Una sola app en vez de diez sitios.** PDF, imágenes, web y privacidad en el mismo lugar, procesando 1 o 500 archivos a la vez.
+- **Privacidad de verdad.** Censura que borra el texto (no solo lo tapa), detección de fotos con ubicación GPS y difuminado de rostros.
+- **Recetas reutilizables.** Guarda una cadena de pasos (encajar → marca de agua → WebP sin GPS) y repítela con un clic o un comando.
+- **Terminal de primera clase.** Cada herramienta es también un comando (`quillay unir_pdf *.pdf`), generado desde el mismo código que la ventana.
 
 ## Herramientas
 

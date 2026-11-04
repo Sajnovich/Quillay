@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     load_all()
     parser = argparse.ArgumentParser(
         prog="quillay",
-        description="Quillay — prepara imágenes para publicar, por lotes y con recetas.",
+        description="Quillay — todo para tus PDF e imágenes. Nada sale de tu equipo.",
         epilog=f"¿Te sirve? Dale una estrella: {__url__}  ·  Problemas: {__url__}/issues",
     )
     parser.add_argument("--version", action="version", version=f"Quillay {__version__}")

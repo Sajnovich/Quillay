@@ -1,4 +1,4 @@
-"""Quillay: prepara imágenes para publicar, con recetas reutilizables.
+"""Quillay: todo para tus PDF e imágenes. Nada sale de tu equipo.
 
 El paquete se divide en tres capas:
 

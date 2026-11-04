@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
         side.setContentsMargins(0, 0, 0, 12)
         brand = QLabel("🌿 Quillay")
         brand.setObjectName("Brand")
-        sub = QLabel("Prepara imágenes para publicar")
+        sub = QLabel("Todo para tus PDF e imágenes.\nNada sale de tu equipo.")
         sub.setObjectName("BrandSub")
         self.nav = QListWidget()
         self.nav.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)

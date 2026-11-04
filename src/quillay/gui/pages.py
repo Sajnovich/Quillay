@@ -253,7 +253,7 @@ class HomePage(QWidget):
         inner = QWidget()
         lay = QVBoxLayout(inner)
         lay.setContentsMargins(28, 22, 28, 22)
-        lay.addWidget(_title("¿Qué vas a publicar hoy?",
+        lay.addWidget(_title("¿Qué necesitas hacer hoy?",
                              "Agrega archivos a la izquierda y elige una herramienta, o automatízalo con una receta. "
                              "Todo se procesa en tu equipo."))
         for category, tools in tools_by_category().items():

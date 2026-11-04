@@ -8,6 +8,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Menú, pantalla de inicio y `quillay herramientas` ordenados de lo más usado a lo más específico: primero convertir, organizar y comprimir PDF; Recetas pasa al final, en «Automatizar».
 - El orden vive en una sola lista (`TOOL_ORDER` en `core/registry.py`) en vez de depender del orden de importación.
 - Las categorías «Edición» y «Web» se llaman ahora «Imágenes» y «Web y redes».
+- Nuevo eslogan: «Todo para tus PDF e imágenes. Nada sale de tu equipo.», con la historia del nombre en el README.
 
 ## [0.3.0] — 2026-11-04
 

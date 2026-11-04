@@ -35,8 +35,9 @@ def main() -> None:
     icon = Image.open(ROOT / "src/quillay/assets/icono.png").convert("RGBA").resize((150, 150))
     img.paste(icon, (72, 86), icon)
     d.text((72, 262), "Quillay", font=font(84, bold=True), fill="#e7ecea")
-    d.multiline_text((76, 372), "Prepara tus imágenes\npara publicar", font=font(32), fill="#b7c4bf", spacing=8)
-    for i, line in enumerate(("Recetas por lotes · Favicons y srcset", "GPS, caras y duplicados · PDF",
+    d.multiline_text((76, 372), "Todo para tus PDF e imágenes.\nNada sale de tu equipo.", font=font(30),
+                     fill="#b7c4bf", spacing=8)
+    for i, line in enumerate(("Convertir, unir, comprimir y firmar PDF", "Imágenes, web, privacidad y recetas",
                               "Windows · macOS · Linux · Código abierto")):
         d.text((76, 474 + i * 36), line, font=font(22), fill="#7fae96")
 

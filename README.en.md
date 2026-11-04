@@ -6,9 +6,9 @@
 
 # Quillay
 
-**Get your images ready to publish: lightweight, the right size, and free of data you don't want to share.**
+### Everything for your PDFs and images. Nothing leaves your computer.
 
-Quillay automates what you do before uploading a photo to your website or social media: it fits it, shrinks it, strips its GPS location and writes the code you need to paste. Save those steps as **recipes** and repeat them with one click or one command.
+A free multi-tool with 35+ features: convert, merge, compress, sign and redact PDFs; transform and shrink images; get files ready for the web and social media. Unlike online services, **it never uploads your documents to anyone's server**.
 
 [![CI](https://github.com/sajnovich/quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/sajnovich/quillay/actions/workflows/ci.yml)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-2f7d5b)
@@ -18,23 +18,25 @@ Quillay automates what you do before uploading a photo to your website or social
 
 **[Download](https://github.com/sajnovich/quillay/releases/latest)** · [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/sajnovich/quillay/issues/new/choose)
 
-<img src="docs/capturas/inicio-oscuro.webp" width="860" alt="Quillay home screen with tools grouped into Web, Privacy, Editing and PDF" />
+<img src="docs/capturas/inicio-oscuro.webp" width="860" alt="Quillay home screen with tools grouped by category, starting with PDF" />
 
 </div>
 
 > [!NOTE]
 > The interface is currently in **Spanish**. An English translation is on the roadmap, and help is very welcome!
 
+> 🌿 **Why "Quillay"?** The quillay is a native Chilean tree with many uses: its bark was used as soap for generations, it is used in food and drinks today, and its compounds are even found in vaccines. Quillay, the app, is the same: one tool for almost everything you do with PDFs and images.
+
 > [!TIP]
 > **Find Quillay useful?** Give it a ⭐. It takes one second and helps others discover it.
 
 ## What makes Quillay different
 
-- **Reusable recipes.** A recipe is a YAML file with several steps (fit → watermark → WebP without GPS) that you run from the window, the terminal or a script, and share with your team.
-- **First-class command line.** Every tool is also a command (`quillay favicons logo.png`), generated from the same code as the window, so they never disagree.
-- **Built for the web.** You get files *and* code: the favicon `<head>`, the `<picture>` with `srcset`, CSS variables for your brand colors and loading placeholders.
-- **Privacy before publishing.** It tells you which photos reveal where they were taken, blurs faces and finds duplicates without deleting anything.
-- **Local, no accounts.** Everything runs on your computer; nothing is uploaded.
+- **Nothing leaves your computer.** Contracts, signed documents or photos with GPS never travel to someone else's server. No accounts, no daily limits, works offline.
+- **One app instead of ten websites.** PDFs, images, web and privacy in one place, 1 or 500 files at a time.
+- **Real privacy.** Redaction that deletes text (not just covers it), GPS detection in photos and face blurring.
+- **Reusable recipes.** Save a chain of steps (fit → watermark → WebP without GPS) and repeat it with one click or one command.
+- **First-class command line.** Every tool is also a command (`quillay unir_pdf *.pdf`), generated from the same code as the window.
 
 ## Tools
 
