@@ -1,0 +1,10 @@
+nombre: Anonimizar para publicar
+descripcion: Difumina caras, quita la ubicación GPS y reduce a 2048 px. Revisa siempre el resultado.
+pasos:
+  - difuminar: {detectar: [caras], estilo: desenfoque, intensidad: 7}
+  - redimensionar: {modo: caja, ancho: 2048, alto: 2048}
+salida:
+  formato: jpg
+  calidad: 85
+  quitar_metadatos: true
+  sufijo: -anonima

@@ -1,0 +1,9 @@
+nombre: Instagram cuadrado
+descripcion: Recorta al centro en 1:1, lleva a 1080×1080 y guarda en JPG de alta calidad.
+pasos:
+  - encajar: {ancho: 1080, alto: 1080, ajuste: cubrir}
+salida:
+  formato: jpg
+  calidad: 92
+  quitar_metadatos: true
+  sufijo: _ig

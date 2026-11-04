@@ -1,0 +1,9 @@
+nombre: Web optimizado
+descripcion: Reduce a máximo 1920 px, convierte a WebP calidad 80 y elimina GPS y datos de cámara. Ideal para subir a WordPress.
+pasos:
+  - redimensionar: {modo: caja, ancho: 1920, alto: 1920, no_agrandar: true}
+salida:
+  formato: webp
+  calidad: 80
+  quitar_metadatos: true
+  sufijo: -web

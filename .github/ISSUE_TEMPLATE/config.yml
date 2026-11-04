@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Preguntas y conversaciones
+    url: https://github.com/sajnovich/quillay/discussions
+    about: Dudas de uso, recetas para compartir e ideas a medio formar.
+  - name: 🔒 Reportar una vulnerabilidad
+    url: https://github.com/sajnovich/quillay/security/advisories/new
+    about: Hazlo en privado, no en un issue público.

@@ -1,0 +1,9 @@
+nombre: Miniaturas
+descripcion: Miniaturas de 400 px de ancho en WebP, livianas para galerías.
+pasos:
+  - redimensionar: {modo: ancho, ancho: 400}
+salida:
+  formato: webp
+  calidad: 70
+  quitar_metadatos: true
+  sufijo: -mini

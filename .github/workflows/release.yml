@@ -1,0 +1,62 @@
+# Publicación: al subir una etiqueta como v0.1.0, GitHub construye el
+# ejecutable en los tres sistemas y crea una "Release" con los descargables.
+#
+#   git tag v0.1.0
+#   git push origin v0.1.0
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
+
+permissions:
+  contents: write   # necesario para crear la Release
+
+jobs:
+  build:
+    name: Ejecutable ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-22.04 usa una glibc más antigua: el binario corre en más distros (Debian 12 incluida).
+        os: [windows-latest, macos-latest, ubuntu-22.04]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Instalar dependencias
+        run: python -m pip install ".[gui,dev]"
+      - name: Empaquetar con PyInstaller
+        run: python scripts/empaquetar.py
+      - name: Probar que el ejecutable arranca
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then BIN=dist/Quillay.app/Contents/MacOS/Quillay
+          elif [ "$RUNNER_OS" = "Windows" ]; then BIN=dist/Quillay/Quillay.exe
+          else BIN=dist/Quillay/Quillay; fi
+          "$BIN" --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quillay-${{ matrix.os }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artefactos
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artefactos/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}   # v0.2.0-rc1 → pre-release

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Empaquetado (PyInstaller)
+build/
+dist/
+*.spec
+
+# Salidas de prueba
+quillay/
+!src/quillay/
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

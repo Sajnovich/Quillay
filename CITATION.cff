@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "Si usas Quillay en un trabajo académico o publicación, puedes citarlo así."
+title: "Quillay"
+abstract: "Prepara imágenes para publicar: recetas por lotes, herramientas web y de privacidad."
+type: software
+authors:
+  - family-names: Sajnovich
+    given-names: Eduardo
+version: 0.1.0
+date-released: 2026-11-03
+license: MIT
+repository-code: "https://github.com/sajnovich/quillay"
+keywords:
+  - procesamiento de imágenes
+  - image processing
+  - batch
+  - favicon
+  - privacidad

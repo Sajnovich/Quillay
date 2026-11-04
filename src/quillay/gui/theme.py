@@ -1,0 +1,101 @@
+"""Colores y hoja de estilos (QSS = el "CSS" de Qt).
+
+Usamos el estilo «Fusion» de Qt, que se ve igual en los tres sistemas, y
+encima una paleta clara u oscura con el verde quillay como color de acento.
+"""
+
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QGuiApplication, QPalette
+from PySide6.QtWidgets import QApplication
+
+ACCENT = "#2f7d5b"
+ACCENT_HOVER = "#3a9670"
+
+THEMES = {
+    "oscuro": {
+        "bg": "#16191b", "panel": "#1d2124", "card": "#242a2d", "border": "#2f373b",
+        "text": "#e7ecea", "muted": "#94a19c", "input": "#14181a",
+    },
+    "claro": {
+        "bg": "#f4f6f5", "panel": "#ffffff", "card": "#ffffff", "border": "#d9e0dd",
+        "text": "#1b2421", "muted": "#5f6d68", "input": "#ffffff",
+    },
+}
+
+
+def resolve(mode: str) -> str:
+    """'sistema' → 'claro' u 'oscuro' según la configuración del sistema operativo."""
+    if mode in THEMES:
+        return mode
+    scheme = QGuiApplication.styleHints().colorScheme()
+    return "oscuro" if scheme == Qt.ColorScheme.Dark else "claro"
+
+
+def apply(app: QApplication, mode: str = "sistema") -> str:
+    name = resolve(mode)
+    c = THEMES[name]
+    app.setStyle("Fusion")
+
+    pal = QPalette()
+    for role, key in (
+        (QPalette.ColorRole.Window, "bg"), (QPalette.ColorRole.Base, "input"),
+        (QPalette.ColorRole.AlternateBase, "card"), (QPalette.ColorRole.Button, "card"),
+        (QPalette.ColorRole.Text, "text"), (QPalette.ColorRole.WindowText, "text"),
+        (QPalette.ColorRole.ButtonText, "text"), (QPalette.ColorRole.ToolTipBase, "card"),
+        (QPalette.ColorRole.ToolTipText, "text"), (QPalette.ColorRole.PlaceholderText, "muted"),
+    ):
+        pal.setColor(role, QColor(c[key]))
+    pal.setColor(QPalette.ColorRole.Highlight, QColor(ACCENT))
+    pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
+    pal.setColor(QPalette.ColorRole.Link, QColor(ACCENT_HOVER))
+    app.setPalette(pal)
+
+    app.setStyleSheet(f"""
+        QWidget {{ font-size: 13px; }}
+        #Sidebar {{ background: {c['panel']}; border-right: 1px solid {c['border']}; }}
+        #Sidebar QListWidget {{ background: transparent; border: none; outline: none; }}
+        #Sidebar QListWidget::item {{ padding: 7px 12px; border-radius: 7px; margin: 1px 8px; }}
+        #Sidebar QListWidget::item:selected {{ background: {ACCENT}; color: white; }}
+        #Sidebar QListWidget::item:hover:!selected {{ background: {c['card']}; }}
+        #Brand {{ font-size: 20px; font-weight: 700; padding: 16px 18px 2px 18px; }}
+        #BrandSub {{ color: {c['muted']}; padding: 0 18px 10px 18px; font-size: 12px; }}
+        #FilesPanel {{ background: {c['panel']}; border-right: 1px solid {c['border']}; }}
+        #PageTitle {{ font-size: 22px; font-weight: 700; }}
+        #Muted, QLabel[muted="true"] {{ color: {c['muted']}; }}
+        QLabel[help="true"] {{ color: {c['muted']}; font-size: 11px; }}
+        #Card {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 12px; }}
+        #Card:hover {{ border-color: {ACCENT}; }}
+        #DropHint {{ color: {c['muted']}; border: 2px dashed {c['border']}; border-radius: 12px;
+                    padding: 18px; }}
+        QPushButton {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 8px;
+                       padding: 7px 14px; }}
+        QPushButton:hover {{ border-color: {ACCENT}; }}
+        QPushButton:disabled {{ color: {c['muted']}; }}
+        QPushButton#Primary {{ background: {ACCENT}; color: white; border: none; font-weight: 600;
+                               padding: 9px 22px; }}
+        QPushButton#Primary:hover {{ background: {ACCENT_HOVER}; }}
+        QPushButton#Primary:disabled {{ background: {c['border']}; color: {c['muted']}; }}
+        QLineEdit, QComboBox, QPlainTextEdit {{
+            background: {c['input']}; border: 1px solid {c['border']}; border-radius: 7px; padding: 5px 8px; }}
+        QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus {{ border-color: {ACCENT}; }}
+        QSpinBox, QDoubleSpinBox {{ min-height: 26px; }}
+        QCheckBox::indicator {{ width: 16px; height: 16px; border-radius: 4px;
+                                border: 1px solid {c['muted']}; background: {c['input']}; }}
+        QCheckBox::indicator:checked {{ background: {ACCENT}; border-color: {ACCENT}; }}
+        QCheckBox::indicator:hover {{ border-color: {ACCENT}; }}
+        QListWidget::item {{ padding: 3px 2px; }}
+        QListWidget#Files {{ background: {c['input']}; border: 1px solid {c['border']}; border-radius: 10px; }}
+        QProgressBar {{ border: 1px solid {c['border']}; border-radius: 6px; text-align: center;
+                        background: {c['input']}; height: 18px; }}
+        QProgressBar::chunk {{ background: {ACCENT}; border-radius: 5px; }}
+        QScrollArea {{ border: none; background: transparent; }}
+        QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
+        QScrollBar::handle:vertical {{ background: {c['border']}; border-radius: 3px; min-height: 30px; }}
+        QScrollBar::handle:vertical:hover {{ background: {c['muted']}; }}
+        QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
+        QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
+        QSplitter::handle {{ background: {c['border']}; }}
+    """)
+    return name

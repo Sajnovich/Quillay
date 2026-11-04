@@ -1,0 +1,15 @@
+"""Quillay: prepara imágenes para publicar, con recetas reutilizables.
+
+El paquete se divide en tres capas:
+
+- ``quillay.core``   → la lógica pura (parámetros, registro, abrir/guardar imágenes).
+- ``quillay.tools``  → cada herramienta (convertir, comprimir, favicons, PDF...).
+- ``quillay.gui`` y ``quillay.cli`` → dos "caras" distintas sobre la misma lógica.
+
+Gracias a esta separación, la terminal y la ventana nunca se contradicen:
+ambas llaman exactamente a las mismas funciones.
+"""
+
+__version__ = "0.1.0"
+__app_name__ = "Quillay"
+__url__ = "https://github.com/sajnovich/quillay"

@@ -1,0 +1,10 @@
+nombre: Catálogo de producto
+descripcion: Centra cada producto en un lienzo blanco de 1200×1200 y agrega la marca de agua en texto.
+pasos:
+  - encajar: {ancho: 1200, alto: 1200, ajuste: contener, color_fondo: "#ffffff"}
+  - marca_agua: {texto: "© Mi tienda", posicion: abajo-derecha, tamano: 18, opacidad: 45, color_texto: "#000000"}
+salida:
+  formato: jpg
+  calidad: 88
+  quitar_metadatos: true
+  sufijo: -catalogo

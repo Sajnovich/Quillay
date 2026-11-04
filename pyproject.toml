@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "quillay"
+dynamic = ["version"]
+description = "Prepara imágenes para publicar: recetas por lotes, herramientas web (favicons, srcset, redes) y privacidad (GPS, caras, duplicados)."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Eduardo Sajnovich", email = "eduardo.sajnovich.esc@gmail.com" }]
+requires-python = ">=3.11"
+keywords = ["imágenes", "images", "batch", "webp", "avif", "favicon", "pdf", "exif", "pyside6"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: X11 Applications :: Qt",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Natural Language :: Spanish",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
+# Dependencias del núcleo (lo que necesita la terminal).
+dependencies = [
+  "Pillow>=11.3",                       # leer/escribir imágenes (incluye AVIF)
+  "pillow-heif>=0.18",                  # fotos HEIC de iPhone
+  "pypdfium2>=4.30",                    # leer PDF (motor de Chrome)
+  "opencv-python-headless>=4.9,<5",     # detección de caras; la v5 ya no trae los modelos Haar
+  "numpy>=1.26",
+  "PyYAML>=6.0",                        # recetas
+  "platformdirs>=4.0",                  # carpeta de configuración por sistema operativo
+]
+
+[project.optional-dependencies]
+# La ventana es opcional: en un servidor basta con la terminal.
+gui = ["PySide6-Essentials>=6.7"]
+dev = ["pytest>=8", "ruff>=0.6", "pyinstaller>=6.10"]
+
+[project.scripts]
+quillay = "quillay.cli:main"
+
+[project.gui-scripts]
+quillay-gui = "quillay.gui.app:main"
+
+[project.urls]
+Repositorio = "https://github.com/sajnovich/quillay"
+Problemas = "https://github.com/sajnovich/quillay/issues"
+
+[tool.hatch.version]
+path = "src/quillay/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quillay"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E731", "B008"]
