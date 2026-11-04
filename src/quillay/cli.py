@@ -43,8 +43,27 @@ def _add_param(parser: argparse.ArgumentParser, p: Param) -> None:
     parser.add_argument(flag, **kwargs)
 
 
+def _setup_streams() -> None:
+    """Asegura que la salida acepte cualquier carácter (✓, →, tildes).
+
+    En Windows, cuando la salida se redirige a un archivo o a otro programa,
+    Python usa la codificación regional (cp1252), que no tiene «✓» y se cae.
+    La pasamos a UTF-8, el estándar actual. ``errors="replace"`` es el
+    último seguro: un carácter imposible se muestra como «?» en vez de fallar.
+    """
+    for name in ("stdout", "stderr"):
+        stream = getattr(sys, name)
+        encoding = (getattr(stream, "encoding", "") or "").lower().replace("-", "")
+        if stream is not None and encoding != "utf8" and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
 def _progress(done: int, total: int, msg: str) -> None:
-    if not sys.stderr.isatty():
+    # stderr es None en el .exe de ventana de Windows si no hay consola.
+    if sys.stderr is None or not sys.stderr.isatty():
         return
     width = 24
     filled = int(width * done / total) if total else width
@@ -139,6 +158,7 @@ def _run_recipe_cmd(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _setup_streams()
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
@@ -160,7 +180,7 @@ def main(argv: list[str] | None = None) -> int:
             return _run_recipe_cmd(args)
         return _run_tool(TOOLS[args.comando], args)
     except (ParamError, ValueError) as exc:
-        print(f"Error: {exc}", file=sys.stderr)
+        print(f"Error: {exc}", file=sys.stderr or sys.stdout)
         return 2
     except (Cancelled, KeyboardInterrupt):
         print("\nCancelado.", file=sys.stderr)

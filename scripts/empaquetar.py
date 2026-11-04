@@ -46,6 +46,7 @@ def main() -> None:
         "--collect-all", "pillow_heif",
         "--collect-all", "pikepdf",         # incluye la librería nativa qpdf
         "--collect-data", "reportlab",      # fuentes y datos de reportlab
+        "--collect-data", "pdfminer",       # tablas de caracteres (cmap) para PDF en chino, japonés…
         "--collect-data", "docx",           # plantilla base de Word
         "--collect-data", "pptx",           # plantilla base de PowerPoint
         # python-pptx busca sus plantillas con la ruta "pptx/oxml/../templates". Para que

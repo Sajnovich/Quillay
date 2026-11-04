@@ -76,3 +76,28 @@ def test_cli_receta(photo, out):
 def test_cli_error_amable(photo, capsys):
     assert main(["convertir", str(photo), "--calidad", "0"]) == 2
     assert "Calidad" in capsys.readouterr().err
+
+
+def test_cli_salida_redirigida_en_cp1252(photo, out):
+    """Windows en español redirige la salida en cp1252, que no tiene «✓»: no debe caerse."""
+    import os
+    import subprocess
+    import sys
+
+    env = {**os.environ, "PYTHONIOENCODING": "cp1252"}
+    result = subprocess.run(
+        [sys.executable, "-m", "quillay", "convertir", str(photo), "--formato", "png", "-o", str(out)],
+        capture_output=True, env=env, check=False,
+    )
+    assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+    assert "✓" in result.stdout.decode("utf-8")
+
+
+def test_cli_sin_consola(photo, out, monkeypatch):
+    """El .exe de ventana de Windows no tiene stdout/stderr: la CLI debe funcionar igual."""
+    import sys
+
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(sys, "stderr", None)
+    assert main(["convertir", str(photo), "--formato", "png", "-o", str(out)]) == 0
+    assert (out / "foto playa.png").exists()

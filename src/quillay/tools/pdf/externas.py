@@ -68,6 +68,11 @@ def find_browser() -> str | None:
     return None
 
 
+# Nota sobre ignore_cleanup_errors=True en las carpetas temporales: en Windows,
+# Chrome y LibreOffice pueden mantener archivos de su perfil bloqueados unos
+# segundos tras cerrarse; borrar la carpeta fallaría aunque el PDF esté listo.
+
+
 def run_until_file(cmd: list[str], dest: Path, timeout: float) -> None:
     """Ejecuta ``cmd`` y lo detiene en cuanto ``dest`` está completo.
 
@@ -113,7 +118,7 @@ def office_a_pdf(ctx: Context) -> Report:
         raise ValueError(INSTALL_LO)
     report = Report()
     out = ctx.output_dir()
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         tmp_path = Path(tmp)
         # Un perfil de LibreOffice propio evita choques si ya tienes LibreOffice abierto.
         profile = (tmp_path / "perfil").as_uri()
@@ -164,7 +169,7 @@ def html_a_pdf(ctx: Context) -> Report:
     report = Report()
     out = ctx.out_dir or (ctx.files[0].parent / "quillay" if ctx.files else Path.home() / "Quillay")
     out.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as profile:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
         for i, (url, stem) in enumerate(targets):
             ctx.tick(i, len(targets), url)
             dest = unique_path(out / f"{stem}.pdf")

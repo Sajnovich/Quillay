@@ -10,6 +10,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Las categorías «Edición» y «Web» se llaman ahora «Imágenes» y «Web y redes».
 - Nuevo eslogan: «Todo para tus PDF e imágenes. Nada sale de tu equipo.», con la historia del nombre en el README.
 
+### Corregido
+- **Windows:** la terminal se caía con `UnicodeEncodeError` al redirigir la salida (`quillay ... > log.txt`), porque la codificación cp1252 no tiene «✓». Ahora la salida es UTF-8.
+- **Windows:** usar `Quillay.exe` como comando (`Quillay.exe convertir ...`) se caía o no mostraba nada; ahora se conecta a la consola que lo llamó.
+- **Windows:** las carpetas temporales de LibreOffice y Chrome ya no provocan errores si quedan bloqueadas unos segundos.
+- El ejecutable incluye ahora las tablas de caracteres de pdfminer, necesarias para convertir PDF en chino o japonés.
+
+### Agregado
+- `scripts/autoprueba.py`: antes de publicar, GitHub Actions hace 10 conversiones reales con el ejecutable empaquetado en Windows, macOS y Linux.
+- Instrucciones de instalación por sistema en el README (incluye el nuevo paso de macOS Sequoia).
+
 ## [0.3.0] — 2026-11-04
 
 Segunda etapa del módulo PDF: Quillay llega a 38 herramientas.

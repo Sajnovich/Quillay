@@ -74,11 +74,38 @@ Ve a **[Releases](https://github.com/sajnovich/quillay/releases)** y descarga el
 
 | Sistema | Archivo | Cómo abrirlo |
 |---|---|---|
-| Windows 10/11 | `Quillay-<versión>-windows-x64.zip` | Descomprime y abre `Quillay.exe`. |
-| macOS (Apple Silicon) | `Quillay-<versión>-macos-arm64.zip` | Descomprime y mueve `Quillay.app` a Aplicaciones. |
-| Linux x86_64 | `Quillay-<versión>-linux-x86_64.tar.gz` | `tar xzf Quillay-*.tar.gz && ./Quillay/Quillay` |
+| Windows 10/11 (64 bits) | `Quillay-<versión>-windows-x64.zip` | Descomprime **toda** la carpeta y abre `Quillay.exe`. |
+| macOS 12 o superior (Apple Silicon: M1, M2, M3, M4) | `Quillay-<versión>-macos-arm64.zip` | Descomprime y mueve `Quillay.app` a Aplicaciones. |
+| Linux x86_64 (Debian 12+, Ubuntu 22.04+) | `Quillay-<versión>-linux-x86_64.tar.gz` | `tar xzf Quillay-*.tar.gz && ./Quillay/Quillay` |
 
-> **Aviso de seguridad la primera vez.** Los ejecutables aún no están firmados digitalmente (cuesta dinero). Windows mostrará *"Windows protegió tu PC"* → **Más información → Ejecutar de todas formas**. En macOS: clic derecho sobre la app → **Abrir**.
+Los ejecutables aún no están firmados digitalmente (la firma cuesta dinero), así que la primera vez tu sistema mostrará una advertencia:
+
+<details>
+<summary><b>Windows</b>: «Windows protegió tu PC»</summary>
+
+Haz clic en **Más información → Ejecutar de todas formas**. Solo se pide la primera vez.
+</details>
+
+<details>
+<summary><b>macOS</b>: «no se puede abrir porque Apple no puede verificarla»</summary>
+
+1. Intenta abrir `Quillay.app` una vez y cierra el aviso.
+2. Ve a **Configuración del Sistema → Privacidad y seguridad**, baja hasta el final y presiona **Abrir de todos modos**.
+
+En macOS 14 o anterior también funciona: clic derecho sobre la app → **Abrir**. Si tienes un Mac con Intel, usa la opción con Python.
+</details>
+
+<details>
+<summary><b>Linux</b>: la ventana no abre</summary>
+
+Instala las librerías de sistema que Qt necesita:
+
+```bash
+sudo apt install libegl1 libxkbcommon0 libxcb-cursor0
+```
+</details>
+
+**Funciones opcionales en todos los sistemas:** «Office a PDF» necesita [LibreOffice](https://www.libreoffice.org) y «HTML a PDF» necesita Edge, Chrome o Chromium (Windows ya trae Edge). Quillay te avisa si faltan.
 
 ### Opción 2 · Con Python (recomendado si programas)
 
