@@ -15,7 +15,7 @@ from quillay.core.params import Param, color_to_rgba
 from quillay.core.registry import Context, Report, tool
 from quillay.tools.pasos import encajar
 
-CAT = "Web"
+CAT = "Web y redes"
 
 
 def _slug(text: str) -> str:

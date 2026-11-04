@@ -178,3 +178,13 @@ def test_parametro_invalido(photo, out):
         run("convertir", [photo], out, calidad=500)
     with pytest.raises(ParamError):
         run("convertir", [photo], out, formato="psd")
+
+
+def test_orden_del_menu_incluye_todas_las_herramientas():
+    """Si alguien agrega una herramienta, debe ubicarla en TOOL_ORDER (y una sola vez)."""
+    from quillay.core.registry import CATEGORIES, TOOL_ORDER, tools_by_category
+
+    assert sorted(TOOL_ORDER) == sorted(TOOLS)
+    grouped = tools_by_category()
+    assert list(grouped) == [c for c in CATEGORIES if c in grouped]
+    assert [t.id for t in grouped["PDF · Convertir"]][0] == "pdf_a_word"

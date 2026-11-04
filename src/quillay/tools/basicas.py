@@ -28,7 +28,7 @@ from quillay.core.pipeline import (
 from quillay.core.registry import STEPS, Context, Report, tool
 from quillay.tools import pasos  # noqa: F401  (registra los pasos que envolvemos abajo)
 
-CAT = "Edición"
+CAT = "Imágenes"
 
 
 def _split(opts: dict, step_id: str) -> tuple[dict, dict]:
@@ -345,7 +345,7 @@ def _swatch(colors: list[tuple[str, float]], path: Path) -> None:
 
 @tool(
     "paleta", "Colores de marca",
-    "Extrae los colores dominantes como variables CSS listas para tu sitio.", "Web",
+    "Extrae los colores dominantes como variables CSS listas para tu sitio.", "Web y redes",
     (
         Param("colores", "Cantidad de colores", "int", 6, min=2, max=16),
         Param("guardar_muestra", "Guardar muestra PNG", "bool", True),

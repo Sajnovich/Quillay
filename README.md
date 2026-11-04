@@ -40,25 +40,16 @@ Quillay automatiza lo que haces antes de subir una foto a tu sitio o a redes: la
 
 | Categoría | Herramienta | Qué hace |
 |---|---|---|
-| **Automatizar** | Recetas | Cadenas de pasos en YAML: 5 incluidas, editor en la ventana y `quillay receta correr`. |
-| **Web** | Favicons e íconos de app | `favicon.ico`, PNG, `apple-touch-icon`, ícono *maskable*, `site.webmanifest` y el `<head>` listo. |
-| | Imágenes responsive | Varias anchuras × AVIF/WebP/JPG + el código `<picture>` con `width`/`height` (evita CLS). |
-| | Tamaños para redes | Instagram, historias/Reels/Estados, LinkedIn, Facebook, X, YouTube y Open Graph. |
-| | Colores de marca | Colores dominantes como variables CSS, con muestra PNG y valores RGB/HSL. |
-| | Marcadores de carga | Miniaturas borrosas (LQIP) o la imagen como *data URI*, en JSON y CSS. |
-| **Privacidad y orden** | Ubicación y metadatos | Indica qué fotos tienen **GPS**, cámara y fecha; crea copias limpias sin recomprimir los JPG. |
-| | Difuminar caras y patentes | Detecta rostros y los oculta con desenfoque, pixelado o caja negra. |
-| | Buscar duplicados | Encuentra fotos repetidas aunque cambien de nombre, tamaño o formato. Nunca borra: copia o mueve. |
-| **Edición** | Convertir · Comprimir | JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP y GIF; PNG a 256 colores y ancho máximo, con el ahorro total. |
-| | Redimensionar · Recortar · Encajar | Por caja, ancho, alto o porcentaje; a proporción (1:1, 4:5, 9:16…); o a un tamaño exacto con bordes. |
-| | Marca de agua | Tu logo PNG o un texto en cualquiera de 9 ubicaciones, con transparencia ajustable. |
-| | Renombrar | Patrones con `{nombre}` `{n}` `{fecha}` `{ancho}` `{alto}`, con vista previa. |
+| **PDF · Convertir** | PDF → Word · Imágenes → PDF · Office → PDF · PDF → imágenes · PDF → Excel · PDF → PowerPoint · HTML → PDF | Word con títulos y tablas; Excel con números en formato chileno; Office y web usan LibreOffice, Edge o Chrome si los tienes. |
 | **PDF · Organizar** | Unir · Dividir · Ordenar y eliminar páginas · Rotar · Recortar márgenes | Ordena arrastrando miniaturas; divide por página, rangos o cada N; recorte automático del blanco. |
 | **PDF · Optimizar** | Comprimir · Reparar | Tres niveles de compresión de las imágenes internas; reconstruye PDF dañados. |
-| **PDF · Convertir** | Imágenes ↔ PDF · PDF → Word, PowerPoint y Excel · Office → PDF · HTML → PDF | Word con títulos y tablas; Excel con números en formato chileno; Office y web usan LibreOffice, Edge o Chrome si los tienes. |
-| **PDF · Editar** | Números de página · Marca de agua · Formularios | «Página 3 de 10»; marca en mosaico; rellena un formulario por cada fila de un Excel o CSV. |
+| **Imágenes** | Comprimir · Convertir · Redimensionar · Recortar · Marca de agua · Encajar · Renombrar | JPG, PNG, WebP, AVIF, HEIC y más; ahorro total visible; renombrado con vista previa. |
+| **PDF · Seguridad** | Proteger · Firmar · Desbloquear · Censurar · Propiedades | AES-256; firma visual y digital con certificado `.p12`/`.pfx`; censura real de RUT, correos, teléfonos y patentes. |
+| **PDF · Editar** | Marca de agua · Números de página · Formularios | Marca en mosaico; «Página 3 de 10»; rellena un formulario por cada fila de un Excel o CSV. |
+| **Web y redes** | Tamaños para redes · Favicons · Imágenes responsive · Colores de marca · Marcadores de carga | Instagram, historias, LinkedIn, YouTube; el `<head>` y el `<picture>` listos para pegar. |
+| **Privacidad y orden** | Ubicación y metadatos · Difuminar caras · Buscar duplicados | Detecta fotos con GPS; oculta rostros; encuentra repetidas sin borrar nada. |
 | **PDF · Revisar** | Comparar PDF | Informe de diferencias de texto y páginas lado a lado con los cambios en rojo. |
-| **PDF · Seguridad** | Proteger · Desbloquear · Propiedades · Firmar · Censurar | AES-256; firma visual y digital con certificado `.p12`/`.pfx`; censura real de RUT, correos, teléfonos y patentes. |
+| **Automatizar** | Recetas | Cadenas de pasos en YAML: 5 incluidas, editor en la ventana y `quillay receta correr`. |
 
 <table>
   <tr>

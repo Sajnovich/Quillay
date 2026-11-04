@@ -136,9 +136,33 @@ class Tool:
 TOOLS: dict[str, Tool] = {}
 
 # Orden de las categorías en la barra lateral y en ``quillay herramientas``.
+# Orden de la barra lateral, la pantalla de inicio y `quillay herramientas`:
+# de lo más usado a lo más específico. Para mover algo, basta con cambiar
+# su lugar en estas listas (no depende del orden en que se importan los módulos).
 CATEGORIES = (
-    "Web", "Privacidad y orden", "Edición",
-    "PDF · Organizar", "PDF · Optimizar", "PDF · Convertir", "PDF · Editar", "PDF · Revisar", "PDF · Seguridad",
+    "PDF · Convertir", "PDF · Organizar", "PDF · Optimizar", "Imágenes",
+    "PDF · Seguridad", "PDF · Editar", "Web y redes", "Privacidad y orden", "PDF · Revisar",
+)
+TOOL_ORDER = (
+    # PDF · Convertir
+    "pdf_a_word", "imagenes_a_pdf", "office_a_pdf", "pdf_a_imagenes", "pdf_a_excel", "pdf_a_powerpoint",
+    "html_a_pdf",
+    # PDF · Organizar
+    "unir_pdf", "dividir_pdf", "ordenar_pdf", "rotar_pdf", "recortar_pdf",
+    # PDF · Optimizar
+    "comprimir_pdf", "reparar_pdf",
+    # Imágenes
+    "comprimir", "convertir", "redimensionar", "recortar", "marca_agua", "encajar", "renombrar",
+    # PDF · Seguridad
+    "proteger_pdf", "firmar_pdf", "desbloquear_pdf", "censurar_pdf", "metadatos_pdf",
+    # PDF · Editar
+    "marca_agua_pdf", "numeros_pagina", "formularios_pdf",
+    # Web y redes
+    "redes_sociales", "favicons", "responsive", "paleta", "lqip",
+    # Privacidad y orden
+    "metadatos", "difuminar", "duplicados",
+    # PDF · Revisar
+    "comparar_pdf",
 )
 
 
@@ -196,6 +220,9 @@ def load_all() -> None:
 def tools_by_category() -> dict[str, list[Tool]]:
     load_all()
     grouped: dict[str, list[Tool]] = {c: [] for c in CATEGORIES}
-    for t in TOOLS.values():
+    # Las herramientas que no estén en TOOL_ORDER (por ejemplo, una recién agregada)
+    # quedan al final de su categoría, sin desaparecer.
+    rank = {tool_id: i for i, tool_id in enumerate(TOOL_ORDER)}
+    for t in sorted(TOOLS.values(), key=lambda t: rank.get(t.id, len(rank))):
         grouped.setdefault(t.category, []).append(t)
-    return grouped
+    return {c: tools for c, tools in grouped.items() if tools}

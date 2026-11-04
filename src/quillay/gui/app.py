@@ -73,17 +73,13 @@ class MainWindow(QMainWindow):
         home = HomePage()
         home.open_tool.connect(self.select)
         self._add_nav(HOME, "⌂  Inicio", home)
-        self._add_nav(RECIPES, "⚙  Recetas", RecipesPage(self.files))
         for category, tools in tools_by_category().items():
-            head = QListWidgetItem(f"{ICONS.get(category, '•')}  {category.upper()}")
-            head.setFlags(Qt.ItemFlag.NoItemFlags)  # encabezado: no seleccionable
-            font = head.font()
-            font.setPointSizeF(font.pointSizeF() * 0.85)
-            font.setBold(True)
-            head.setFont(font)
-            self.nav.addItem(head)
+            self._add_header(f"{ICONS.get(category, '•')}  {category.upper()}")
             for tool in tools:
                 self._add_nav(tool.id, "    " + tool.name, ToolPage(tool, self.files))
+        # Recetas al final: es lo más avanzado; quien solo quiere unir un PDF no lo necesita primero.
+        self._add_header("⚙  AUTOMATIZAR")
+        self._add_nav(RECIPES, "    Recetas", RecipesPage(self.files))
 
         split = QSplitter()
         split.addWidget(self.files)
@@ -101,6 +97,15 @@ class MainWindow(QMainWindow):
 
         QShortcut(QKeySequence.StandardKey.Open, self, activated=self.files._pick_files)
         self.select(HOME)
+
+    def _add_header(self, text: str) -> None:
+        head = QListWidgetItem(text)
+        head.setFlags(Qt.ItemFlag.NoItemFlags)  # encabezado: no seleccionable
+        font = head.font()
+        font.setPointSizeF(font.pointSizeF() * 0.85)
+        font.setBold(True)
+        head.setFont(font)
+        self.nav.addItem(head)
 
     def _add_nav(self, key: str, label: str, page: QWidget) -> None:
         self.pages[key] = self.stack.addWidget(page)

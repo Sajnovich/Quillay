@@ -31,8 +31,9 @@ from quillay.core.params import ParamError
 from quillay.core.registry import STEPS, Context, Report, Tool, tools_by_category
 from quillay.gui.widgets import FileList, ParamForm, Worker
 
-ICONS = {"Edición": "◧", "Web": "◎", "Privacidad y orden": "◐", "PDF · Organizar": "▤", "PDF · Optimizar": "▤",
-         "PDF · Convertir": "▤", "PDF · Editar": "▤", "PDF · Revisar": "▤", "PDF · Seguridad": "▤"}
+ICONS = {"Imágenes": "◧", "Web y redes": "◎", "Privacidad y orden": "◐", "PDF · Convertir": "▤",
+         "PDF · Organizar": "▤", "PDF · Optimizar": "▤", "PDF · Editar": "▤", "PDF · Revisar": "▤",
+         "PDF · Seguridad": "▤"}
 
 
 def _title(text: str, sub: str) -> QWidget:
@@ -255,11 +256,23 @@ class HomePage(QWidget):
         lay.addWidget(_title("¿Qué vas a publicar hoy?",
                              "Agrega archivos a la izquierda y elige una herramienta, o automatízalo con una receta. "
                              "Todo se procesa en tu equipo."))
+        for category, tools in tools_by_category().items():
+            head = QLabel(f"{ICONS.get(category, '•')}  {category}")
+            head.setStyleSheet("font-weight: 700; font-size: 15px; margin-top: 14px;")
+            lay.addWidget(head)
+            grid = QGridLayout()
+            grid.setSpacing(10)
+            for i, tool in enumerate(tools):
+                grid.addWidget(self._card(tool), i // 3, i % 3)
+            lay.addLayout(grid)
+        recipes_head = QLabel("⚙  Automatizar")
+        recipes_head.setStyleSheet("font-weight: 700; font-size: 15px; margin-top: 14px;")
+        lay.addWidget(recipes_head)
         recipes_card = QPushButton()
         recipes_card.setObjectName("Card")
         recipes_card.setCursor(Qt.CursorShape.PointingHandCursor)
         rc = QVBoxLayout(recipes_card)
-        for text, style in (("⚙  Recetas", "font-weight: 700; font-size: 15px;"),
+        for text, style in (("⚙  Automatizar con recetas", "font-weight: 700; font-size: 15px;"),
                             ("Encadena pasos (encajar → marca de agua → WebP sin GPS) y repítelos con un clic. "
                              "Incluye: web optimizado, Instagram cuadrado, anonimizar, catálogo y miniaturas.",
                              "font-size: 12px;")):
@@ -271,15 +284,6 @@ class HomePage(QWidget):
         recipes_card.setMinimumHeight(80)
         recipes_card.clicked.connect(lambda: self.open_tool.emit("__recetas__"))
         lay.addWidget(recipes_card)
-        for category, tools in tools_by_category().items():
-            head = QLabel(f"{ICONS.get(category, '•')}  {category}")
-            head.setStyleSheet("font-weight: 700; font-size: 15px; margin-top: 14px;")
-            lay.addWidget(head)
-            grid = QGridLayout()
-            grid.setSpacing(10)
-            for i, tool in enumerate(tools):
-                grid.addWidget(self._card(tool), i // 3, i % 3)
-            lay.addLayout(grid)
         lay.addStretch(1)
         # Enlaces a GitHub: openExternalLinks hace que Qt abra el navegador al hacer clic.
         foot = QLabel(
