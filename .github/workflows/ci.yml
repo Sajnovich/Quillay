@@ -28,6 +28,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
+          cache-dependency-path: pyproject.toml  # sin esto, setup-python busca requirements.txt y se detiene
 
       - name: Librerías de sistema para Qt (solo Linux)
         if: runner.os == 'Linux'
