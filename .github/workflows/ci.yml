@@ -37,7 +37,7 @@ jobs:
       - name: Permitir el sandbox de Chrome (solo Linux)
         # Ubuntu 24.04+ bloquea los "user namespaces" que usa el sandbox de Chrome;
         # sin esto, Chrome no arranca en la maquina de GitHub y falla la prueba de HTML a PDF.
-        if: runner.os == "Linux"
+        if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
 
       - name: Instalar Quillay con extras de desarrollo
