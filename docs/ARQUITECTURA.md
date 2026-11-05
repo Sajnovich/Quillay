@@ -79,6 +79,7 @@ Luego impórtala en `tools/__init__.py`. Listo: aparece en la barra lateral, en 
 | **pikepdf** para manipular PDF | Envuelve qpdf: une, divide, rota, cifra y repara sin re-dibujar nada, así que no pierde calidad. |
 | **reportlab** para dibujar sobre PDF | Genera una capa (números, marca de agua) que pikepdf superpone a cada página compensando su rotación. |
 | **pdfplumber** para PDF → Word/Excel | Agrupa letras sueltas en líneas y detecta tablas; con el tamaño de letra deducimos qué es título. |
+| **LibreOffice** para PDF → Word «igual al original» | Su importador de PDF conserva fuentes, colores, imágenes y posiciones. Corregimos su único defecto visible: las franjas de fondo quedaban encima del texto (les damos un `z-index` negativo). |
 | **Censura rasterizando la página** | Tapar con un rectángulo deja el texto debajo; convertir la página en imagen con las cajas "quemadas" lo elimina de verdad. |
 | **pyHanko** para firma digital | Firma con escritura incremental: cualquier cambio posterior invalida la firma y el lector lo muestra. |
 | **LibreOffice / Edge / Chrome externos** | Convertir Office y HTML con fidelidad exige un motor completo; usamos los instalados en modo *headless* y vigilamos el archivo de salida, porque Chrome a veces no cierra su proceso. |

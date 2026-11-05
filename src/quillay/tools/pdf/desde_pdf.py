@@ -6,6 +6,11 @@ posición. Para reconstruir un documento editable usamos **pdfplumber**
 alineaciones. Luego escribimos con python-docx, python-pptx y openpyxl
 (todas MIT).
 
+Para Word hay además un modo «igual al original»: le pedimos a **LibreOffice**
+(si está instalado) que importe el PDF, porque conserva fuentes, colores,
+imágenes y posiciones. Su resultado tiene un defecto que corregimos aquí: las
+franjas de color de fondo quedan *encima* del texto y lo tapan.
+
 Limitación honesta: los PDF escaneados son imágenes, no texto. Sin OCR no se
 pueden convertir a texto editable; en ese caso insertamos la página como imagen.
 """
@@ -14,7 +19,12 @@ from __future__ import annotations
 
 import io
 import re
+import shutil
 import statistics
+import subprocess
+import tempfile
+import zipfile
+from pathlib import Path
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
@@ -55,7 +65,7 @@ def _inside(obj, boxes) -> bool:
 
 
 def _blocks(page):
-    """Devuelve los bloques de una página en orden de lectura: ('p', líneas) o ('t', filas)."""
+    """Bloques de una página en orden de lectura: ('p', líneas), ('t', filas) o ('i', recuadro)."""
     tables = page.find_tables()
     boxes = [t.bbox for t in tables]
     text_page = page.filter(lambda obj: obj.get("object_type") != "char" or not _inside(obj, boxes))
@@ -70,17 +80,23 @@ def _blocks(page):
         rows = [[(cell or "").strip() for cell in row] for row in t.extract()]
         if rows:
             items.append((t.bbox[1], "t", rows))
+    for im in page.images:
+        # Imágenes (logos, firmas, códigos QR): guardamos su recuadro para
+        # recortarlo de la página dibujada. Las diminutas suelen ser adornos.
+        box = (max(im["x0"], 0), max(im["top"], 0), min(im["x1"], page.width), min(im["bottom"], page.height))
+        if box[2] - box[0] >= 24 and box[3] - box[1] >= 24:
+            items.append((box[1], "i", box))
     items.sort(key=lambda it: it[0])
 
     # Unimos líneas consecutivas en párrafos: se corta cuando hay un salto
     # vertical grande o cambia el tamaño de letra (señal de título).
     blocks, current, last_bottom = [], [], None
     for _top, kind, data in items:
-        if kind == "t":
+        if kind in ("t", "i"):
             if current:
                 blocks.append(("p", current))
                 current = []
-            blocks.append(("t", data))
+            blocks.append((kind, data))
             last_bottom = None
             continue
         if current:
@@ -95,71 +111,173 @@ def _blocks(page):
     return blocks
 
 
+_PICT = re.compile(r"<w:pict\b.*?</w:pict>", re.S)
+_ALTERNATIVA = re.compile(r"(<mc:AlternateContent>.*?</mc:AlternateContent>)", re.S)
+
+
+def _formas_al_fondo(docx: Path) -> int:
+    """Manda detrás del texto las franjas de color que LibreOffice deja encima.
+
+    Al importar un PDF, LibreOffice dibuja cada rectángulo de fondo (por ejemplo,
+    la franja gris de un título) como una forma VML (``<w:pict>``) sin
+    ``z-index``. Word y LibreOffice la ponen entonces *sobre* el texto y lo
+    tapan. Le damos un ``z-index`` negativo, que en VML significa «detrás del
+    texto». Solo tocamos formas sin texto ni imagen. Devuelve cuántas movimos.
+    """
+    with zipfile.ZipFile(docx) as z:
+        items = {info: z.read(info.filename) for info in z.infolist()}
+    main = next(i for i in items if i.filename == "word/document.xml")
+    moved = 0
+
+    def al_fondo(m: re.Match) -> str:
+        nonlocal moved
+        pict = m.group(0)
+        if "<w:t" in pict or "<v:imagedata" in pict or "z-index" in pict:
+            return pict
+        new = re.sub(r'style="(position:absolute;[^"]*)"',
+                     lambda st: f'style="{st.group(1)};z-index:-{251658240 - moved - 1}"', pict, count=1)
+        moved += new != pict
+        return new
+
+    # Las formas dentro de mc:AlternateContent son la copia de respaldo de un
+    # cuadro de texto: esas ya se dibujan bien y no las tocamos.
+    parts = _ALTERNATIVA.split(items[main].decode("utf-8"))
+    for i, part in enumerate(parts):
+        if not part.startswith("<mc:AlternateContent>"):
+            parts[i] = _PICT.sub(al_fondo, part)
+    items[main] = "".join(parts).encode("utf-8")
+    tmp = docx.with_suffix(".tmp")
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+        for info, data in items.items():
+            z.writestr(info, data)
+    tmp.replace(docx)
+    return moved
+
+
+def _word_con_libreoffice(soffice: str, src: Path, dest: Path, timeout: int) -> None:
+    """Convierte con el importador de PDF de LibreOffice («Draw») a .docx."""
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        tmp_path = Path(tmp)
+        # Copia con nombre simple: así sabemos cómo se llamará el resultado.
+        copia = tmp_path / "entrada.pdf"
+        shutil.copyfile(src, copia)
+        cmd = [soffice, f"-env:UserInstallation={(tmp_path / 'perfil').as_uri()}", "--headless", "--norestore",
+               "--infilter=writer_pdf_import", "--convert-to", "docx:MS Word 2007 XML",
+               "--outdir", str(tmp_path), str(copia)]
+        try:
+            subprocess.run(cmd, capture_output=True, timeout=timeout, check=False)
+        except subprocess.TimeoutExpired as exc:
+            raise ValueError(f"LibreOffice tardó más de {timeout} s") from exc
+        produced = tmp_path / "entrada.docx"
+        if not produced.exists() or produced.stat().st_size == 0:
+            raise ValueError("LibreOffice no pudo convertirlo")
+        _formas_al_fondo(produced)
+        shutil.move(str(produced), dest)
+
+
 @tool(
-    "pdf_a_word", "PDF a Word", "Convierte el PDF en un documento .docx editable, con títulos y tablas.", CAT,
+    "pdf_a_word", "PDF a Word", "Convierte el PDF en un documento Word (.docx) editable que conserva su diseño.", CAT,
     (
-        Param("modo", "Modo", "choice", "editable", ("editable", "imagen"),
-              choice_labels=("Texto editable (títulos, párrafos y tablas)",
-                             "Idéntico al original (cada página como imagen)")),
+        Param("modo", "Modo", "choice", "diseno", ("diseno", "editable", "imagen"),
+              choice_labels=("Igual al original: fuentes, colores e imágenes (usa LibreOffice)",
+                             "Texto continuo: títulos, párrafos, tablas e imágenes",
+                             "Cada página como imagen (no editable)"),
+              help="«Igual al original» deja el texto en cuadros ubicados como en el PDF y necesita "
+                   "LibreOffice (gratis); si no está, Quillay usa «Texto continuo», que fluye como "
+                   "un documento normal."),
     ),
     accepts="pdf",
 )
 def pdf_a_word(ctx: Context) -> Report:
+    from quillay.tools.pdf.externas import find_libreoffice
+
+    modo = ctx.options["modo"]
+    soffice = find_libreoffice() if modo == "diseno" else None
+    report = Report()
+    for n, src in enumerate(ctx.files):
+        try:
+            pdf = _open_plumber(src)  # primero revisamos que se pueda abrir (contraseña, daño)
+        except ValueError as exc:
+            report.fail(src, exc)
+            continue
+        if soffice:
+            pdf.close()
+            ctx.tick(n, len(ctx.files), f"{src.name} (LibreOffice)")
+            dest = destino(ctx, src, "", ".docx")
+            try:
+                _word_con_libreoffice(soffice, src, dest, timeout=300)
+            except ValueError as exc:
+                report.fail(src, exc)
+                continue
+            report.add_output(dest, linea(src, dest))
+            continue
+        nota = "sin LibreOffice: se usó «Texto continuo»" if modo == "diseno" else ""
+        _word_continuo(ctx, src, pdf, report, "imagen" if modo == "imagen" else "editable", nota)
+    return report
+
+
+def _word_continuo(ctx: Context, src: Path, pdf, report: Report, modo: str, nota: str) -> None:
+    """Reconstruye el documento con pdfplumber + python-docx (no necesita programas externos)."""
     from docx import Document
     from docx.enum.section import WD_ORIENT
     from docx.shared import Pt
 
-    report = Report()
-    for src in ctx.files:
-        try:
-            pdf = _open_plumber(src)
-        except ValueError as exc:
-            report.fail(src, exc)
-            continue
-        with pdf:
-            doc = Document()
-            section = doc.sections[0]
-            first = pdf.pages[0]
-            section.page_width, section.page_height = Pt(first.width), Pt(first.height)
-            if first.width > first.height:
-                section.orientation = WD_ORIENT.LANDSCAPE
-            margin = Pt(54)
-            section.left_margin = section.right_margin = section.top_margin = section.bottom_margin = margin
-            usable = Pt(first.width) - 2 * margin
+    with pdf:
+        doc = Document()
+        section = doc.sections[0]
+        first = pdf.pages[0]
+        section.page_width, section.page_height = Pt(first.width), Pt(first.height)
+        if first.width > first.height:
+            section.orientation = WD_ORIENT.LANDSCAPE
+        margin = Pt(54)
+        section.left_margin = section.right_margin = section.top_margin = section.bottom_margin = margin
+        usable = Pt(first.width) - 2 * margin
 
-            all_sizes = [c["size"] for p in pdf.pages for c in p.chars] or [11]
-            body = statistics.median(all_sizes)  # el tamaño más común = texto normal
-            scanned = 0
-            for i, page in enumerate(pdf.pages):
-                ctx.tick(i, len(pdf.pages), f"{src.name} p.{i + 1}")
-                if i:
-                    doc.add_page_break()
-                if ctx.options["modo"] == "imagen" or not page.chars:
-                    scanned += not page.chars and ctx.options["modo"] == "editable"
-                    doc.add_picture(io.BytesIO(_render_png(src, i, 150)), width=usable)
+        all_sizes = [c["size"] for p in pdf.pages for c in p.chars] or [11]
+        body = statistics.median(all_sizes)  # el tamaño más común = texto normal
+        scanned = 0
+        for i, page in enumerate(pdf.pages):
+            ctx.tick(i, len(pdf.pages), f"{src.name} p.{i + 1}")
+            if i:
+                doc.add_page_break()
+            if modo == "imagen" or not page.chars:
+                scanned += not page.chars and modo == "editable"
+                doc.add_picture(io.BytesIO(_render_png(src, i, 150)), width=usable)
+                continue
+            dibujo = None  # la página dibujada, solo si hay imágenes que recortar
+            for kind, data in _blocks(page):
+                if kind == "i":
+                    if dibujo is None:
+                        from PIL import Image
+
+                        dibujo = Image.open(io.BytesIO(_render_png(src, i, 200)))
+                    k = 200 / 72
+                    recorte = dibujo.crop(tuple(round(v * k) for v in data))
+                    buf = io.BytesIO()
+                    recorte.save(buf, "PNG", optimize=True)
+                    buf.seek(0)
+                    doc.add_picture(buf, width=min(Pt(data[2] - data[0]), usable))
                     continue
-                for kind, data in _blocks(page):
-                    if kind == "t":
-                        cols = max(len(r) for r in data)
-                        table = doc.add_table(rows=len(data), cols=cols)
-                        table.style = "Table Grid"
-                        for r, row in enumerate(data):
-                            for c, value in enumerate(row):
-                                table.cell(r, c).text = value
-                        continue
-                    text = " ".join(d["text"] for d in data)
-                    size = data[0]["size"]
-                    if size >= body * 1.6:
-                        doc.add_heading(text, level=1)
-                    elif size >= body * 1.25 or (data[0]["bold"] and len(data) == 1 and len(text) < 90):
-                        doc.add_heading(text, level=2)
-                    else:
-                        doc.add_paragraph(text)
-            dest = destino(ctx, src, "", ".docx")
-            doc.save(dest)
-        extra = f"{scanned} página(s) escaneada(s) quedaron como imagen (requieren OCR)" if scanned else ""
-        report.add_output(dest, linea(src, dest, extra))
-    return report
+                if kind == "t":
+                    cols = max(len(r) for r in data)
+                    table = doc.add_table(rows=len(data), cols=cols)
+                    table.style = "Table Grid"
+                    for r, row in enumerate(data):
+                        for c, value in enumerate(row):
+                            table.cell(r, c).text = value
+                    continue
+                text = " ".join(d["text"] for d in data)
+                size = data[0]["size"]
+                if size >= body * 1.6:
+                    doc.add_heading(text, level=1)
+                elif size >= body * 1.25 or (data[0]["bold"] and len(data) == 1 and len(text) < 90):
+                    doc.add_heading(text, level=2)
+                else:
+                    doc.add_paragraph(text)
+        dest = destino(ctx, src, "", ".docx")
+        doc.save(dest)
+    extra = f"{scanned} página(s) escaneada(s) quedaron como imagen (requieren OCR)" if scanned else ""
+    report.add_output(dest, linea(src, dest, "; ".join(x for x in (nota, extra) if x)))
 
 
 # ---------------------------------------------------------------- PowerPoint

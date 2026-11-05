@@ -40,7 +40,7 @@ Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, f
 
 | Categoría | Herramienta | Qué hace |
 |---|---|---|
-| **PDF · Convertir** | PDF → Word · Imágenes → PDF · Office → PDF · PDF → imágenes · PDF → Excel · PDF → PowerPoint · HTML → PDF | Word con títulos y tablas; Excel con números en formato chileno; Office y web usan LibreOffice, Edge o Chrome si los tienes. |
+| **PDF · Convertir** | PDF → Word · Imágenes → PDF · Office → PDF · PDF → imágenes · PDF → Excel · PDF → PowerPoint · HTML → PDF | Word igual al original (fuentes, colores e imágenes, con LibreOffice) o con texto continuo; Excel con números en formato chileno; Office y web usan LibreOffice, Edge o Chrome si los tienes. |
 | **PDF · Organizar** | Unir · Dividir · Ordenar y eliminar páginas · Rotar · Recortar márgenes | Ordena arrastrando miniaturas; divide por página, rangos o cada N; recorte automático del blanco. |
 | **PDF · Optimizar** | Comprimir · Reparar | Tres niveles de compresión de las imágenes internas; reconstruye PDF dañados. |
 | **Imágenes** | Comprimir · Convertir · Redimensionar · Recortar · Marca de agua · Encajar · Renombrar | JPG, PNG, WebP, AVIF, HEIC y más; ahorro total visible; renombrado con vista previa. |

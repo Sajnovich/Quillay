@@ -16,7 +16,9 @@ Primera versión con ejecutables descargables para Windows, macOS y Linux. Corri
 - «Desbloquear PDF» sin contraseña pide escribirla, en vez de sugerir usar «Desbloquear PDF».
 
 ### Agregado
-- 22 pruebas automáticas nuevas, una por cada problema encontrado en la revisión.
+- **PDF → Word «Igual al original»** (nuevo modo por defecto): conserva fuentes, colores, imágenes, franjas de fondo y la posición de cada elemento, usando LibreOffice si está instalado. Si no está, Quillay usa «Texto continuo» y lo avisa.
+- **PDF → Word «Texto continuo»** ahora incluye las imágenes del PDF (logos, firmas, códigos QR) en su lugar; antes se perdían.
+- 26 pruebas automáticas nuevas: una por cada problema encontrado en la revisión y cuatro para PDF → Word.
 - El CI revisa los workflows con **actionlint** (las mismas reglas que GitHub), para atrapar errores de sintaxis antes de que rompan las pruebas o la publicación.
 
 ### Cambiado

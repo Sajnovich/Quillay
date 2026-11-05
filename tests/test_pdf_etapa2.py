@@ -62,12 +62,71 @@ def informe(tmp_path):
 def test_pdf_a_word_reconoce_titulo_y_tabla(informe, out):
     from docx import Document
 
-    dest = run("pdf_a_word", [informe], out).outputs[0]
+    dest = run("pdf_a_word", [informe], out, modo="editable").outputs[0]
     doc = Document(dest)
     headings = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading")]
     assert "Informe de ventas" in headings
     assert len(doc.tables) == 1 and doc.tables[0].cell(1, 0).text == "Taza"
     assert any("12.345.678-5" in p.text for p in doc.paragraphs)
+
+
+def test_pdf_a_word_continuo_incluye_imagenes(out, tmp_path):
+    """Los logos y códigos QR del PDF deben llegar al Word, no perderse."""
+    from docx import Document
+    from PIL import Image
+
+    logo = tmp_path / "logo.png"
+    Image.new("RGB", (200, 120), (200, 30, 40)).save(logo)
+    pdf = tmp_path / "con-logo.pdf"
+    c = canvas.Canvas(str(pdf), pagesize=A4)
+    c.drawImage(str(logo), 72, 700, width=100, height=60)
+    c.setFont("Helvetica", 11)
+    c.drawString(72, 650, "Texto bajo el logo.")
+    c.save()
+    doc = Document(run("pdf_a_word", [pdf], out, modo="editable").outputs[0])
+    assert len(doc.inline_shapes) == 1
+    assert any("Texto bajo el logo." in p.text for p in doc.paragraphs)
+
+
+def test_pdf_a_word_sin_libreoffice_usa_texto_continuo(monkeypatch, informe, out):
+    import quillay.tools.pdf.externas as ext
+
+    monkeypatch.setattr(ext, "find_libreoffice", lambda: None)
+    rep = run("pdf_a_word", [informe], out)  # modo por defecto: igual al original
+    assert not rep.errors and rep.outputs[0].suffix == ".docx"
+    assert "Texto continuo" in rep.lines[0]
+
+
+def test_formas_de_fondo_quedan_detras_del_texto(tmp_path):
+    """Las franjas de color que LibreOffice deja encima del texto se mandan al fondo."""
+    import zipfile
+
+    from quillay.tools.pdf.desde_pdf import _formas_al_fondo
+
+    franja = '<w:pict><v:rect style="position:absolute;margin-top:216pt;width:532pt" fillcolor="#eeeeee"/></w:pict>'
+    con_texto = '<w:pict><v:shape style="position:absolute;width:10pt"><w:t>Hola</w:t></v:shape></w:pict>'
+    respaldo = ('<mc:AlternateContent><mc:Fallback><w:pict><v:rect style="position:absolute;width:5pt"/>'
+                '</w:pict></mc:Fallback></mc:AlternateContent>')
+    docx = tmp_path / "x.docx"
+    with zipfile.ZipFile(docx, "w") as z:
+        z.writestr("word/document.xml", f"<w:document><w:body>{franja}{con_texto}{respaldo}</w:body></w:document>")
+        z.writestr("[Content_Types].xml", "<Types/>")
+    assert _formas_al_fondo(docx) == 1
+    with zipfile.ZipFile(docx) as z:
+        xml = z.read("word/document.xml").decode()
+        assert "[Content_Types].xml" in z.namelist()
+    assert xml.count("z-index:-") == 1 and "width:532pt;z-index:-" in xml
+    assert con_texto in xml and respaldo in xml
+
+
+@pytest.mark.skipif(not find_libreoffice(), reason="LibreOffice no está instalado")
+def test_pdf_a_word_igual_al_original(informe, out):
+    import zipfile
+
+    rep = run("pdf_a_word", [informe], out, modo="diseno")
+    assert not rep.errors
+    xml = zipfile.ZipFile(rep.outputs[0]).read("word/document.xml").decode()
+    assert "Informe de ventas" in xml and "12.345.678-5" in xml
 
 
 def test_pdf_a_powerpoint(informe, out):
