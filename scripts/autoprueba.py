@@ -19,6 +19,11 @@ from PIL import Image, ImageDraw
 
 
 def main() -> int:
+    # En Windows, la salida de GitHub Actions usa la codificación cp1252, que no
+    # tiene «✓» ni «✗»: sin esto, el script se cae antes de probar nada.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     binary = Path(sys.argv[1]).resolve()
     if not binary.exists():
         print(f"No existe el ejecutable: {binary}")
