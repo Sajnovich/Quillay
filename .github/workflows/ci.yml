@@ -22,9 +22,9 @@ jobs:
     env:
       QT_QPA_PLATFORM: offscreen   # Qt sin pantalla
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -48,3 +48,15 @@ jobs:
 
       - name: Tests
         run: python -m pytest -v
+
+  workflows:
+    # actionlint revisa los workflows con las mismas reglas que GitHub
+    # (por ejemplo, que en las condiciones solo se usen comillas simples).
+    name: Revisar workflows (actionlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Descargar actionlint 1.7.7
+        run: bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
+      - name: Revisar
+        run: ./actionlint -color

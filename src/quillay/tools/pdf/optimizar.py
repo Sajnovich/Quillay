@@ -137,7 +137,7 @@ def reparar_pdf(ctx: Context) -> Report:
             # qpdf (dentro de pikepdf) reconstruye automáticamente la tabla de
             # referencias (xref) y los objetos dañados al abrir el archivo.
             with pikepdf.open(src) as pdf:
-                problems = pdf.check_pdf_syntax() if hasattr(pdf, "check_pdf_syntax") else pdf.check()
+                problems = pdf.check_pdf_syntax()
                 guardar(pdf, dest)
             note = f"{len(problems)} problema(s) corregido(s)" if problems else "estructura revisada"
             report.add_output(dest, linea(src, dest, note))

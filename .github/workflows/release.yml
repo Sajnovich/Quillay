@@ -23,8 +23,8 @@ jobs:
         # ubuntu-22.04 usa una glibc más antigua: el binario corre en más distros (Debian 12 incluida).
         os: [windows-latest, macos-latest, ubuntu-22.04]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -42,7 +42,7 @@ jobs:
           elif [ "$RUNNER_OS" = "Windows" ]; then BIN=dist/Quillay/Quillay.exe
           else BIN=dist/Quillay/Quillay; fi
           python scripts/autoprueba.py "$BIN"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: quillay-${{ matrix.os }}
           path: |
@@ -54,11 +54,11 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artefactos
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: artefactos/*
           generate_release_notes: true

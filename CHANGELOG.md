@@ -15,6 +15,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Agregado
 - 22 pruebas automáticas nuevas, una por cada problema encontrado en la revisión.
+- El CI revisa los workflows con **actionlint** (las mismas reglas que GitHub), para atrapar errores de sintaxis antes de que rompan las pruebas o la publicación.
+
+### Cambiado
+- Acciones de GitHub actualizadas a sus versiones con Node 24: `checkout` v7, `setup-python` v7, `upload-artifact` v7, `download-artifact` v8 y `action-gh-release` v3. Desaparece el aviso de Node 20 obsoleto.
+- Versión mínima de pikepdf: 10 (la 9 no tiene todas las funciones que usa «Reparar PDF»).
 
 ### Quitado
 - Dependabot: abría un pull request por cada dependencia y cada uno disparaba las pruebas en los tres sistemas, lo que llenaba la cola de GitHub Actions. Las dependencias se actualizarán a mano y por versión.
