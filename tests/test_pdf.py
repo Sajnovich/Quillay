@@ -161,7 +161,7 @@ def test_proteger_y_desbloquear(doc, out):
     with pikepdf.open(locked, password="clave123") as p:
         assert p.is_encrypted
     wrong = run("desbloquear_pdf", [locked], out, contrasena="otra")
-    assert wrong.errors and "incorrecta" in wrong.errors[0][1]
+    assert wrong.errors and "no es correcta" in wrong.errors[0][1]
     free = run("desbloquear_pdf", [locked], out, contrasena="clave123").outputs[0]
     with pikepdf.open(free) as p:
         assert not p.is_encrypted

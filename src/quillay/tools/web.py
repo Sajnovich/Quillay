@@ -58,7 +58,11 @@ def favicons(ctx: Context) -> Report:
     o = ctx.options
     out = ctx.output_dir() / f"favicons-{_slug(src.stem)}"
     out.mkdir(parents=True, exist_ok=True)
-    img = open_image(src)
+    try:
+        img = open_image(src)
+    except ValueError as exc:  # imagen dañada o archivo que no es imagen
+        report.fail(src, exc)
+        return report
     if abs(img.width - img.height) > 2:
         report.lines.append("⚠ La imagen no es cuadrada: se centró con bordes transparentes.")
 

@@ -20,6 +20,7 @@ from pathlib import Path
 from quillay.core.imageio import unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
+from quillay.tools.pdf.comun import mensaje_pdf
 
 CAT = "PDF · Editar"
 TIPOS = {"/Tx": "texto", "/Btn": "casilla", "/Ch": "lista", "/Sig": "firma"}
@@ -83,7 +84,10 @@ def formularios_pdf(ctx: Context) -> Report:
         try:
             reader = PdfReader(src)
         except Exception as exc:  # noqa: BLE001
-            report.fail(src, f"no se pudo leer ({exc})")
+            report.fail(src, mensaje_pdf(src, exc))
+            continue
+        if reader.is_encrypted:  # pypdf no puede leer los campos sin descifrar
+            report.fail(src, mensaje_pdf(src, ValueError("encrypted")))
             continue
         fields = _fields(reader)
         if not fields:

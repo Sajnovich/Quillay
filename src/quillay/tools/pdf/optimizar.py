@@ -152,8 +152,8 @@ def reparar_pdf(ctx: Context) -> Report:
             continue
         try:
             pages = _rescue_as_images(src)
-        except Exception as exc:  # noqa: BLE001
-            report.fail(src, f"no se pudo recuperar ({exc})")
+        except Exception:  # noqa: BLE001
+            report.fail(src, "no se pudo recuperar: el archivo está demasiado dañado o no es un PDF")
             continue
         pages[0].save(dest, "PDF", save_all=True, append_images=pages[1:], resolution=150)
         report.add_output(dest, linea(src, dest, f"rescatado como imágenes ({len(pages)} páginas)"))

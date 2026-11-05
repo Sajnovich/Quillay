@@ -177,17 +177,40 @@ def renombrar(ctx: Context) -> Report:
 
     # Renombrado en el lugar en dos fases (a → temporal → b) para que
     # intercambios como a.jpg ↔ b.jpg no choquen entre sí.
-    temps = []
-    for i, (src, new) in enumerate(plan):
-        tmp = src.with_name(f".quillay-tmp-{i}{src.suffix}")
-        src.rename(tmp)
-        temps.append((src, tmp, new))
-    for i, (src, tmp, new) in enumerate(temps):
-        ctx.tick(i, len(temps), src.name)
-        dest = unique_path(src.with_name(new))
-        tmp.rename(dest)
+    #
+    # Es una operación "todo o nada": durante las dos fases NO se atiende el botón
+    # Cancelar (si se cortara a la mitad, quedarían archivos con nombres temporales
+    # ocultos, como si se hubieran borrado). Y si algo falla —permisos, disco lleno—
+    # se deshace todo y cada archivo vuelve a su nombre original.
+    ctx.check_cancel()  # última oportunidad de cancelar, antes de tocar nada
+    temps: list[tuple[Path, Path, str]] = []
+    done: list[tuple[Path, Path]] = []
+    try:
+        for i, (src, new) in enumerate(plan):
+            tmp = src.with_name(f".quillay-tmp-{i}{src.suffix}")
+            src.rename(tmp)
+            temps.append((src, tmp, new))
+        for i, (src, tmp, new) in enumerate(temps):
+            ctx.progress(i, len(temps), src.name)  # progress, no tick: no se puede cancelar aquí
+            dest = unique_path(src.with_name(new))
+            tmp.rename(dest)
+            done.append((src, dest))
+    except BaseException:
+        _rollback_rename(temps, done)
+        raise
+    for src, dest in done:
         report.add_output(dest, f"✓ {src.name} → {dest.name}")
     return report
+
+
+def _rollback_rename(temps: list[tuple[Path, Path, str]], done: list[tuple[Path, Path]]) -> None:
+    """Devuelve cada archivo a su nombre original tras un error a mitad de camino."""
+    for original, dest in done:
+        if dest.exists() and not original.exists():
+            dest.rename(original)
+    for original, tmp, _ in temps:
+        if tmp.exists():
+            tmp.rename(original if not original.exists() else unique_path(original))
 
 
 # ------------------------------------------------------------------ metadatos
@@ -206,6 +229,12 @@ def _gps_to_decimal(gps: dict) -> tuple[float, float] | None:
         return None
 
 
+def _as_text(value) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace").strip("\x00 ")
+    return str(value).strip()
+
+
 def read_metadata(path: Path) -> dict:
     with Image.open(path) as im:
         exif = im.getexif()
@@ -221,6 +250,8 @@ def read_metadata(path: Path) -> dict:
             "software": str(exif.get(Base.Software, "")),
             "autor": str(exif.get(Base.Artist, "")),
             "perfil_color": "sí" if im.info.get("icc_profile") else "no",
+            "comentario": _as_text(im.info.get("comment", "")),
+            "xmp": "sí" if (im.info.get("xmp") or im.info.get("XML:com.adobe.xmp")) else "",
             "etiquetas_exif": len(exif) + len(sub) + len(gps),
         }
         coords = _gps_to_decimal(gps) if gps else None
@@ -254,7 +285,7 @@ def metadatos(ctx: Context) -> Report:
             continue
         rows.append(info)
         report.lines.append(f"▸ {info['archivo']}  ({info['formato']}, {info['dimensiones']}, {info['peso']})")
-        for key in ("camara", "fecha", "software", "autor"):
+        for key in ("camara", "fecha", "software", "autor", "comentario", "xmp"):
             if info[key]:
                 report.lines.append(f"    {key}: {info[key]}")
         if info["gps"]:
@@ -282,7 +313,8 @@ def _strip_metadata(ctx: Context, report: Report) -> Report:
                 icc = im.info.get("icc_profile")
                 if im.format == "JPEG" and orientation in (1, None):
                     # Reutiliza las tablas de cuantización originales: no pierde calidad.
-                    im.save(dest, "JPEG", quality="keep", subsampling="keep", icc_profile=icc)
+                    # comment=b"": Pillow copiaría el comentario del original si no se le indica.
+                    im.save(dest, "JPEG", quality="keep", subsampling="keep", icc_profile=icc, comment=b"")
                     report.add_output(dest, f"✓ {src.name} limpio (sin recomprimir)")
                     continue
             # Caso general (u orientación a corregir): pipeline normal.

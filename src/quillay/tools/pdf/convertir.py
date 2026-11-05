@@ -15,7 +15,7 @@ from PIL import Image
 from quillay.core.imageio import SaveOptions, flatten, human_size, open_image, save_image, unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, imagenes, parse_pages
+from quillay.tools.pdf.comun import abrir, imagenes, mensaje_pdf, parse_pages
 
 CAT = "PDF · Convertir"
 
@@ -100,7 +100,7 @@ def pdf_a_imagenes(ctx: Context) -> Report:
         try:
             pdf = pdfium.PdfDocument(src)
         except Exception as exc:
-            report.fail(src, f"no se pudo abrir el PDF ({exc})")
+            report.fail(src, mensaje_pdf(src, exc))
             continue
         try:
             selected = parse_pages(o["paginas"], len(pdf))

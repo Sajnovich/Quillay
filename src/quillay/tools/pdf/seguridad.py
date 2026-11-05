@@ -65,7 +65,7 @@ def desbloquear_pdf(ctx: Context) -> Report:
     report = Report()
     for src in ctx.files:
         try:
-            with abrir(src, ctx.options["contrasena"]) as pdf:
+            with abrir(src, ctx.options["contrasena"], al_desbloquear=True) as pdf:
                 was_encrypted = pdf.is_encrypted
                 # Guardar sin el parámetro encryption escribe el PDF sin cifrar.
                 dest = guardar(pdf, destino(ctx, src, "-desbloqueado"))

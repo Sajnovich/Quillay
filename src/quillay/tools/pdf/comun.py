@@ -15,17 +15,36 @@ from quillay.core.registry import Context
 PT_PER_MM = 72 / 25.4  # PDF mide en puntos: 1 pulgada = 72 pt = 25,4 mm
 
 
-def abrir(path: Path, password: str = "") -> pikepdf.Pdf:
+def mensaje_pdf(path: Path, exc: BaseException) -> str:
+    """Traduce los errores técnicos (en inglés, con rutas) de pikepdf, PDFium,
+    pdfplumber y pypdf a un mensaje claro y en español."""
+    # Revisamos el tipo y el mensaje de toda la cadena de errores: pdfplumber, por
+    # ejemplo, lanza un PdfminerException vacío cuya causa es PDFPasswordIncorrect.
+    parts = []
+    current: BaseException | None = exc
+    while current is not None and len(parts) < 10:
+        parts.append(f"{type(current).__name__} {current}")
+        current = current.__cause__ or current.__context__
+    text = " ".join(parts).lower()
+    if any(word in text for word in ("password", "decrypt", "encrypt")):
+        return f"{path.name} está protegido con contraseña: usa «Desbloquear PDF» primero"
+    return f"{path.name} está dañado o no es un PDF válido. Prueba «Reparar PDF»."
+
+
+def abrir(path: Path, password: str = "", al_desbloquear: bool = False) -> pikepdf.Pdf:
     """Abre un PDF con mensajes de error comprensibles."""
     try:
         return pikepdf.open(path, password=password or "")
     except pikepdf.PasswordError as exc:
-        raise ValueError(
-            f"{path.name} está protegido con contraseña: usa «Desbloquear PDF» primero"
-            if not password else f"{path.name}: contraseña incorrecta"
-        ) from exc
+        if password:
+            msg = f"{path.name}: la contraseña no es correcta"
+        elif al_desbloquear:  # ya estamos en «Desbloquear PDF»: solo falta la contraseña
+            msg = f"{path.name} está protegido: escribe su contraseña en el campo «Contraseña»"
+        else:
+            msg = f"{path.name} está protegido con contraseña: usa «Desbloquear PDF» primero"
+        raise ValueError(msg) from exc
     except pikepdf.PdfError as exc:
-        raise ValueError(f"{path.name} parece dañado ({exc}). Prueba «Reparar PDF».") from exc
+        raise ValueError(mensaje_pdf(path, exc)) from exc
 
 
 def guardar(pdf: pikepdf.Pdf, dest: Path, **kwargs) -> Path:

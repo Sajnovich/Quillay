@@ -18,7 +18,7 @@ import statistics
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import destino, linea
+from quillay.tools.pdf.comun import destino, linea, mensaje_pdf
 
 CAT = "PDF · Convertir"
 
@@ -29,7 +29,7 @@ def _open_plumber(src):
     try:
         return pdfplumber.open(src)
     except Exception as exc:  # noqa: BLE001
-        raise ValueError(f"{src.name}: no se pudo leer ({exc}). Si tiene contraseña, desbloquéalo primero.") from exc
+        raise ValueError(mensaje_pdf(src, exc)) from exc
 
 
 def _render_png(src, index: int, dpi: int) -> bytes:
@@ -186,7 +186,7 @@ def pdf_a_powerpoint(ctx: Context) -> Report:
         try:
             doc = pdfium.PdfDocument(src)
         except Exception as exc:  # noqa: BLE001
-            report.fail(src, f"no se pudo leer ({exc})")
+            report.fail(src, mensaje_pdf(src, exc))
             continue
         try:
             prs = Presentation()

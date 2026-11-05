@@ -183,8 +183,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Error: {exc}", file=sys.stderr or sys.stdout)
         return 2
     except (Cancelled, KeyboardInterrupt):
-        print("\nCancelado.", file=sys.stderr)
+        print("\nCancelado.", file=sys.stderr or sys.stdout)
         return 130
+    except Exception as exc:  # noqa: BLE001 - red de seguridad: nunca mostrar un traceback crudo
+        print(f"Error inesperado ({type(exc).__name__}): {exc}\n"
+              f"Si se repite, repórtalo en {__url__}/issues/new/choose", file=sys.stderr or sys.stdout)
+        return 1
 
 
 if __name__ == "__main__":

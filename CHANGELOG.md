@@ -4,6 +4,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Corregido
+- **Privacidad:** al convertir a HEIC con «Quitar metadatos», el archivo conservaba el GPS, el modelo de cámara y los datos XMP. Ahora se eliminan en todos los formatos.
+- **Privacidad:** el comentario interno de los JPEG (puede contener texto personal) sobrevivía a «Quitar metadatos», Comprimir, Convertir y Difuminar. Ahora se elimina, y «Ver metadatos» lo muestra.
+- **Renombrar originales** ya no deja archivos ocultos (`.quillay-tmp-…`) si se cancela a la mitad: la operación es «todo o nada» y, si algo falla, cada archivo vuelve a su nombre original.
+- **Favicons** con una imagen dañada y **Formularios PDF** con un PDF protegido mostraban un error técnico en vez de un mensaje.
+- La terminal ya no muestra errores técnicos completos ante fallos inesperados: indica dónde reportarlos.
+- Los mensajes de error ahora están en español y sin rutas internas («no es una imagen válida o está dañada», «está dañado o no es un PDF válido»).
+- «Desbloquear PDF» sin contraseña pide escribirla, en vez de sugerir usar «Desbloquear PDF».
+
+### Agregado
+- 22 pruebas automáticas nuevas, una por cada problema encontrado en la revisión.
+
 ### Quitado
 - Dependabot: abría un pull request por cada dependencia y cada uno disparaba las pruebas en los tres sistemas, lo que llenaba la cola de GitHub Actions. Las dependencias se actualizarán a mano y por versión.
 

@@ -17,7 +17,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from PIL import Image, ImageOps, features
+from PIL import Image, ImageOps, UnidentifiedImageError, features
 
 from quillay.core.params import color_to_rgba
 
@@ -65,6 +65,11 @@ OUTPUT_FORMATS = ("igual", "jpg", "png", "webp", "avif", "heic", "tiff", "bmp", 
 LOSSY = {"JPEG", "WEBP", "AVIF", "HEIF"}
 
 
+# Campos de image.info que pueden revelar quién, dónde o con qué se tomó una foto.
+# No incluimos icc_profile (colores), transparency, dpi ni duration (animaciones).
+METADATA_KEYS = ("exif", "xmp", "XML:com.adobe.xmp", "comment", "photoshop", "iptc")
+
+
 def avif_available() -> bool:
     return bool(features.check("avif"))
 
@@ -106,10 +111,17 @@ def collect_files(items: Iterable[str | Path], accepts: str = "images", recursiv
 def open_image(path: Path) -> Image.Image:
     """Abre una imagen y la gira según su EXIF. Carga los píxeles en memoria."""
     _ensure_heif()
-    with Image.open(path) as im:
-        im.load()
-        fmt = im.format
-        rotated = ImageOps.exif_transpose(im)
+    try:
+        with Image.open(path) as im:
+            im.load()
+            fmt = im.format
+            rotated = ImageOps.exif_transpose(im)
+    except UnidentifiedImageError as exc:
+        raise ValueError(f"{path.name}: no es una imagen válida o está dañada") from exc
+    except OSError as exc:
+        if "truncated" in str(exc) or "broken data" in str(exc):
+            raise ValueError(f"{path.name}: la imagen está incompleta o dañada") from exc
+        raise
     # exif_transpose puede devolver una copia sin el atributo 'format'.
     rotated.format = fmt  # type: ignore[attr-defined]
     return rotated
@@ -177,7 +189,14 @@ def save_image(image: Image.Image, src: Path, out_dir: Path, opts: SaveOptions) 
     icc = image.info.get("icc_profile")
     if icc:
         kwargs["icc_profile"] = icc  # el ICC define colores: siempre se conserva
-    if not opts.quitar_metadatos:
+    if opts.quitar_metadatos:
+        # Copiamos para no modificar la imagen de quien llama, y sacamos solo los
+        # campos que revelan datos. Algunas librerías (como la de HEIC) copian por
+        # su cuenta lo que encuentren en image.info, así que hay que vaciarlo aquí.
+        img = image.copy()
+        for key in METADATA_KEYS:
+            img.info.pop(key, None)
+    else:
         exif = image.getexif()
         if exif:
             # La rotación ya se aplicó a los píxeles: marcamos orientación normal.
