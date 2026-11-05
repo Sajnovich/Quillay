@@ -2,7 +2,9 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.3.2] — 2026-11-05
+
+Primera versión con ejecutables descargables para Windows, macOS y Linux. Corrige problemas de privacidad y estabilidad encontrados en una revisión completa.
 
 ### Corregido
 - **Privacidad:** al convertir a HEIC con «Quitar metadatos», el archivo conservaba el GPS, el modelo de cámara y los datos XMP. Ahora se eliminan en todos los formatos.
@@ -96,4 +98,5 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
+[0.3.2]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.1
