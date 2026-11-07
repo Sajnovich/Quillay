@@ -20,6 +20,7 @@ from pathlib import Path
 from quillay.core.imageio import unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
+from quillay.core.seguro import celda_segura, quitar_apostrofo
 from quillay.tools.pdf.comun import mensaje_pdf
 
 CAT = "PDF · Editar"
@@ -51,9 +52,12 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
                 for r in rows[1:] if any(v is not None for v in r)]
     text = path.read_text(encoding="utf-8-sig")
     # En Chile Excel guarda CSV con «;» porque la coma es el separador decimal.
-    dialect = csv.Sniffer().sniff(text.splitlines()[0], delimiters=",;\t")
-    return [{k.strip(): (v or "").strip() for k, v in row.items() if k} for row in csv.DictReader(text.splitlines(),
-                                                                                                    dialect=dialect)]
+    try:
+        delimiter = csv.Sniffer().sniff(text.splitlines()[0], delimiters=",;\t").delimiter
+    except csv.Error:  # una sola columna: no hay separador que adivinar
+        delimiter = ";"
+    return [{k.strip(): (v or "").strip() for k, v in row.items() if k}
+            for row in csv.DictReader(text.splitlines(), delimiter=delimiter)]
 
 
 def _safe_name(text: str) -> str:
@@ -103,8 +107,10 @@ def formularios_pdf(ctx: Context) -> Report:
             names = [n for n, f in fields.items() if f["tipo"] != "firma"]
             with template.open("w", encoding="utf-8-sig", newline="") as fh:
                 writer = csv.writer(fh, delimiter=";")
-                writer.writerow(names)
-                writer.writerow(["" if fields[n]["valor"] is None else str(fields[n]["valor"]).lstrip("/")
+                # Nombres y valores vienen del PDF: celda_segura evita que Excel los
+                # calcule como fórmulas si empiezan con «=», «+», «-» o «@».
+                writer.writerow([celda_segura(n) for n in names])
+                writer.writerow([celda_segura("" if fields[n]["valor"] is None else str(fields[n]["valor"]).lstrip("/"))
                                  for n in names])
             report.add_output(template, f"Plantilla: {template.name} (ábrela en Excel, una fila por documento)")
             continue
@@ -114,7 +120,7 @@ def formularios_pdf(ctx: Context) -> Report:
         rows = _read_rows(Path(o["datos"]).expanduser())
         if not rows:
             raise ValueError("el archivo de datos no tiene filas")
-        unknown = set(rows[0]) - set(fields) - {o["columna_nombre"]}
+        unknown = {quitar_apostrofo(n) for n in rows[0]} - set(fields) - {o["columna_nombre"]}
         if unknown:
             report.lines.append(f"⚠ Columnas que no son campos del PDF (se ignoran): {', '.join(sorted(unknown))}")
         folder = ctx.output_dir() / f"{src.stem}-rellenos"
@@ -123,6 +129,7 @@ def formularios_pdf(ctx: Context) -> Report:
             ctx.tick(n - 1, len(rows), f"fila {n}")
             values = {}
             for name, value in row.items():
+                name, value = quitar_apostrofo(name), quitar_apostrofo(value)
                 f = fields.get(name)
                 if f is None:
                     continue

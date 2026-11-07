@@ -10,8 +10,10 @@ on:
     tags: ["v*"]
   workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
 
+# Por defecto, solo lectura. Únicamente el job «release» puede escribir: así el
+# job que instala dependencias y compila no tiene permiso para publicar nada.
 permissions:
-  contents: write   # necesario para crear la Release
+  contents: read
 
 jobs:
   build:
@@ -52,6 +54,8 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # necesario para crear la Release
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/download-artifact@v8

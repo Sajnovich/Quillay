@@ -4,7 +4,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [0.3.2] — 2026-11-05
 
-Primera versión con ejecutables descargables para Windows, macOS y Linux. Corrige problemas de privacidad y estabilidad encontrados en una revisión completa.
+Primera versión con ejecutables descargables para Windows, macOS y Linux. Corrige problemas de privacidad, estabilidad y seguridad encontrados en una revisión completa y en una auditoría de seguridad.
+
+### Seguridad
+Resultado de una auditoría con la skill de seguridad de Cloudflare. Cada punto tiene su prueba automática en `tests/test_auditoria.py`.
+- **Censurar datos (grave):** si un campo de formulario, un marcador o las etiquetas de accesibilidad apuntaban a una página censurada, el PDF guardaba escondida la página original *con su texto*, y el dato (por ejemplo un RUT) se podía recuperar con herramientas como qpdf. Ahora la página se reescribe en el mismo lugar y los campos de formulario de esa página se eliminan.
+- **Limpiar metadatos de PDF** y **Comprimir PDF → Quitar metadatos** solo borraban los metadatos del documento: los de cada página e imagen (XMP y `PieceInfo`) seguían ahí, y «Ver» decía «Sin metadatos». Ahora se quitan en todo el archivo y «Ver» los muestra. Comprimir ya no entrega el original (con metadatos) cuando no logra achicarlo.
+- **Recetas compartidas:** un `sufijo` como `/../../x` guardaba imágenes fuera de la carpeta de salida, y `marca_agua.logo` podía leer cualquier imagen de tu equipo y pegarla en las fotos. Ahora el sufijo no acepta rutas, toda imagen se guarda dentro de la carpeta de salida y una receta solo puede usar archivos de su propia carpeta, con rutas relativas como `logo.png`.
+- **PDF → Excel** y la plantilla CSV de **Formularios PDF** ya no convierten en fórmulas activas los textos del PDF que empiezan con `=`, `+`, `-` o `@`.
+- **Comparar PDF** y **picture.html** escapan el nombre de los archivos: un nombre con código HTML ya no queda activo en la página generada.
+- La **terminal** muestra como texto (`\x1b`) las secuencias de escape escondidas en nombres o metadatos, en vez de dejar que cambien el título o falseen el informe.
+- La **ventana** muestra como texto plano los nombres de archivo, las descripciones de recetas y los errores, para que un nombre con HTML no cambie lo que se ve.
+- **LibreOffice** se abre con un perfil temporal que desactiva los macros y bloquea los enlaces a recursos externos de los documentos que se convierten.
+- GitHub Actions: el CI corre con permiso de solo lectura y, al publicar, solo el job que crea la Release puede escribir.
+- `.gitignore` ignora certificados y secretos (`*.p12`, `*.pfx`, `*.pem`, `*.key`, `.env`).
 
 ### Corregido
 - **Privacidad:** al convertir a HEIC con «Quitar metadatos», el archivo conservaba el GPS, el modelo de cámara y los datos XMP. Ahora se eliminan en todos los formatos.
@@ -18,7 +31,7 @@ Primera versión con ejecutables descargables para Windows, macOS y Linux. Corri
 ### Agregado
 - **PDF → Word «Igual al original»** (nuevo modo por defecto): conserva fuentes, colores, imágenes, franjas de fondo y la posición de cada elemento, usando LibreOffice si está instalado. Si no está, Quillay usa «Texto continuo» y lo avisa.
 - **PDF → Word «Texto continuo»** ahora incluye las imágenes del PDF (logos, firmas, códigos QR) en su lugar; antes se perdían.
-- 26 pruebas automáticas nuevas: una por cada problema encontrado en la revisión y cuatro para PDF → Word.
+- 39 pruebas automáticas nuevas: una por cada problema encontrado en la revisión, cuatro para PDF → Word y trece de la auditoría de seguridad.
 - El CI revisa los workflows con **actionlint** (las mismas reglas que GitHub), para atrapar errores de sintaxis antes de que rompan las pruebas o la publicación.
 
 ### Cambiado

@@ -27,7 +27,7 @@ from typing import Any
 
 import yaml
 
-from quillay.core.imageio import SaveOptions
+from quillay.core.imageio import SaveOptions, safe_suffix
 from quillay.core.params import ParamError, resolve_options
 from quillay.core.pipeline import run_pipeline
 from quillay.core.registry import STEPS, Context, Report, load_all
@@ -49,18 +49,61 @@ class Recipe:
     def slug(self) -> str:
         return self.origen.stem if self.origen else self.nombre
 
-    def validate(self) -> None:
-        """Lanza ParamError con un mensaje claro si algo está mal."""
+    def base_dir(self) -> Path:
+        """Carpeta desde la que la receta puede leer archivos (por ejemplo, un logo)."""
+        if self.origen and self.origen.is_absolute():
+            return self.origen.parent
+        return user_dir()
+
+    def _contained(self, step_id: str, opts: dict[str, Any]) -> dict[str, Any]:
+        """Resuelve los archivos que pide la receta dentro de su propia carpeta.
+
+        Una receta puede venir de otra persona. Si aceptáramos rutas absolutas
+        («/home/tu/Fotos/carnet.png») o «~», podría leer cualquier imagen tuya y
+        pegarla en lo que generas. Por eso solo se permiten rutas relativas que
+        queden dentro de la carpeta de la receta.
+        """
+        base = self.base_dir().resolve()
+        result = dict(opts)
+        for param in STEPS[step_id].params:
+            value = result.get(param.name)
+            if param.kind != "file" or not value:
+                continue
+            text = str(value).strip()
+            raw = Path(text)
+            full = (base / raw).resolve()
+            if raw.is_absolute() or text.startswith("~") or not full.is_relative_to(base):
+                raise ParamError(
+                    f"«{param.label}»: una receta solo puede usar archivos de su propia carpeta "
+                    f"({base}); escribe una ruta relativa como «logo.png»"
+                )
+            result[param.name] = str(full)
+        return result
+
+    def resolved_steps(self) -> list[tuple[str, dict[str, Any]]]:
+        """Valida la receta y devuelve los pasos con las rutas de archivo ya contenidas."""
         load_all()
+        steps = []
         for step_id, opts in self.pasos:
             if step_id not in STEPS:
                 raise ParamError(
                     f"paso desconocido «{step_id}». Disponibles: {', '.join(sorted(STEPS))}"
                 )
-            resolve_options(STEPS[step_id].params, opts)
+            contained = self._contained(step_id, opts)
+            resolve_options(STEPS[step_id].params, contained)
+            steps.append((step_id, contained))
         unknown = set(self.salida) - SALIDA_KEYS
         if unknown:
             raise ParamError(f"opción de salida desconocida: {', '.join(sorted(unknown))}")
+        try:
+            safe_suffix(self.salida.get("sufijo", ""))
+        except ValueError as exc:
+            raise ParamError(f"salida: {exc}") from exc
+        return steps
+
+    def validate(self) -> None:
+        """Lanza ParamError con un mensaje claro si algo está mal."""
+        self.resolved_steps()
 
     def to_yaml(self) -> str:
         data = {
@@ -72,10 +115,10 @@ class Recipe:
         return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
 
     def run(self, ctx: Context) -> Report:
-        self.validate()
+        steps = self.resolved_steps()
         report = Report()
         report.lines.append(f"Receta: {self.nombre}")
-        return run_pipeline(ctx, self.pasos, SaveOptions(**self.salida), report)
+        return run_pipeline(ctx, steps, SaveOptions(**self.salida), report)
 
 
 def parse(text: str, origen: Path | None = None) -> Recipe:

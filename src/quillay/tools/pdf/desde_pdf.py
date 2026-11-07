@@ -28,6 +28,7 @@ from pathlib import Path
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
+from quillay.core.seguro import INICIO_FORMULA
 from quillay.tools.pdf.comun import destino, linea, mensaje_pdf
 
 CAT = "PDF · Convertir"
@@ -161,7 +162,10 @@ def _word_con_libreoffice(soffice: str, src: Path, dest: Path, timeout: int) -> 
         # Copia con nombre simple: así sabemos cómo se llamará el resultado.
         copia = tmp_path / "entrada.pdf"
         shutil.copyfile(src, copia)
-        cmd = [soffice, f"-env:UserInstallation={(tmp_path / 'perfil').as_uri()}", "--headless", "--norestore",
+        from quillay.tools.pdf.externas import perfil_libreoffice
+
+        perfil = perfil_libreoffice(tmp_path / "perfil")
+        cmd = [soffice, f"-env:UserInstallation={perfil}", "--headless", "--norestore",
                "--infilter=writer_pdf_import", "--convert-to", "docx:MS Word 2007 XML",
                "--outdir", str(tmp_path), str(copia)]
         try:
@@ -407,6 +411,11 @@ def pdf_a_excel(ctx: Context) -> Report:
                             value = (cell or "").strip()
                             parsed = parse_number_cl(value) if ctx.options["numeros"] and r > 1 else None
                             target = ws.cell(r, c, parsed[0] if parsed else value)
+                            if not parsed and value.startswith(INICIO_FORMULA):
+                                # Texto del PDF: siempre dato, nunca fórmula (openpyxl
+                                # convierte en fórmula todo texto que empieza con «=»).
+                                target.data_type = "s"
+                                target.quotePrefix = True
                             if parsed and parsed[1]:
                                 target.number_format = parsed[1]
                     for cell in ws[1]:  # primera fila como encabezado

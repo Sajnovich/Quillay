@@ -21,6 +21,7 @@ from quillay import __url__, __version__
 from quillay.core.imageio import collect_files
 from quillay.core.params import Param, ParamError
 from quillay.core.registry import TOOLS, Cancelled, Report, Tool, load_all, tools_by_category
+from quillay.core.seguro import para_terminal
 
 
 def _add_param(parser: argparse.ArgumentParser, p: Param) -> None:
@@ -67,6 +68,7 @@ def _progress(done: int, total: int, msg: str) -> None:
         return
     width = 24
     filled = int(width * done / total) if total else width
+    msg = para_terminal(msg)  # el nombre del archivo puede traer secuencias de escape
     sys.stderr.write(f"\r[{'█' * filled}{'·' * (width - filled)}] {done}/{total} {msg[:40]:<40}")
     if done >= total:
         sys.stderr.write("\n")
@@ -74,7 +76,9 @@ def _progress(done: int, total: int, msg: str) -> None:
 
 
 def _print_report(report: Report) -> int:
-    print(report.as_text())
+    # Los informes muestran nombres y metadatos de archivos ajenos: para_terminal
+    # impide que una secuencia de escape escondida en ellos actúe sobre la terminal.
+    print(para_terminal(report.as_text()))
     return 1 if report.errors and not report.outputs else 0
 
 
@@ -127,7 +131,7 @@ def _run_tool(tool: Tool, args: argparse.Namespace) -> int:
     options = {p.name: getattr(args, p.name) for p in tool.params if getattr(args, p.name) is not None}
     if getattr(args, "vista_previa", False) and tool.preview:
         ctx = tool.make_context(files, options, args.salida)
-        print("\n".join(tool.preview(ctx)))
+        print(para_terminal("\n".join(tool.preview(ctx))))
         return 0
     report = tool.execute(files, options, args.salida, _progress)
     return _print_report(report)
@@ -140,14 +144,14 @@ def _run_recipe_cmd(args: argparse.Namespace) -> int:
     if args.accion_receta == "lista":
         for r in recipes.available():
             tag = "incluida" if r.incluida else "tuya"
-            print(f"{r.slug:<22} [{tag}] {r.descripcion}")
+            print(para_terminal(f"{r.slug:<22} [{tag}] {r.descripcion}"))
         return 0
     if args.accion_receta == "carpeta":
         print(recipes.user_dir())
         return 0
     recipe = recipes.find(args.receta)
     if args.accion_receta == "mostrar":
-        print(recipe.to_yaml())
+        print(para_terminal(recipe.to_yaml()))
         return 0
     files = collect_files(args.archivos, "images", args.recursivo)
     if not files:
@@ -180,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
             return _run_recipe_cmd(args)
         return _run_tool(TOOLS[args.comando], args)
     except (ParamError, ValueError) as exc:
-        print(f"Error: {exc}", file=sys.stderr or sys.stdout)
+        print(para_terminal(f"Error: {exc}"), file=sys.stderr or sys.stdout)
         return 2
     except (Cancelled, KeyboardInterrupt):
         print("\nCancelado.", file=sys.stderr or sys.stdout)

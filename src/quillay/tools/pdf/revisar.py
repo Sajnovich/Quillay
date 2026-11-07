@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import difflib
+from html import escape
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
@@ -89,8 +90,10 @@ def comparar_pdf(ctx: Context) -> Report:
 
             la, lb = lines(doc_a), lines(doc_b)
             changed = sum(1 for d in difflib.ndiff(la, lb) if d[:1] in "+-")
-            html = difflib.HtmlDiff(wrapcolumn=90).make_file(la, lb, a_path.name, b_path.name, context=True,
-                                                             numlines=2)
+            # difflib escapa las líneas, pero NO los títulos de columna: el nombre de
+            # un PDF recibido podría traer código HTML, así que lo escapamos nosotros.
+            html = difflib.HtmlDiff(wrapcolumn=90).make_file(
+                la, lb, escape(a_path.name), escape(b_path.name), context=True, numlines=2)
             html = html.replace("<head>", '<head><meta charset="utf-8">', 1)
             dest = unique_path(out / f"comparacion-{a_path.stem}-vs-{b_path.stem}.html")
             dest.write_text(html, encoding="utf-8")

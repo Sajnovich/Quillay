@@ -10,7 +10,7 @@ from PIL import Image
 from quillay.core.imageio import human_size
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, destino, guardar, imagenes, linea
+from quillay.tools.pdf.comun import abrir, destino, guardar, imagenes, limpiar_metadatos, linea
 
 CAT = "PDF · Optimizar"
 
@@ -96,28 +96,24 @@ def comprimir_pdf(ctx: Context) -> Report:
                         _recompress_image(raw, limit, quality)
                 pdf.remove_unreferenced_resources()
                 if ctx.options["quitar_metadatos"]:
-                    _clear_metadata(pdf)
+                    limpiar_metadatos(pdf)
                 dest = guardar(pdf, destino(ctx, src, "-comprimido"))
         except ValueError as exc:
             report.fail(src, exc)
             continue
         a, b = src.stat().st_size, dest.stat().st_size
-        if b >= a:
-            # Pasa con PDF que ya estaban optimizados: entregamos el original tal cual.
+        if b >= a and not ctx.options["quitar_metadatos"]:
+            # Pasa con PDF que ya estaban optimizados: entregamos el original tal cual
+            # (salvo que haya que quitar metadatos: el original todavía los tiene).
             dest.write_bytes(src.read_bytes())
             b = a
         total_in, total_out = total_in + a, total_out + b
-        report.add_output(dest, linea(src, dest, "" if b < a else "(ya estaba optimizado)"))
+        ya_optimizado = b >= a and not ctx.options["quitar_metadatos"]
+        report.add_output(dest, linea(src, dest, "(ya estaba optimizado)" if ya_optimizado else ""))
     if total_in:
         report.lines.append(f"Total: {human_size(total_in)} → {human_size(total_out)} "
                             f"(ahorro de {100 * (1 - total_out / total_in):.0f} %)")
     return report
-
-
-def _clear_metadata(pdf: pikepdf.Pdf) -> None:
-    if "/Metadata" in pdf.Root:
-        del pdf.Root.Metadata
-    pdf.trailer.Info = pdf.make_indirect(pikepdf.Dictionary())
 
 
 @tool(

@@ -18,6 +18,13 @@ dist/
 quillay/
 !src/quillay/
 
+# Certificados y secretos (nunca deben subirse; firmar_pdf usa .p12/.pfx)
+*.p12
+*.pfx
+*.pem
+*.key
+.env
+
 # Sistema / editores
 .DS_Store
 Thumbs.db

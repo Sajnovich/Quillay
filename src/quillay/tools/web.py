@@ -183,7 +183,10 @@ def responsive(ctx: Context) -> Report:
                 f'width="{fallback_w}" height="{fh}" alt="Describe la imagen"{lazy}>'
             )
             lines.append("</picture>")
-            snippets.append(f"<!-- {src.name} -->\n" + "\n".join(lines))
+            # El nombre del archivo lo eligió quien lo envió: escapado y sin «--», no
+            # puede cerrar el comentario ni meter código en la página.
+            nombre = escape(src.name).replace("--", "&#45;&#45;")
+            snippets.append(f"<!-- {nombre} -->\n" + "\n".join(lines))
             report.lines.append(f"✓ {src.name}: {len(usable)} anchos × {len(formats)} formatos")
         except Exception as exc:
             report.fail(src, exc)

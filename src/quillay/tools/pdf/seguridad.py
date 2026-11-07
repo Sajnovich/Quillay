@@ -8,7 +8,7 @@ import pikepdf
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, destino, guardar, linea
+from quillay.tools.pdf.comun import abrir, contar_metadatos_ocultos, destino, guardar, limpiar_metadatos, linea
 
 CAT = "PDF · Seguridad"
 
@@ -113,13 +113,17 @@ def metadatos_pdf(ctx: Context) -> Report:
                     if "/Metadata" in pdf.Root:
                         report.lines.append("    Contiene metadatos XMP adicionales")
                         found = True
+                    ocultos = contar_metadatos_ocultos(pdf)
+                    if ocultos:
+                        report.lines.append(f"    {ocultos} página(s) o imagen(es) con metadatos propios")
+                        found = True
                     if not found:
                         report.lines.append("    Sin metadatos")
                     continue
                 if o["accion"] == "limpiar":
-                    if "/Metadata" in pdf.Root:
-                        del pdf.Root.Metadata  # XMP: metadatos en XML, invisibles en la mayoría de lectores
-                    pdf.trailer.Info = pdf.make_indirect(pikepdf.Dictionary())
+                    # XMP (/Metadata) y /PieceInfo pueden estar en el documento, en cada
+                    # página y en cada imagen: limpiar_metadatos los quita en todos lados.
+                    limpiar_metadatos(pdf)
                     dest = guardar(pdf, destino(ctx, src, "-limpio"))
                     report.add_output(dest, linea(src, dest, "metadatos eliminados"))
                     continue

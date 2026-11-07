@@ -174,6 +174,19 @@ def flatten(image: Image.Image, background: str = "#ffffff") -> Image.Image:
     return image
 
 
+def safe_suffix(text: str) -> str:
+    """Valida que un sufijo sea solo un trozo de nombre, nunca una ruta.
+
+    Un sufijo como ``/../../x`` haría que la imagen se guarde fuera de la
+    carpeta de salida (ataque de «path traversal»), algo que una receta
+    compartida por otra persona no debe poder hacer.
+    """
+    text = str(text)
+    if any(c in text for c in "/\\:") or ".." in text or any(ord(c) < 32 for c in text):
+        raise ValueError(f"sufijo no permitido {text!r}: no puede tener «/», «\\», «:» ni «..»")
+    return text
+
+
 def save_image(image: Image.Image, src: Path, out_dir: Path, opts: SaveOptions) -> Path:
     """Guarda ``image`` (que vino de ``src``) en ``out_dir`` según ``opts``."""
     _ensure_heif()
@@ -181,7 +194,12 @@ def save_image(image: Image.Image, src: Path, out_dir: Path, opts: SaveOptions) 
     if fmt == "AVIF" and not avif_available():
         raise RuntimeError("tu versión de Pillow no soporta AVIF (actualiza Pillow ≥ 11.3)")
 
-    dest = unique_path(out_dir / f"{src.stem}{opts.sufijo}.{ext}")
+    stem = src.stem if src.stem not in ("", ".", "..") else "imagen"
+    dest = out_dir / f"{stem}{safe_suffix(opts.sufijo)}.{ext}"
+    # Defensa final: el archivo siempre queda directamente dentro de out_dir.
+    if dest.resolve().parent != out_dir.resolve():
+        raise ValueError("el archivo de salida quedaría fuera de la carpeta de salida")
+    dest = unique_path(dest)
     kwargs: dict = {}
     img = image
 

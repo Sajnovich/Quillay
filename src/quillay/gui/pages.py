@@ -36,6 +36,13 @@ ICONS = {"Imágenes": "◧", "Web y redes": "◎", "Privacidad y orden": "◐", 
          "PDF · Seguridad": "▤"}
 
 
+def _avisar(parent: QWidget, title: str, text: str) -> None:
+    """Advertencia en texto plano: el mensaje puede incluir texto de una receta o archivo ajeno."""
+    box = QMessageBox(QMessageBox.Icon.Warning, title, text, QMessageBox.StandardButton.Ok, parent)
+    box.setTextFormat(Qt.TextFormat.PlainText)
+    box.exec()
+
+
 def _title(text: str, sub: str) -> QWidget:
     box = QWidget()
     lay = QVBoxLayout(box)
@@ -91,6 +98,9 @@ class RunPanel(QWidget):
         self.bar = QProgressBar()
         self.bar.setVisible(False)
         self.status = QLabel("")
+        # Muestra nombres de archivos ajenos: texto plano para que Qt no interprete
+        # HTML escondido en un nombre (imágenes locales, formato falso).
+        self.status.setTextFormat(Qt.TextFormat.PlainText)
         self.status.setObjectName("Muted")
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
@@ -226,7 +236,7 @@ class ToolPage(QWidget):
             return self.tool.make_context(self.files.paths(self.tool.accepts), self.form.values(),
                                           self.panel.out_dir())
         except (ParamError, ValueError) as exc:
-            QMessageBox.warning(self, "Revisa las opciones", str(exc))
+            _avisar(self, "Revisa las opciones", str(exc))
             return None
 
     def run(self) -> None:
@@ -355,6 +365,7 @@ class RecipesPage(QWidget):
         ll.addWidget(folder_btn)
 
         self.desc = QLabel()
+        self.desc.setTextFormat(Qt.TextFormat.PlainText)  # la descripción viene de recetas ajenas
         self.desc.setWordWrap(True)
         self.desc.setObjectName("Muted")
         self.editor = QPlainTextEdit()
@@ -458,7 +469,7 @@ class RecipesPage(QWidget):
         try:
             r = recipes.save_user(self.editor.toPlainText(), slug)
         except Exception as exc:  # YAML o validación
-            QMessageBox.warning(self, "La receta tiene un error", str(exc))
+            _avisar(self, "La receta tiene un error", str(exc))
             return
         self.reload(select=r.slug)
 
@@ -466,7 +477,7 @@ class RecipesPage(QWidget):
         try:
             recipe = recipes.parse(self.editor.toPlainText())
         except Exception as exc:
-            QMessageBox.warning(self, "La receta tiene un error", str(exc))
+            _avisar(self, "La receta tiene un error", str(exc))
             return
         files = self.files.paths("images")
         if not files:

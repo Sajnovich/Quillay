@@ -35,6 +35,34 @@ def _first_existing(candidates: list[str | None]) -> str | None:
     return None
 
 
+_PERFIL_SEGURO = """<?xml version="1.0" encoding="UTF-8"?>
+<oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<item oor:path="/org.openoffice.Office.Common/Security/Scripting">
+  <prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>
+<item oor:path="/org.openoffice.Office.Common/Security/Scripting">
+  <prop oor:name="DisableMacrosExecution" oor:op="fuse"><value>true</value></prop></item>
+<item oor:path="/org.openoffice.Office.Common/Security/Scripting">
+  <prop oor:name="BlockUntrustedRefererLinks" oor:op="fuse"><value>true</value></prop></item>
+</oor:items>
+"""
+
+
+def perfil_libreoffice(folder: Path) -> str:
+    """Crea un perfil temporal de LibreOffice endurecido y devuelve su URI.
+
+    Los documentos que convertimos pueden venir de otra persona. Este perfil
+    desactiva los macros por completo y bloquea los enlaces a recursos externos
+    (por ejemplo, una imagen en internet), así el documento no puede ejecutar
+    código ni hacer que tu equipo se conecte a otro sitio durante la conversión.
+    Además, un perfil propio evita choques si ya tienes LibreOffice abierto.
+    """
+    user = folder / "user"
+    user.mkdir(parents=True, exist_ok=True)
+    (user / "registrymodifications.xcu").write_text(_PERFIL_SEGURO, encoding="utf-8")
+    return folder.as_uri()
+
+
 def find_libreoffice() -> str | None:
     system = platform.system()
     found = shutil.which("soffice") or shutil.which("libreoffice")
@@ -120,8 +148,7 @@ def office_a_pdf(ctx: Context) -> Report:
     out = ctx.output_dir()
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         tmp_path = Path(tmp)
-        # Un perfil de LibreOffice propio evita choques si ya tienes LibreOffice abierto.
-        profile = (tmp_path / "perfil").as_uri()
+        profile = perfil_libreoffice(tmp_path / "perfil")
         for i, src in enumerate(ctx.files):
             ctx.tick(i, len(ctx.files), src.name)
             cmd = [soffice, f"-env:UserInstallation={profile}", "--headless", "--norestore",

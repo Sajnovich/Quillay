@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, destino, guardar, linea
+from quillay.tools.pdf.comun import abrir, destino, guardar, limpiar_metadatos, linea
 
 CAT = "PDF · Seguridad"
 
@@ -94,6 +94,7 @@ def censurar_pdf(ctx: Context) -> Report:
                 doc = pdfium.PdfDocument(src)
                 totals: dict[str, int] = {}
                 touched = 0
+                rasterized: set[tuple[int, int]] = set()
                 try:
                     for i in range(len(doc)):
                         ctx.tick(i, len(doc), f"{src.name} p.{i + 1}")
@@ -113,13 +114,13 @@ def censurar_pdf(ctx: Context) -> Report:
                         for left, bottom, right, top in rects:
                             draw.rectangle(((left - x0 - pad) * scale, (y1 - top - pad) * scale,
                                             (right - x0 + pad) * scale, (y1 - bottom + pad) * scale), fill="black")
+                        rasterized.add(pdf.pages[i].obj.objgen)
                         _replace_page(pdf, i, img, o["dpi"], rotation)
                 finally:
                     doc.close()
+                _drop_form_fields(pdf, rasterized)
                 if o["quitar_metadatos"]:
-                    if "/Metadata" in pdf.Root:
-                        del pdf.Root.Metadata
-                    pdf.trailer.Info = pdf.make_indirect(pikepdf.Dictionary())
+                    limpiar_metadatos(pdf)
                 dest = guardar(pdf, destino(ctx, src, "-censurado"))
         except ValueError as exc:
             report.fail(src, exc)
@@ -131,13 +132,51 @@ def censurar_pdf(ctx: Context) -> Report:
     return report
 
 
+def _drop_form_fields(pdf: pikepdf.Pdf, pages: set[tuple[int, int]]) -> None:
+    """Quita del formulario los campos que estaban en páginas convertidas en imagen.
+
+    Su valor (que puede ser el dato censurado) vive en el formulario, no en la
+    página: si no lo quitamos, seguiría dentro del archivo.
+    """
+    form = pdf.Root.get("/AcroForm")
+    if not pages or form is None or "/Fields" not in form:
+        return
+
+    def on_page(obj: pikepdf.Object) -> bool:
+        target = obj.get("/P")
+        return target is not None and target.objgen in pages
+
+    kept = pikepdf.Array()
+    for field in form.Fields:
+        if "/Kids" in field:
+            kids = pikepdf.Array([k for k in field.Kids if not on_page(k)])
+            if not kids:
+                continue
+            field.Kids = kids
+        elif on_page(field):
+            continue
+        kept.append(field)
+    form.Fields = kept
+
+
 def _replace_page(pdf: pikepdf.Pdf, index: int, img: Image.Image, dpi: int, rotation: int) -> None:
-    """Reemplaza la página por una imagen del mismo tamaño y rotación."""
+    """Reescribe la página, en el mismo objeto, como una imagen del mismo tamaño y rotación.
+
+    No basta con insertar una página nueva y borrar la original: si un campo de
+    formulario, un marcador o las etiquetas de accesibilidad apuntan a la página
+    original, el PDF la conserva escondida *con su texto*, y el dato censurado se
+    puede recuperar. Por eso vaciamos el mismo objeto y le ponemos la imagen: las
+    referencias siguen funcionando, pero ya no llevan al contenido original.
+    """
     buf = io.BytesIO()
     img.save(buf, "PDF", resolution=dpi)
     with pikepdf.open(io.BytesIO(buf.getvalue())) as tmp:
         new_page = pdf.copy_foreign(tmp.pages[0].obj)
+    page = pdf.pages[index].obj
+    for key in list(page.keys()):
+        if key not in ("/Type", "/Parent", "/StructParents"):
+            del page[key]
+    for key in ("/MediaBox", "/Contents", "/Resources"):
+        page[key] = new_page[key]
     if rotation:
-        new_page.Rotate = rotation
-    pdf.pages.insert(index, pikepdf.Page(new_page))
-    del pdf.pages[index + 1]
+        page.Rotate = rotation

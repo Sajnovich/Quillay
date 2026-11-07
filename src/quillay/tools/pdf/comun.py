@@ -47,6 +47,37 @@ def abrir(path: Path, password: str = "", al_desbloquear: bool = False) -> pikep
         raise ValueError(mensaje_pdf(path, exc)) from exc
 
 
+_CLAVES_METADATOS = ("/Metadata", "/PieceInfo")
+
+
+def _objetos_con_metadatos(pdf: pikepdf.Pdf) -> list[pikepdf.Object]:
+    """Diccionarios y flujos que llevan metadatos XMP (/Metadata) o datos privados de
+    la aplicación que creó el PDF (/PieceInfo): pueden estar en el documento, en
+    cada página y en cada imagen o dibujo incrustado, no solo en la raíz."""
+    found = []
+    for obj in pdf.objects:
+        if isinstance(obj, pikepdf.Dictionary | pikepdf.Stream) and any(k in obj for k in _CLAVES_METADATOS):
+            found.append(obj)
+    for obj in (pdf.Root, *(page.obj for page in pdf.pages)):
+        if any(k in obj for k in _CLAVES_METADATOS) and obj not in found:
+            found.append(obj)
+    return found
+
+
+def contar_metadatos_ocultos(pdf: pikepdf.Pdf) -> int:
+    """Cuántos objetos fuera de la raíz del documento traen metadatos propios."""
+    return sum(1 for obj in _objetos_con_metadatos(pdf) if obj.objgen != pdf.Root.objgen)
+
+
+def limpiar_metadatos(pdf: pikepdf.Pdf) -> None:
+    """Quita el diccionario Info y todos los /Metadata y /PieceInfo del archivo."""
+    for obj in _objetos_con_metadatos(pdf):
+        for key in _CLAVES_METADATOS:
+            if key in obj:
+                del obj[key]
+    pdf.trailer.Info = pdf.make_indirect(pikepdf.Dictionary())
+
+
 def guardar(pdf: pikepdf.Pdf, dest: Path, **kwargs) -> Path:
     """Guarda comprimiendo la estructura: los "object streams" agrupan objetos
     pequeños y suelen ahorrar entre 5 y 20 % sin tocar el contenido."""
