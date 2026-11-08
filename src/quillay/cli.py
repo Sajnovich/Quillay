@@ -82,6 +82,15 @@ def _print_report(report: Report) -> int:
     return 1 if report.errors and not report.outputs else 0
 
 
+class _Version(argparse.Action):
+    """Como ``action="version"``, pero sin reacomodar el texto al ancho de la
+    terminal (argparse juntaba las líneas y cortaba la firma por la mitad)."""
+
+    def __call__(self, parser, namespace, values, option_string=None) -> None:
+        print(f"Quillay {__version__}\n{FIRMA}")
+        parser.exit()
+
+
 def build_parser() -> argparse.ArgumentParser:
     load_all()
     parser = argparse.ArgumentParser(
@@ -89,7 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Quillay — todo para tus PDF e imágenes. Nada sale de tu equipo.",
         epilog=f"¿Te sirve? Dale una estrella: {__url__}  ·  Problemas: {__url__}/issues",
     )
-    parser.add_argument("--version", action="version", version=f"Quillay {__version__}\n{FIRMA}")
+    parser.add_argument("--version", action=_Version, nargs=0, help="Muestra la versión y sale")
     sub = parser.add_subparsers(dest="comando", metavar="COMANDO")
 
     sub.add_parser("herramientas", help="Lista todas las herramientas disponibles")

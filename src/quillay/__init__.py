@@ -15,4 +15,4 @@ __app_name__ = "Quillay"
 __url__ = "https://github.com/Sajnovich/Quillay"
 __autor__ = "Eduardo Sajnovich"
 # Firma que se muestra siempre al pie de la ventana y en «quillay --version».
-FIRMA = f"Creado por {__autor__} · Hecho en Chile · Libre para todos"
+FIRMA = f"Created by {__autor__} · Made in Chile 🇨🇱 · Free for everyone 💙"

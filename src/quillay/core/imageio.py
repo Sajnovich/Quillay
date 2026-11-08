@@ -62,6 +62,24 @@ ALL_EXTS = IMAGE_EXTS | PDF_EXTS | OFFICE_EXTS | HTML_EXTS
 
 # Formatos ofrecidos para guardar (el primero es "mantener el original").
 OUTPUT_FORMATS = ("igual", "jpg", "png", "webp", "avif", "heic", "tiff", "bmp", "gif")
+
+# Para qué conviene cada formato: se muestra junto a cada opción en los menús.
+FORMAT_HINTS = {
+    "igual": "Igual que el original",
+    "jpg": "JPG · fotos para compartir, abre en todas partes",
+    "png": "PNG · logos, capturas y fondos transparentes",
+    "webp": "WebP · página web: liviano y con transparencia",
+    "avif": "AVIF · página web moderna, el más liviano",
+    "heic": "HEIC · fotos en equipos Apple",
+    "tiff": "TIFF · imprenta y archivo, sin pérdida",
+    "bmp": "BMP · programas antiguos",
+    "gif": "GIF · animaciones simples (256 colores)",
+}
+
+
+def format_labels(formats: tuple[str, ...]) -> tuple[str, ...]:
+    """Etiquetas «formato · para qué sirve» en el mismo orden que ``formats``."""
+    return tuple(FORMAT_HINTS.get(f, f.upper()) for f in formats)
 LOSSY = {"JPEG", "WEBP", "AVIF", "HEIF"}
 
 

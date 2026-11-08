@@ -69,7 +69,13 @@ def main() -> int:
             if not ok:
                 failures += 1
                 print(result.stderr.decode("utf-8", "replace")[-1500:])
-        total = len(checks) + 2
+        # La ventana no se abre en esta prueba, pero sí revisamos que vengan sus
+        # archivos de datos: sin las fuentes de QtAwesome, el menú queda sin íconos.
+        raiz = binary.parents[1] if binary.parent.name == "MacOS" else binary.parent  # .app de macOS
+        ok = any(raiz.rglob("qtawesome/fonts/phosphor-charmap-*.json"))
+        print(f"{'✓' if ok else '✗'} íconos del menú (QtAwesome)")
+        failures += 0 if ok else 1
+        total = len(checks) + 3
         print(f"\n{total - failures} de {total} pruebas funcionan en el ejecutable.")
         return 1 if failures else 0
 

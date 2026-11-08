@@ -43,6 +43,9 @@ class Param:
     # Muestra el parámetro solo si otro parámetro tiene cierto valor,
     # por ejemplo ancho/alto solo cuando modo == "caja".
     visible_if: tuple[str, tuple[Any, ...]] | None = None
+    # Para "multichoice": grupo de cada opción (la ventana los muestra en columnas,
+    # por ejemplo una por red social). Mismo orden que ``choices``.
+    choice_groups: tuple[str, ...] = ()
 
     def label_for(self, choice: str) -> str:
         if self.choice_labels and choice in self.choices:

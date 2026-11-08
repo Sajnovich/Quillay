@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, Qt, QUrl, Signal
+from PySide6.QtCore import QSettings, QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QFont
 from PySide6.QtWidgets import (
-    QCheckBox,
     QFileDialog,
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -22,6 +20,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QSplitter,
     QVBoxLayout,
     QWidget,
@@ -31,11 +30,9 @@ from quillay import __url__, __version__, recipes
 from quillay.core import libreoffice
 from quillay.core.params import ParamError
 from quillay.core.registry import STEPS, Context, Report, Tool, tools_by_category
-from quillay.gui.widgets import FileList, ParamForm, Worker
-
-ICONS = {"Imágenes": "◧", "Web y redes": "◎", "Privacidad y orden": "◐", "PDF · Convertir": "▤",
-         "PDF · Organizar": "▤", "PDF · Optimizar": "▤", "PDF · Editar": "▤", "PDF · Revisar": "▤",
-         "PDF · Seguridad": "▤"}
+from quillay.gui import iconos
+from quillay.gui.ui.ui_actualizaciones import Ui_Actualizaciones
+from quillay.gui.widgets import FileList, GroupGrid, ParamForm, Worker
 
 
 def _avisar(parent: QWidget, title: str, text: str) -> None:
@@ -110,7 +107,11 @@ class RunPanel(QWidget):
         mono = QFont("monospace")
         mono.setStyleHint(QFont.StyleHint.Monospace)
         self.log.setFont(mono)
-        self.log.setMinimumHeight(150)
+        # Bajo para que los formularios largos quepan sin tener que bajar; crece si hay espacio.
+        self.log.setMinimumHeight(90)
+        # «Ignored» en vertical: el registro no pide su alto preferido (unas 12 líneas),
+        # solo usa el espacio que sobre. Si no, empuja la página y aparece la barra para bajar.
+        self.log.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 8, 0, 0)
@@ -204,6 +205,8 @@ class ToolPage(QWidget):
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        # Las páginas se adaptan al ancho: nunca hay que moverse hacia los lados.
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(inner)
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -291,31 +294,25 @@ class HomePage(QWidget):
         lay.addWidget(_title("¿Qué necesitas hacer hoy?",
                              "Agrega archivos a la izquierda y elige una herramienta, o automatízalo con una receta. "
                              "Todo se procesa en tu equipo."))
+        # (etiqueta, nombre del ícono, rol): para volver a pintarlos si cambia el tema.
+        self._iconos: list[tuple[QLabel, str, str]] = []
         for category, tools in tools_by_category().items():
-            head = QLabel(f"{ICONS.get(category, '•')}  {category}")
-            head.setStyleSheet("font-weight: 700; font-size: 15px; margin-top: 14px;")
-            lay.addWidget(head)
-            grid = QGridLayout()
-            grid.setSpacing(10)
-            for i, tool in enumerate(tools):
-                grid.addWidget(self._card(tool), i // 3, i % 3)
-            lay.addLayout(grid)
-        recipes_head = QLabel("⚙  Automatizar")
-        recipes_head.setStyleSheet("font-weight: 700; font-size: 15px; margin-top: 14px;")
-        lay.addWidget(recipes_head)
+            lay.addWidget(self._heading(category, iconos.CATEGORIAS.get(category, iconos.GENERICO)))
+            # Hasta 3 tarjetas por fila; con la ventana angosta se reacomodan en 2 o 1.
+            lay.addWidget(GroupGrid([self._card(tool) for tool in tools], max_columnas=3, ancho_tarjeta=200))
+        lay.addWidget(self._heading("Automatizar", iconos.CATEGORIAS["Automatizar"]))
         recipes_card = QPushButton()
         recipes_card.setObjectName("Card")
         recipes_card.setCursor(Qt.CursorShape.PointingHandCursor)
         rc = QVBoxLayout(recipes_card)
-        for text, style in (("⚙  Automatizar con recetas", "font-weight: 700; font-size: 15px;"),
-                            ("Encadena pasos (encajar → marca de agua → WebP sin GPS) y repítelos con un clic. "
-                             "Incluye: web optimizado, Instagram cuadrado, anonimizar, catálogo y miniaturas.",
-                             "font-size: 12px;")):
-            lbl = QLabel(text)
-            lbl.setWordWrap(True)
-            lbl.setStyleSheet(f"background: transparent; {style}")
-            lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            rc.addWidget(lbl)
+        rc.addLayout(self._icon_row("Automatizar con recetas", iconos.HERRAMIENTAS["__recetas__"],
+                                    "font-weight: 700; font-size: 15px;"))
+        lbl = QLabel("Encadena pasos (encajar → marca de agua → WebP sin GPS) y repítelos con un clic. "
+                     "Incluye: web optimizado, Instagram cuadrado, anonimizar, catálogo y miniaturas.")
+        lbl.setWordWrap(True)
+        lbl.setStyleSheet("background: transparent; font-size: 12px;")
+        lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        rc.addWidget(lbl)
         recipes_card.setMinimumHeight(80)
         recipes_card.clicked.connect(lambda: self.open_tool.emit("__recetas__"))
         lay.addWidget(recipes_card)
@@ -330,9 +327,12 @@ class HomePage(QWidget):
         foot.setObjectName("Muted")
         foot.setTextFormat(Qt.TextFormat.RichText)
         foot.setOpenExternalLinks(True)
+        foot.setWordWrap(True)
         lay.addWidget(foot)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        # Las páginas se adaptan al ancho: nunca hay que moverse hacia los lados.
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(inner)
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -344,17 +344,45 @@ class HomePage(QWidget):
         card.setCursor(Qt.CursorShape.PointingHandCursor)
         card.setMinimumHeight(86)
         lay = QVBoxLayout(card)
-        name = QLabel(tool.name)
-        name.setStyleSheet("font-weight: 600; background: transparent;")
+        lay.addLayout(self._icon_row(tool.name, iconos.HERRAMIENTAS.get(tool.id, iconos.GENERICO),
+                                     "font-weight: 600;"))
         desc = QLabel(tool.description)
         desc.setWordWrap(True)
         desc.setObjectName("Muted")
         desc.setStyleSheet("background: transparent; font-size: 12px;")
-        for w in (name, desc):
-            w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            lay.addWidget(w)
+        desc.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        lay.addWidget(desc)
         card.clicked.connect(lambda: self.open_tool.emit(tool.id))
         return card
+
+    def _icon_row(self, text: str, icon: str, style: str, size: int = 18) -> QHBoxLayout:
+        """Fila «ícono + texto». Los dos dejan pasar el clic a la tarjeta que los contiene."""
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        pic = QLabel()
+        pic.setFixedSize(size, size)
+        self._iconos.append((pic, icon, "acento"))
+        label = QLabel(text)
+        label.setStyleSheet(f"background: transparent; {style}")
+        label.setWordWrap(True)
+        for w in (pic, label):
+            w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            row.addWidget(w, 0, Qt.AlignmentFlag.AlignVCenter)
+        row.addStretch(1)
+        return row
+
+    def _heading(self, text: str, icon: str) -> QWidget:
+        box = QWidget()
+        box.setContentsMargins(0, 14, 0, 0)
+        row = self._icon_row(text, icon, "font-weight: 700; font-size: 15px;", size=20)
+        row.setContentsMargins(0, 0, 0, 0)
+        box.setLayout(row)
+        return box
+
+    def refresh_icons(self) -> None:
+        for pic, icon, rol in self._iconos:
+            size = pic.width()
+            pic.setPixmap(iconos.icono(icon, rol).pixmap(QSize(size, size)))
 
 
 TEMPLATE = """nombre: Mi receta
@@ -380,7 +408,7 @@ class RecipesPage(QWidget):
         self.list.currentItemChanged.connect(self._select)
         new_btn = QPushButton("Nueva receta")
         new_btn.clicked.connect(self._new)
-        folder_btn = QPushButton("Abrir carpeta de recetas")
+        folder_btn = QPushButton("Abrir carpeta")
         folder_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(recipes.user_dir()))))
         left = QWidget()
         ll = QVBoxLayout(left)
@@ -443,6 +471,8 @@ class RecipesPage(QWidget):
         lay.addWidget(frame)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        # Las páginas se adaptan al ancho: nunca hay que moverse hacia los lados.
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(inner)
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -542,43 +572,17 @@ class UpdatesPage(QWidget):
         super().__init__()
         self.settings = QSettings()
         self.worker: Worker | None = None
-        self.estado = QLabel()
-        self.estado.setTextFormat(Qt.TextFormat.PlainText)
-        self.estado.setWordWrap(True)
-        self.revisar_btn = QPushButton("Buscar actualizaciones")
-        self.revisar_btn.setObjectName("Primary")
+        # El diseño de esta página está en gui/ui/actualizaciones.ui (se edita con Qt Designer
+        # y se compila con scripts/compilar_ui.py). Aquí solo se conecta la lógica.
+        ui = Ui_Actualizaciones()
+        ui.setupUi(self)
+        self.ui = ui
+        self.estado, self.bar, self.log, self.al_abrir = ui.estado, ui.bar, ui.log, ui.al_abrir
+        self.revisar_btn, self.lo_btn, self.descargar_btn = ui.revisar_btn, ui.lo_btn, ui.descargar_btn
         self.revisar_btn.clicked.connect(self.revisar)
-        self.lo_btn = QPushButton()
         self.lo_btn.clicked.connect(self._instalar_lo)
-        self.descargar_btn = QPushButton("Descargar la nueva versión de Quillay")
-        self.descargar_btn.setVisible(False)
-        self.al_abrir = QCheckBox("Revisar al abrir Quillay")
         self.al_abrir.setChecked(self.settings.value("revisar_al_abrir", False, bool))
         self.al_abrir.toggled.connect(lambda v: self.settings.setValue("revisar_al_abrir", v))
-        self.bar = QProgressBar()
-        self.bar.setVisible(False)
-        self.log = QPlainTextEdit()
-        self.log.setReadOnly(True)
-        nota = QLabel("Quillay funciona sin internet. Solo se conecta cuando aprietas un botón de esta página "
-                      "(o al abrir, si activas la casilla), y no envía nada tuyo: pregunta a GitHub y a "
-                      "LibreOffice cuáles son sus últimas versiones.")
-        nota.setWordWrap(True)
-        nota.setObjectName("Muted")
-
-        botones = QHBoxLayout()
-        for b in (self.revisar_btn, self.lo_btn, self.descargar_btn):
-            botones.addWidget(b)
-        botones.addStretch(1)
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(28, 24, 28, 24)
-        lay.addWidget(_title("Actualizaciones", "Mantén Quillay y LibreOffice al día: las versiones nuevas "
-                                                "traen correcciones de seguridad."))
-        lay.addWidget(self.estado)
-        lay.addLayout(botones)
-        lay.addWidget(self.al_abrir)
-        lay.addWidget(nota)
-        lay.addWidget(self.bar)
-        lay.addWidget(self.log, 1)
         self._mostrar_local()
 
     def _mostrar_local(self, version_lo: str = "") -> None:

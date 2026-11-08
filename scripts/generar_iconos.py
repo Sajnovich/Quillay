@@ -34,6 +34,12 @@ def render(svg: Path, size: int) -> Image.Image:
     return Image.open(io.BytesIO(png)).convert("RGBA")
 
 
+def render_rect(svg: Path, ancho: int, alto: int) -> Image.Image:
+    png = subprocess.run(["rsvg-convert", "-w", str(ancho), "-h", str(alto), str(svg)],
+                         capture_output=True, check=True).stdout
+    return Image.open(io.BytesIO(png)).convert("RGBA")
+
+
 def main() -> None:
     if not shutil.which("rsvg-convert"):
         raise SystemExit("Falta rsvg-convert: sudo apt install librsvg2-bin  (o brew install librsvg)")
@@ -44,6 +50,13 @@ def main() -> None:
     imgs[256].save(ASSETS / "icono.ico", sizes=[(s, s) for s in ico_sizes],
                    append_images=[imgs[s] for s in ico_sizes if s != 256])
     imgs[1024].save(ASSETS / "icono.icns", append_images=[imgs[s] for s in (16, 32, 64, 128, 256, 512)])
+    # Imágenes que se usan dentro de la ventana: el logo sin su cuadrado de fondo
+    # (se funde con la barra lateral) y los dibujos de la firma. «@2x» es la
+    # versión para pantallas de alta densidad (Retina): Qt la elige sola.
+    for nombre, ancho, alto in (("marca", 53, 72), ("bandera-chile", 18, 12), ("corazon-azul", 13, 12)):
+        for escala, sufijo in ((1, ""), (2, "@2x")):
+            render_rect(ASSETS / f"{nombre}.svg", ancho * escala, alto * escala).save(
+                ASSETS / f"{nombre}{sufijo}.png", optimize=True)
     print(f"Íconos generados en {ASSETS}")
 
 

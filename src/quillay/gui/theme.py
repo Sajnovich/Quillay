@@ -27,6 +27,17 @@ THEMES = {
 }
 
 
+_actual = "oscuro"  # tema aplicado ahora mismo (lo usan los íconos para elegir su color)
+
+
+def actual() -> str:
+    return _actual
+
+
+def colores() -> dict[str, str]:
+    return THEMES[_actual]
+
+
 def resolve(mode: str) -> str:
     """'sistema' → 'claro' u 'oscuro' según la configuración del sistema operativo."""
     if mode in THEMES:
@@ -36,7 +47,9 @@ def resolve(mode: str) -> str:
 
 
 def apply(app: QApplication, mode: str = "sistema") -> str:
+    global _actual
     name = resolve(mode)
+    _actual = name
     c = THEMES[name]
     app.setStyle("Fusion")
 
@@ -54,6 +67,8 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
     pal.setColor(QPalette.ColorRole.Link, QColor(LINK[name]))
     app.setPalette(pal)
 
+    # Pantallas hechas en Qt Designer (gui/ui/*.ui): en vez del objectName, se les da la
+    # propiedad dinámica «rol» = titulo o principal, o «muted» = true, y toman estos estilos.
     app.setStyleSheet(f"""
         QWidget {{ font-size: 13px; }}
         #Sidebar {{ background: {c['panel']}; border-right: 1px solid {c['border']}; }}
@@ -65,21 +80,24 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
         #BrandSub {{ color: {c['muted']}; padding: 0 18px 10px 18px; font-size: 12px; }}
         #Firma {{ color: {c['muted']}; padding: 0 18px; font-size: 11px; }}
         #FilesPanel {{ background: {c['panel']}; border-right: 1px solid {c['border']}; }}
-        #PageTitle {{ font-size: 22px; font-weight: 700; }}
+        #PageTitle, QLabel[rol="titulo"] {{ font-size: 22px; font-weight: 700; }}
         #Muted, QLabel[muted="true"] {{ color: {c['muted']}; }}
         QLabel[help="true"] {{ color: {c['muted']}; font-size: 11px; }}
         #Card {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 12px; }}
         #Card:hover {{ border-color: {ACCENT}; }}
+        #Grupo {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 10px; }}
+        #Grupo QCheckBox {{ background: transparent; }}
         #DropHint {{ color: {c['muted']}; border: 2px dashed {c['border']}; border-radius: 12px;
                     padding: 18px; }}
         QPushButton {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 8px;
                        padding: 7px 14px; }}
         QPushButton:hover {{ border-color: {ACCENT}; }}
         QPushButton:disabled {{ color: {c['muted']}; }}
-        QPushButton#Primary {{ background: {ACCENT}; color: white; border: none; font-weight: 600;
-                               padding: 9px 22px; }}
-        QPushButton#Primary:hover {{ background: {ACCENT_HOVER}; }}
-        QPushButton#Primary:disabled {{ background: {c['border']}; color: {c['muted']}; }}
+        QPushButton#Primary, QPushButton[rol="principal"] {{
+            background: {ACCENT}; color: white; border: none; font-weight: 600; padding: 9px 22px; }}
+        QPushButton#Primary:hover, QPushButton[rol="principal"]:hover {{ background: {ACCENT_HOVER}; }}
+        QPushButton#Primary:disabled, QPushButton[rol="principal"]:disabled {{
+            background: {c['border']}; color: {c['muted']}; }}
         QLineEdit, QComboBox, QPlainTextEdit {{
             background: {c['input']}; border: 1px solid {c['border']}; border-radius: 7px; padding: 5px 8px; }}
         QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus {{ border-color: {ACCENT}; }}

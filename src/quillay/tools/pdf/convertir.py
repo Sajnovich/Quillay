@@ -12,7 +12,15 @@ from pathlib import Path
 
 from PIL import Image
 
-from quillay.core.imageio import SaveOptions, flatten, human_size, open_image, save_image, unique_path
+from quillay.core.imageio import (
+    SaveOptions,
+    flatten,
+    format_labels,
+    human_size,
+    open_image,
+    save_image,
+    unique_path,
+)
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
 from quillay.tools.pdf.comun import abrir, imagenes, mensaje_pdf, parse_pages
@@ -82,7 +90,8 @@ def imagenes_a_pdf(ctx: Context) -> Report:
         Param("modo", "Qué obtener", "choice", "paginas", ("paginas", "imagenes"),
               choice_labels=("Cada página como imagen", "Las imágenes incrustadas (calidad original)")),
         Param("dpi", "Resolución (DPI)", "int", 150, min=36, max=600, visible_if=("modo", ("paginas",))),
-        Param("formato", "Formato", "choice", "jpg", ("png", "jpg", "webp"), visible_if=("modo", ("paginas",))),
+        Param("formato", "Formato", "choice", "jpg", ("png", "jpg", "webp"),
+              choice_labels=format_labels(("png", "jpg", "webp")), visible_if=("modo", ("paginas",))),
         Param("calidad", "Calidad", "int", 90, min=1, max=100, visible_if=("modo", ("paginas",))),
         Param("paginas", "Páginas", "str", "",
               help="Vacío = todas. Ej: 1-3,5"),

@@ -2,6 +2,25 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Agregado
+- **Íconos en el menú y en las tarjetas de inicio**, uno por herramienta, con [QtAwesome](https://github.com/spyder-ide/qtawesome) (set Phosphor, licencia MIT). Se ven nítidos en pantallas Retina y cambian de color con el tema; el ítem seleccionado lo muestra en blanco.
+- La página *Actualizaciones* ahora se diseña en **Qt Designer** (`src/quillay/gui/ui/actualizaciones.ui`) y se compila con `python scripts/compilar_ui.py`.
+- `scripts/generar_capturas.py`: rehace solas todas las capturas del README con archivos de ejemplo inventados.
+- **Sugerencias en los formatos:** cada opción dice para qué conviene (por ejemplo «WebP · página web: liviano y con transparencia» o «PNG · logos, capturas y fondos transparentes»).
+- **«Tamaños para redes» por plataforma:** los tamaños se agrupan en tarjetas compactas, una por red (Instagram, Historias y Reels, Facebook, LinkedIn, X, YouTube y enlaces web), con su logo como referencia, ordenadas de izquierda a derecha y con la medida en gris al lado de cada opción.
+
+### Corregido
+- Cerrar Quillay mientras leía la versión de LibreOffice (o mientras corría otro trabajo) hacía que el programa abortara al salir, y macOS lo mostraba como «Quillay se cerró inesperadamente». Ahora detiene y espera esos trabajos antes de cerrar.
+
+### Cambiado
+- Dentro de la ventana, el logo va sin su cuadrado de fondo: en el tema oscuro ya no se nota el borde del cuadrado contra la barra lateral.
+- Firma al pie, en inglés: «Created by Eduardo Sajnovich · Made in Chile 🇨🇱 · Free for everyone 💙». En la ventana, la bandera y el corazón son imágenes (Windows no dibuja los emoji de bandera), y `quillay --version` la muestra completa sin cortarla.
+- **La ventana ya no se desplaza hacia los lados**, ni siquiera en su tamaño mínimo: las etiquetas pasan arriba de su campo cuando falta espacio, las tarjetas de inicio y de redes se reacomodan en 3, 2 o 1 columnas, y el panel de archivos también cede espacio al achicar la ventana.
+- El cuadro de resultado usa solo el espacio que sobra, así casi todas las herramientas caben sin tener que bajar.
+- Las capturas del README muestran el nuevo logo y los colores azules.
+
 ## [0.4.0] — 2026-11-08
 
 Quillay instala y mantiene al día LibreOffice por ti, te avisa cuando hay versiones nuevas y estrena logo.

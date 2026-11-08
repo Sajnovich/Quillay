@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
+    QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -48,6 +50,7 @@ class FileList(QWidget):
         title.setStyleSheet("font-weight: 700; font-size: 15px;")
         self.count = QLabel("Arrastra imágenes, PDF o documentos aquí")
         self.count.setObjectName("Muted")
+        self.count.setWordWrap(True)  # el panel se angosta con la ventana: el texto baja de línea
 
         self.list = QListWidget()
         self.list.setObjectName("Files")
@@ -235,6 +238,94 @@ class ColorButton(QPushButton):
             self.set_value(f"#{color.red():02x}{color.green():02x}{color.blue():02x}{a}")
 
 
+class GroupGrid(QWidget):
+    """Tarjetas en filas que se reacomodan según el ancho disponible.
+
+    Con la ventana ancha caben tres o cuatro por fila; si se achica, bajan a
+    dos o a una. Así la página nunca necesita moverse hacia los lados.
+    """
+
+    def __init__(self, cards: list[QWidget], max_columnas: int = 4, ancho_tarjeta: int = 0) -> None:
+        super().__init__()
+        self.cards = cards
+        self.max_columnas = max_columnas
+        self.ancho_fijo = ancho_tarjeta  # ancho deseado de cada tarjeta (0 = el que pida su contenido)
+        self.grid = QGridLayout(self)
+        self.grid.setContentsMargins(0, 0, 0, 0)
+        self.grid.setSpacing(8)
+        self.columnas = 0
+        self._acomodar(min(3, max_columnas, len(cards)))
+
+    def _ancho_tarjeta(self) -> int:
+        return self.ancho_fijo or max(c.sizeHint().width() for c in self.cards)
+
+    def _acomodar(self, columnas: int) -> None:
+        if columnas == self.columnas:
+            return
+        for card in self.cards:
+            self.grid.removeWidget(card)
+        for i, card in enumerate(self.cards):
+            self.grid.addWidget(card, i // columnas, i % columnas)
+        for col in range(max(columnas, self.columnas)):
+            self.grid.setColumnStretch(col, 1 if col < columnas else 0)
+        self.columnas = columnas
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802 - nombre de Qt
+        # Lo mínimo es una sola columna: el resto se decide al cambiar de tamaño.
+        return QSize(max(c.minimumSizeHint().width() for c in self.cards), super().minimumSizeHint().height())
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 - nombre de Qt
+        ancho = self._ancho_tarjeta() + self.grid.spacing()
+        cabe = (event.size().width() + self.grid.spacing()) // ancho
+        self._acomodar(max(1, min(len(self.cards), self.max_columnas, cabe)))
+        super().resizeEvent(event)
+
+
+def _grouped_checks(p: Param) -> tuple[QWidget, list[tuple[str, QCheckBox]]]:
+    """Opciones agrupadas en tarjetas compactas, de izquierda a derecha (ej. una por red social)."""
+    from quillay.gui import iconos
+
+    checks: list[tuple[str, QCheckBox]] = []
+    grupos: dict[str, QVBoxLayout] = {}
+    cards: list[QWidget] = []
+    for choice, grupo in zip(p.choices, p.choice_groups, strict=True):
+        if grupo not in grupos:
+            card = QFrame()
+            card.setObjectName("Grupo")
+            lay = QVBoxLayout(card)
+            lay.setContentsMargins(10, 6, 10, 8)
+            lay.setSpacing(2)
+            head = QHBoxLayout()
+            head.setSpacing(6)
+            head.addWidget(iconos.IconLabel(iconos.REDES.get(grupo, iconos.GENERICO), "texto", 15))
+            title = QLabel(grupo)
+            title.setStyleSheet("font-weight: 600; background: transparent;")
+            head.addWidget(title)
+            head.addStretch(1)
+            lay.addLayout(head)
+            grupos[grupo] = lay
+            cards.append(card)
+        # «Post 1:1 · 1080×1080»: el nombre en la casilla y la medida en gris a la derecha.
+        nombre, _, medida = p.label_for(choice).partition(" · ")
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        cb = QCheckBox(nombre)
+        cb.setChecked(choice in p.default)
+        cb.setToolTip(p.label_for(choice))
+        row.addWidget(cb)
+        row.addStretch(1)
+        if medida:
+            size = QLabel(medida)
+            size.setProperty("muted", True)
+            size.setStyleSheet("background: transparent; font-size: 11px;")
+            row.addWidget(size)
+        grupos[grupo].addLayout(row)
+        checks.append((choice, cb))
+    for lay in grupos.values():
+        lay.addStretch(1)
+    return GroupGrid(cards), checks
+
+
 class ParamForm(QWidget):
     """Construye el formulario automáticamente a partir de una lista de ``Param``."""
 
@@ -248,6 +339,10 @@ class ParamForm(QWidget):
         self.getters: dict[str, Any] = {}
         self.rows: dict[str, list[QWidget]] = {}
         self.form = QFormLayout(self)
+        # Si la ventana es angosta, la etiqueta pasa arriba de su campo en vez de
+        # empujar la página hacia la derecha.
+        self.form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        self.form.setVerticalSpacing(6)  # compacto: los formularios largos caben sin bajar
         self.form.setContentsMargins(0, 0, 0, 0)
         self.form.setVerticalSpacing(6)
         self.form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
@@ -281,6 +376,9 @@ class ParamForm(QWidget):
             widget.setCurrentIndex(p.choices.index(p.default))
             widget.currentIndexChanged.connect(self._update_visibility)
             self.getters[p.name] = widget.currentData
+        elif p.kind == "multichoice" and p.choice_groups:
+            widget, checks = _grouped_checks(p)
+            self.getters[p.name] = lambda checks=checks: [c for c, cb in checks if cb.isChecked()]
         elif p.kind == "multichoice":
             widget = QWidget()
             box = QVBoxLayout(widget)
@@ -371,10 +469,31 @@ class Worker(QThread):
     finished_ok = Signal(object)
     failed = Signal(str)
 
+    # Hilos que siguen trabajando. Guardarlos aquí evita que Python los borre a medio
+    # camino, y permite detenerlos todos antes de cerrar la app.
+    _activos: set[Worker] = set()
+
     def __init__(self, fn, *args: Any, **kwargs: Any) -> None:
         super().__init__()
         self.fn, self.args, self.kwargs = fn, args, kwargs
         self.cancel_event = threading.Event()
+        self.finished.connect(lambda: Worker._activos.discard(self))
+
+    def start(self, *args: Any) -> None:
+        Worker._activos.add(self)
+        super().start(*args)
+
+    @classmethod
+    def detener_todos(cls, espera_ms: int = 5000) -> None:
+        """Al cerrar Quillay: pide a cada hilo que se detenga y lo espera.
+
+        Si Qt destruye un hilo que sigue corriendo, aborta el programa («QThread:
+        Destroyed while thread is still running») y el sistema lo muestra como
+        un cierre inesperado.
+        """
+        for worker in list(cls._activos):
+            worker.cancel_event.set()
+            worker.wait(espera_ms)
 
     def run(self) -> None:  # se ejecuta en el hilo secundario
         try:

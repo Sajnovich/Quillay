@@ -41,6 +41,8 @@ A esto se le llama *fuente única de verdad* (*single source of truth*): si camb
 | `recipes/` | Cargar, validar, guardar y ejecutar recetas YAML. | No |
 | `cli.py` | Terminal: genera los subcomandos desde el registro. | No |
 | `gui/` | Ventana: formularios automáticos, lista de archivos, trabajo en segundo plano. | **Sí** |
+| `gui/iconos.py` | Íconos del menú y de las tarjetas (QtAwesome, set Phosphor), pintados con los colores del tema. | **Sí** |
+| `gui/ui/` | Pantallas diseñadas en Qt Designer (`.ui`) y su código generado (`ui_*.py`). | **Sí** |
 
 Como solo `gui/` usa Qt, se puede instalar Quillay sin interfaz (`pip install .`) en un servidor y usar únicamente la terminal.
 
@@ -88,9 +90,24 @@ Luego impórtala en `tools/__init__.py`. Listo: aparece en la barra lateral, en 
 | **OpenCV < 5** para caras | Trae clasificadores Haar listos y sin internet. La versión 5 los dejó de incluir. |
 | **dHash** para duplicados | Implementado a mano (12 líneas): huella de 64 bits resistente a cambios de tamaño y formato. Se compara con distancia de Hamming. |
 | **YAML con `safe_load`** | Las recetas se comparten entre personas; `safe_load` impide ejecutar código escondido en el archivo. |
+| **QtAwesome** para íconos | Íconos vectoriales (MIT) que se ven nítidos en cualquier tamaño y toman el color del tema. Descartamos QFluentWidgets: es GPLv3 o de pago, y obligaría a cambiar la licencia MIT. |
+| **Qt Designer solo para pantallas fijas** | Los formularios de las herramientas se generan solos desde sus `Param`: hacerlos en Designer obligaría a mantener un `.ui` a mano por herramienta. Designer se usa para pantallas armadas a mano, como *Actualizaciones*. |
 | **QThread + señales** | El procesamiento corre en otro hilo para que la ventana no se congele; Qt entrega el progreso al hilo principal de forma segura. |
 | **PyInstaller `onedir`** | Arranca más rápido que `onefile` (no descomprime todo en cada inicio). |
 | **GitHub Actions** con matriz de 3 SO | PyInstaller no hace compilación cruzada: cada ejecutable se construye en su propio sistema. |
+
+## Editar una pantalla con Qt Designer
+
+Qt Designer es el editor visual de Qt: armas la pantalla arrastrando widgets y la guarda como un `.ui` (un XML). Viene incluido con PySide6.
+
+```bash
+pyside6-designer src/quillay/gui/ui/actualizaciones.ui
+python scripts/compilar_ui.py
+```
+
+`compilar_ui.py` usa `pyside6-uic` para convertir cada `.ui` en una clase de Python (`ui_actualizaciones.py`) con un método `setupUi()`. La página la importa y solo conecta la lógica (qué hace cada botón). Los `ui_*.py` son generados: no se editan a mano y ruff no los revisa. Un test avisa si cambiaste el `.ui` y olvidaste compilarlo.
+
+Para que un widget hecho en Designer tome los estilos del tema, dale la propiedad dinámica `rol` (`titulo` o `principal`) o `muted` = `true` (en Designer: botón **+** del editor de propiedades).
 
 ## Reglas de seguridad de los archivos
 

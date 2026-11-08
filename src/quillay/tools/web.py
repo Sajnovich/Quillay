@@ -10,7 +10,15 @@ from pathlib import Path
 
 from PIL import Image, ImageFilter
 
-from quillay.core.imageio import SaveOptions, avif_available, human_size, open_image, save_image, unique_path
+from quillay.core.imageio import (
+    SaveOptions,
+    avif_available,
+    format_labels,
+    human_size,
+    open_image,
+    save_image,
+    unique_path,
+)
 from quillay.core.params import Param, color_to_rgba
 from quillay.core.registry import Context, Report, tool
 from quillay.tools.pasos import encajar
@@ -126,6 +134,7 @@ def favicons(ctx: Context) -> Report:
     (
         Param("anchos", "Anchos (px, separados por coma)", "str", "480,768,1024,1440,1920"),
         Param("formatos", "Formatos", "multichoice", ["avif", "webp", "jpg"], ("avif", "webp", "jpg", "png"),
+              choice_labels=format_labels(("avif", "webp", "jpg", "png")),
               help="El navegador elige el primero que soporte; el último es el respaldo."),
         Param("calidad", "Calidad", "int", 72, min=1, max=100),
         Param("ruta_web", "Ruta en el sitio", "str", "/img/",
@@ -200,16 +209,17 @@ def responsive(ctx: Context) -> Report:
 
 # ------------------------------------------------------------- redes sociales
 
+# clave → (red, tamaño, ancho, alto). El orden es el que se ve en la ventana.
 SOCIAL = {
-    "instagram-post": ("Instagram post 1:1", 1080, 1080),
-    "instagram-vertical": ("Instagram vertical 4:5", 1080, 1350),
-    "historia": ("Historia / Reel / Estado 9:16", 1080, 1920),
-    "facebook-post": ("Facebook post", 1200, 630),
-    "linkedin-post": ("LinkedIn post", 1200, 627),
-    "linkedin-portada": ("LinkedIn portada", 1584, 396),
-    "x-post": ("X (Twitter) post 16:9", 1600, 900),
-    "youtube-miniatura": ("YouTube miniatura", 1280, 720),
-    "open-graph": ("Vista previa de enlace (Open Graph)", 1200, 630),
+    "instagram-post": ("Instagram", "Post 1:1", 1080, 1080),
+    "instagram-vertical": ("Instagram", "Vertical 4:5", 1080, 1350),
+    "historia": ("Historias y Reels", "Vertical 9:16", 1080, 1920),
+    "facebook-post": ("Facebook", "Post", 1200, 630),
+    "linkedin-post": ("LinkedIn", "Post", 1200, 627),
+    "linkedin-portada": ("LinkedIn", "Portada", 1584, 396),
+    "x-post": ("X", "Post 16:9", 1600, 900),
+    "youtube-miniatura": ("YouTube", "Miniatura", 1280, 720),
+    "open-graph": ("Enlaces web", "Vista previa", 1200, 630),
 }
 
 
@@ -219,12 +229,15 @@ SOCIAL = {
     CAT,
     (
         Param("plataformas", "Formatos", "multichoice", ["instagram-post", "historia", "linkedin-post"],
-              tuple(SOCIAL), choice_labels=tuple(f"{v[0]} ({v[1]}×{v[2]})" for v in SOCIAL.values())),
+              tuple(SOCIAL), choice_labels=tuple(f"{v[1]} · {v[2]}×{v[3]}" for v in SOCIAL.values()),
+              choice_groups=tuple(v[0] for v in SOCIAL.values())),
         Param("ajuste", "Ajuste", "choice", "cubrir", ("cubrir", "contener"),
               choice_labels=("Cubrir (recorta)", "Contener (agrega bordes)")),
         Param("color_fondo", "Color de bordes", "color", "#ffffff",
               visible_if=("ajuste", ("contener",))),
-        Param("formato", "Formato", "choice", "jpg", ("jpg", "png", "webp")),
+        Param("formato", "Formato", "choice", "jpg", ("jpg", "png", "webp"),
+              choice_labels=format_labels(("jpg", "png", "webp")),
+              help="Sugerencia: JPG para publicar; PNG si la imagen tiene texto o un logo."),
         Param("calidad", "Calidad", "int", 90, min=1, max=100),
     ),
 )
@@ -241,7 +254,8 @@ def redes_sociales(ctx: Context) -> Report:
             continue
         for key in o["plataformas"]:
             ctx.tick(done, total, f"{src.name} → {key}")
-            label, w, h = SOCIAL[key]
+            red, tamano, w, h = SOCIAL[key]
+            label = f"{red} · {tamano}"
             fitted = encajar(img, {"ancho": w, "alto": h, "ajuste": o["ajuste"],
                                    "color_fondo": o["color_fondo"]})
             dest = save_image(fitted, src, ctx.output_dir(),

@@ -51,6 +51,12 @@ quillay-gui
 
 Lee [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md#agregar-una-herramienta-nueva). En resumen: una función con `@tool(...)` (o `@step(...)` si debe poder usarse en recetas), un import en `tools/__init__.py` y un test.
 
+## Cambiar el diseño de la ventana
+
+- **Pantallas fijas** (como *Actualizaciones*): se editan con Qt Designer y se compilan con `python scripts/compilar_ui.py`. Detalles en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md#editar-una-pantalla-con-qt-designer).
+- **Íconos:** el ícono de cada herramienta está en `src/quillay/gui/iconos.py` (nombres del set [Phosphor](https://phosphoricons.com)).
+- **Capturas del README:** después de un cambio visual, regenéralas con `python scripts/generar_capturas.py`.
+
 ## Aportar una receta incluida
 
 Las recetas viven en `src/quillay/recipes/incluidas/`. Una buena receta resuelve una tarea concreta y frecuente (por ejemplo: "fotos de producto para MercadoLibre"). Agrega el `.yaml`, verifica que `quillay receta correr <nombre> <carpeta>` funcione y súmala a la lista del README.

@@ -118,4 +118,106 @@ def test_firma_fija_al_pie(window):
 
     firma = window.findChild(QLabel, "Firma")
     assert firma is not None and firma.isVisible()
-    assert firma.text().replace("\n", " · ") == FIRMA
+    assert firma.accessibleName() == FIRMA
+    assert "Created by Eduardo Sajnovich" in firma.text()
+    # La bandera y el corazón van como imágenes (el emoji de bandera no se ve en Windows).
+    assert "bandera-chile.png" in firma.text() and "corazon-azul.png" in firma.text()
+
+
+def test_redes_agrupadas_por_plataforma(window):
+    """«Tamaños para redes» muestra una tarjeta por red, una al lado de otra."""
+    from PySide6.QtWidgets import QCheckBox, QFrame
+
+    from quillay.tools.web import SOCIAL
+
+    window.select("redes_sociales")
+    page = window.stack.currentWidget()
+    tarjetas = page.findChildren(QFrame, "Grupo")
+    assert len(tarjetas) == len({red for red, *_ in SOCIAL.values()})
+    marcadas = page.form.values()["plataformas"]
+    assert marcadas == ["instagram-post", "historia", "linkedin-post"]
+    assert sum(len(t.findChildren(QCheckBox)) for t in tarjetas) == len(SOCIAL)
+
+
+def test_iconos_del_menu(window):
+    """Cada herramienta tiene un ícono que existe de verdad en la fuente Phosphor."""
+    import json
+    from pathlib import Path
+
+    qtawesome = pytest.importorskip("qtawesome")
+    from PySide6.QtCore import Qt
+
+    from quillay.gui import iconos
+
+    fuentes = Path(qtawesome.__file__).parent / "fonts"
+    nombres = json.loads(next(fuentes.glob("phosphor-charmap-*.json")).read_text())
+    marcas = json.loads(next(fuentes.glob("fontawesome6-brands-webfont-charmap-*.json")).read_text())
+    usados = (set(iconos.HERRAMIENTAS.values()) | set(iconos.CATEGORIAS.values())
+              | set(iconos.REDES.values()) | {iconos.GENERICO})
+    faltan = {n for n in usados if not (n.removeprefix("fa6b.") in marcas if n.startswith("fa6b.") else n in nombres)}
+    assert not faltan, faltan
+    assert {t.id for t in TOOLS.values()} <= set(iconos.HERRAMIENTAS)
+    for i in range(window.nav.count()):
+        item = window.nav.item(i)
+        if item.data(Qt.ItemDataRole.UserRole):
+            assert not item.icon().isNull(), item.text()
+
+
+def test_pantallas_de_qt_designer_compiladas(app):
+    """Cada .ui tiene su ui_*.py y crea los mismos widgets (si no, falta correr scripts/compilar_ui.py)."""
+    import importlib
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+
+    from PySide6.QtWidgets import QWidget
+
+    carpeta = Path(__file__).resolve().parent.parent / "src" / "quillay" / "gui" / "ui"
+    pantallas = sorted(carpeta.glob("*.ui"))
+    assert pantallas
+    for ui in pantallas:
+        raiz = ET.parse(ui).getroot()
+        clase = raiz.findtext("class")
+        nombres = {w.get("name") for w in raiz.iter() if w.tag in ("widget", "layout", "spacer")} - {clase}
+        modulo = importlib.import_module(f"quillay.gui.ui.ui_{ui.stem}")
+        generado = getattr(modulo, f"Ui_{clase}")()
+        destino = QWidget()
+        generado.setupUi(destino)
+        assert nombres <= set(vars(generado)), f"{ui.name}: corre python scripts/compilar_ui.py"
+        destino.deleteLater()
+
+
+def test_cerrar_detiene_los_hilos(app):
+    """Al cerrar, Quillay cancela y espera los trabajos en curso (si no, Qt aborta al salir)."""
+    import time
+
+    from quillay.gui.widgets import Worker
+
+    def trabajo_largo(progress=None, cancel_event=None):
+        for _ in range(500):
+            if cancel_event.is_set():
+                return "cancelado"
+            time.sleep(0.01)
+        return "terminado"
+
+    worker = Worker(trabajo_largo)
+    worker.start()
+    assert worker in Worker._activos
+    Worker.detener_todos(espera_ms=3000)
+    assert worker.isFinished()
+    app.processEvents()
+    assert worker not in Worker._activos
+
+
+def test_ninguna_pagina_se_sale_hacia_los_lados(window, app):
+    """Con la ventana en su tamaño mínimo, ninguna página necesita moverse hacia los lados."""
+    from PySide6.QtWidgets import QScrollArea
+
+    window.resize(window.minimumSize())
+    app.processEvents()
+    for key in list(window.pages):
+        window.select(key)
+        for _ in range(5):
+            app.processEvents()
+        scroll = window.stack.currentWidget().findChild(QScrollArea)
+        if scroll is not None:
+            assert scroll.widget().width() <= scroll.viewport().width(), key

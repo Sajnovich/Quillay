@@ -46,7 +46,10 @@ dependencies = [
 
 [project.optional-dependencies]
 # La ventana es opcional: en un servidor basta con la terminal.
-gui = ["PySide6-Essentials>=6.7"]
+gui = [
+  "PySide6-Essentials>=6.7",
+  "QtAwesome>=1.4",                     # íconos vectoriales del menú (set Phosphor, MIT)
+]
 dev = ["pytest>=8", "ruff>=0.6", "pyinstaller>=6.10"]
 
 [project.scripts]
@@ -72,6 +75,8 @@ addopts = "-q"
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+# Código generado por pyside6-uic desde los .ui de Qt Designer: no se edita a mano.
+extend-exclude = ["src/quillay/gui/ui/ui_*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]

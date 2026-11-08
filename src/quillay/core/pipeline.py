@@ -14,6 +14,7 @@ from typing import Any
 from quillay.core.imageio import (
     OUTPUT_FORMATS,
     SaveOptions,
+    format_labels,
     human_size,
     open_image,
     save_image,
@@ -24,7 +25,8 @@ from quillay.core.registry import STEPS, Cancelled, Context, Report
 # Parámetros de guardado reutilizados por varias herramientas.
 P_FORMATO = Param(
     "formato", "Formato de salida", "choice", "igual", OUTPUT_FORMATS,
-    help="«igual» mantiene el formato de cada archivo.",
+    choice_labels=format_labels(OUTPUT_FORMATS),
+    help="Sugerencia: WebP para una página web, JPG para enviar fotos, PNG para logos.",
 )
 P_CALIDAD = Param(
     "calidad", "Calidad", "int", 85, min=1, max=100,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from html import escape
 from importlib import resources
 
 from PySide6.QtCore import QSettings, QSize, Qt
@@ -22,10 +23,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from quillay import FIRMA, __app_name__, __version__
+from quillay import FIRMA, __app_name__, __autor__, __version__
 from quillay.core.registry import tools_by_category
-from quillay.gui import theme
-from quillay.gui.pages import ICONS, HomePage, RecipesPage, ToolPage, UpdatesPage
+from quillay.gui import iconos, theme
+from quillay.gui.pages import HomePage, RecipesPage, ToolPage, UpdatesPage
 from quillay.gui.widgets import FileList, Worker
 
 HOME, RECIPES, UPDATES = "__inicio__", "__recetas__", "__actualizaciones__"
@@ -53,8 +54,10 @@ class MainWindow(QMainWindow):
         brand_row = QHBoxLayout(brand)
         brand_row.setContentsMargins(18, 16, 18, 2)
         brand_row.setSpacing(10)
+        # Dentro de la ventana va el logo sin su cuadrado de fondo: así no se nota el
+        # borde del cuadrado contra la barra lateral, en el tema claro ni en el oscuro.
         logo = QLabel()
-        logo.setPixmap(app_icon().pixmap(QSize(34, 34)))
+        logo.setPixmap(asset_icon("marca.png").pixmap(QSize(25, 34)))
         name = QLabel("Quillay")
         name.setObjectName("Brand")
         brand_row.addWidget(logo, 0, Qt.AlignmentFlag.AlignVCenter)
@@ -63,6 +66,7 @@ class MainWindow(QMainWindow):
         sub = QLabel("Todo para tus PDF e imágenes.\nNada sale de tu equipo.")
         sub.setObjectName("BrandSub")
         self.nav = QListWidget()
+        self.nav.setIconSize(QSize(18, 18))
         self.nav.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.nav.currentItemChanged.connect(self._navigate)
         side.addWidget(brand)
@@ -79,9 +83,10 @@ class MainWindow(QMainWindow):
         theme_row.addWidget(self.theme_box, 1)
         side.addLayout(theme_row)
         # Firma fija al pie: está escrita en el código, no es un ajuste.
-        firma = QLabel(FIRMA.replace(" · Hecho", "\nHecho"))
+        firma = QLabel(firma_html())
         firma.setObjectName("Firma")
-        firma.setTextFormat(Qt.TextFormat.PlainText)
+        firma.setTextFormat(Qt.TextFormat.RichText)
+        firma.setAccessibleName(FIRMA)  # lo que lee un lector de pantalla
         firma.setWordWrap(True)
         side.addSpacing(8)
         side.addWidget(firma)
@@ -89,22 +94,29 @@ class MainWindow(QMainWindow):
         # --- páginas -------------------------------------------------------
         home = HomePage()
         home.open_tool.connect(self.select)
-        self._add_nav(HOME, "⌂  Inicio", home)
+        self.home = home
+        self._add_nav(HOME, "Inicio", home)
         for category, tools in tools_by_category().items():
-            self._add_header(f"{ICONS.get(category, '•')}  {category.upper()}")
+            self._add_header(category.upper())
             for tool in tools:
-                self._add_nav(tool.id, "    " + tool.name, ToolPage(tool, self.files))
+                self._add_nav(tool.id, tool.name, ToolPage(tool, self.files))
         # Recetas al final: es lo más avanzado; quien solo quiere unir un PDF no lo necesita primero.
-        self._add_header("⚙  AUTOMATIZAR")
-        self._add_nav(RECIPES, "    Recetas", RecipesPage(self.files))
-        self._add_header("⟳  MANTENER")
-        self._add_nav(UPDATES, "    Actualizaciones", UpdatesPage())
+        self._add_header("AUTOMATIZAR")
+        self._add_nav(RECIPES, "Recetas", RecipesPage(self.files))
+        self._add_header("MANTENER")
+        self._add_nav(UPDATES, "Actualizaciones", UpdatesPage())
+        self._refresh_icons()
 
         split = QSplitter()
         split.addWidget(self.files)
         split.addWidget(self.stack)
         split.setSizes([300, 900])
         split.setChildrenCollapsible(False)
+        # Al achicar la ventana, el panel de archivos también cede espacio (1 de cada 3 px):
+        # así la herramienta no queda tan angosta que haya que moverse hacia los lados.
+        split.setStretchFactor(0, 1)
+        split.setStretchFactor(1, 2)
+        self.files.setMinimumWidth(200)
 
         central = QWidget()
         lay = QHBoxLayout(central)
@@ -131,6 +143,14 @@ class MainWindow(QMainWindow):
         item = QListWidgetItem(label)
         item.setData(Qt.ItemDataRole.UserRole, key)
         self.nav.addItem(item)
+
+    def _refresh_icons(self) -> None:
+        """Vuelve a pintar los íconos con los colores del tema actual."""
+        for i in range(self.nav.count()):
+            item = self.nav.item(i)
+            if key := item.data(Qt.ItemDataRole.UserRole):
+                item.setIcon(iconos.de_herramienta(key))
+        self.home.refresh_icons()
 
     def select(self, key: str) -> None:
         for i in range(self.nav.count()):
@@ -167,6 +187,34 @@ class MainWindow(QMainWindow):
     def _set_theme(self, mode: str) -> None:
         self.settings.setValue("tema", mode)
         theme.apply(self.app, mode)
+        self._refresh_icons()
+
+
+def asset_path(name: str) -> str:
+    """Ruta de un archivo de assets/ (existe también dentro del ejecutable empaquetado)."""
+    path = resources.files("quillay") / "assets" / name
+    return str(path) if path.is_file() else ""
+
+
+def asset_icon(name: str) -> QIcon:
+    path = asset_path(name)
+    return QIcon(path) if path else QIcon()
+
+
+def firma_html() -> str:
+    """La firma con la bandera y el corazón dibujados como imágenes.
+
+    Los emoji de bandera no se ven en Windows (muestra las letras «CL»), así que
+    en la ventana usamos imágenes; en la terminal queda el texto de ``FIRMA``.
+    Qt elige solo la versión «@2x» de cada imagen en pantallas Retina.
+    """
+    def img(name: str, ancho: int, alto: int, alt: str) -> str:
+        path = asset_path(name)
+        return f'<img src="{escape(path)}" width="{ancho}" height="{alto}" alt="{alt}">' if path else alt
+
+    return (f"Created by {escape(__autor__)}<br>"
+            f"Made in Chile&nbsp;{img('bandera-chile.png', 18, 12, '🇨🇱')} · "
+            f"Free for everyone&nbsp;{img('corazon-azul.png', 13, 12, '💙')}")
 
 
 def app_icon() -> QIcon:
@@ -193,6 +241,7 @@ def main() -> int:
     if len(sys.argv) > 1:
         window.files.add_paths(sys.argv[1:])
     code = app.exec()
+    Worker.detener_todos()  # que ningún hilo quede corriendo al cerrar
     # Liberamos la ventana antes que la aplicación: si Python las destruye en
     # otro orden al salir, Qt (C++) puede liberar memoria dos veces y caerse.
     window.deleteLater()

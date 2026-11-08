@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Actualizaciones</class>
+ <widget class="QWidget" name="Actualizaciones">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>760</width>
+    <height>560</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Actualizaciones</string>
+  </property>
+  <layout class="QVBoxLayout" name="lay">
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <property name="leftMargin">
+    <number>28</number>
+   </property>
+   <property name="topMargin">
+    <number>24</number>
+   </property>
+   <property name="rightMargin">
+    <number>28</number>
+   </property>
+   <property name="bottomMargin">
+    <number>24</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="titulo">
+     <property name="text">
+      <string>Actualizaciones</string>
+     </property>
+     <property name="rol" stdset="0">
+      <string notr="true">titulo</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="subtitulo">
+     <property name="text">
+      <string>Mantén Quillay y LibreOffice al día: las versiones nuevas traen correcciones de seguridad.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="muted" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="estado">
+     <property name="text">
+      <string>Quillay
+LibreOffice</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::TextFormat::PlainText</enum>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="botones">
+     <item>
+      <widget class="QPushButton" name="revisar_btn">
+       <property name="text">
+        <string>Buscar actualizaciones</string>
+       </property>
+       <property name="rol" stdset="0">
+        <string notr="true">principal</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="lo_btn">
+       <property name="text">
+        <string>Instalar LibreOffice</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="descargar_btn">
+       <property name="visible">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Descargar la nueva versión de Quillay</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="relleno_botones">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="al_abrir">
+     <property name="text">
+      <string>Revisar al abrir Quillay</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="nota">
+     <property name="text">
+      <string>Quillay funciona sin internet. Solo se conecta cuando aprietas un botón de esta página (o al abrir, si activas la casilla), y no envía nada tuyo: pregunta a GitHub y a LibreOffice cuáles son sus últimas versiones.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="muted" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="bar">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPlainTextEdit" name="log">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
