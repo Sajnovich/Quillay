@@ -238,6 +238,23 @@ class ColorButton(QPushButton):
             self.set_value(f"#{color.red():02x}{color.green():02x}{color.blue():02x}{a}")
 
 
+class ShrinkCombo(QComboBox):
+    """Menú que muestra sus opciones completas si hay espacio, pero puede angostarse.
+
+    Un QComboBox normal exige el ancho de su opción más larga; con opciones como
+    «Igual al original: fuentes, colores e imágenes (usa LibreOffice)» y las
+    fuentes más anchas de Windows, empujaba la página hacia la derecha. Este
+    acepta quedar más angosto (corta el texto con «…»); al abrirlo, la lista se
+    ensancha y muestra cada opción entera.
+    """
+
+    MINIMO = 160
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802 - nombre de Qt
+        hint = super().minimumSizeHint()
+        return QSize(min(hint.width(), self.MINIMO), hint.height())
+
+
 class GroupGrid(QWidget):
     """Tarjetas en filas que se reacomodan según el ancho disponible.
 
@@ -370,7 +387,7 @@ class ParamForm(QWidget):
             widget.toggled.connect(self._update_visibility)
             self.getters[p.name] = widget.isChecked
         elif p.kind == "choice":
-            widget = QComboBox()
+            widget = ShrinkCombo()
             for choice in p.choices:
                 widget.addItem(p.label_for(choice), choice)
             widget.setCurrentIndex(p.choices.index(p.default))

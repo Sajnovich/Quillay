@@ -81,7 +81,8 @@ class RunPanel(QWidget):
         self.run_btn.clicked.connect(self.run_requested)
         self.cancel_btn = QPushButton("Cancelar")
         self.cancel_btn.setVisible(False)
-        self.open_btn = QPushButton("Abrir carpeta de salida")
+        self.open_btn = QPushButton("Abrir resultados")
+        self.open_btn.setToolTip("Abre la carpeta donde quedaron los archivos generados")
         self.open_btn.setEnabled(False)
         self.open_btn.clicked.connect(self._open_out)
         buttons = QHBoxLayout()
@@ -189,6 +190,7 @@ class ToolPage(QWidget):
         need = {"pdf": "PDF", "images": "imágenes", "office": "documentos de Office",
                 "html": "páginas HTML"}.get(tool.accepts, "archivos")
         self.files_note = QLabel()
+        self.files_note.setWordWrap(True)
         self.files_note.setObjectName("Muted")
         files.changed.connect(lambda: self._update_note(need))
         self._update_note(need)
@@ -442,7 +444,7 @@ class RecipesPage(QWidget):
         ref.setObjectName("Muted")
 
         self.panel = RunPanel()
-        self.panel.run_btn.setText("Ejecutar receta")
+        self.panel.run_btn.setText("Ejecutar")  # corto: la página ya dice que es una receta
         self.panel.run_requested.connect(self._run)
 
         right = QWidget()

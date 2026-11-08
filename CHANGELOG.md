@@ -18,6 +18,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Dentro de la ventana, el logo va sin su cuadrado de fondo: en el tema oscuro ya no se nota el borde del cuadrado contra la barra lateral.
 - Firma al pie, en inglés: «Created by Eduardo Sajnovich · Made in Chile 🇨🇱 · Free for everyone 💙». En la ventana, la bandera y el corazón son imágenes (Windows no dibuja los emoji de bandera), y `quillay --version` la muestra completa sin cortarla.
 - **La ventana ya no se desplaza hacia los lados**, ni siquiera en su tamaño mínimo: las etiquetas pasan arriba de su campo cuando falta espacio, las tarjetas de inicio y de redes se reacomodan en 3, 2 o 1 columnas, y el panel de archivos también cede espacio al achicar la ventana.
+- Los menús con opciones largas se pueden angostar (cortan el texto con «…» y al abrirlos muestran cada opción entera), y los botones «Abrir carpeta de salida» y «Ejecutar receta» ahora dicen «Abrir resultados» y «Ejecutar». Así la ventana tampoco se sale con las fuentes más anchas de Windows y Linux.
 - El cuadro de resultado usa solo el espacio que sobra, así casi todas las herramientas caben sin tener que bajar.
 - Las capturas del README muestran el nuevo logo y los colores azules.
 
