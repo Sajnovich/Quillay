@@ -17,7 +17,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from quillay import __url__, __version__
+from quillay import FIRMA, __url__, __version__
 from quillay.core.imageio import collect_files
 from quillay.core.params import Param, ParamError
 from quillay.core.registry import TOOLS, Cancelled, Report, Tool, load_all, tools_by_category
@@ -89,11 +89,15 @@ def build_parser() -> argparse.ArgumentParser:
         description="Quillay — todo para tus PDF e imágenes. Nada sale de tu equipo.",
         epilog=f"¿Te sirve? Dale una estrella: {__url__}  ·  Problemas: {__url__}/issues",
     )
-    parser.add_argument("--version", action="version", version=f"Quillay {__version__}")
+    parser.add_argument("--version", action="version", version=f"Quillay {__version__}\n{FIRMA}")
     sub = parser.add_subparsers(dest="comando", metavar="COMANDO")
 
     sub.add_parser("herramientas", help="Lista todas las herramientas disponibles")
     sub.add_parser("gui", help="Abre la aplicación de escritorio")
+    sub.add_parser("actualizaciones", help="Revisa si hay versiones nuevas de Quillay y LibreOffice (usa internet)")
+    lo = sub.add_parser("libreoffice", help="Muestra, instala o actualiza LibreOffice")
+    lo.add_argument("accion_lo", nargs="?", default="estado", choices=("estado", "instalar", "actualizar"),
+                    metavar="ACCIÓN", help="estado (por defecto), instalar o actualizar")
 
     # --- recetas ---------------------------------------------------------
     rec = sub.add_parser("receta", help="Lista, muestra o ejecuta recetas")
@@ -161,6 +165,41 @@ def _run_recipe_cmd(args: argparse.Namespace) -> int:
     return _print_report(recipe.run(ctx))
 
 
+def _run_updates() -> int:
+    from quillay.core import actualizaciones
+
+    print("Revisando versiones (esto usa internet)…")
+    estados = actualizaciones.revisar()
+    for estado in estados:
+        print(para_terminal("  " + estado.linea()))
+    if any(e.hay_actualizacion for e in estados if e.nombre == "LibreOffice"):
+        print("\nPara actualizar LibreOffice: quillay libreoffice actualizar")
+    return 0
+
+
+def _run_libreoffice(accion: str) -> int:
+    from quillay.core import libreoffice
+
+    soffice = libreoffice.buscar()
+    if accion == "estado":
+        if soffice:
+            print(f"LibreOffice {libreoffice.version(soffice) or '(versión desconocida)'} en {soffice}")
+        else:
+            print("LibreOffice no está instalado. Para instalarlo: quillay libreoffice instalar")
+        return 0
+    if accion == "instalar" and soffice:
+        print("LibreOffice ya está instalado. Para actualizarlo: quillay libreoffice actualizar")
+        return 0
+    if accion == "actualizar" and not soffice:
+        accion = "instalar"
+    elegido = libreoffice.plan(actualizar=accion == "actualizar")
+    print(elegido.descripcion)
+    if elegido.metodo == "manual":
+        return 1
+    print(libreoffice.instalar(actualizar=accion == "actualizar", progress=_progress))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     _setup_streams()
     parser = build_parser()
@@ -182,6 +221,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.comando == "receta":
             return _run_recipe_cmd(args)
+        if args.comando == "actualizaciones":
+            return _run_updates()
+        if args.comando == "libreoffice":
+            return _run_libreoffice(args.accion_lo)
         return _run_tool(TOOLS[args.comando], args)
     except (ParamError, ValueError) as exc:
         print(para_terminal(f"Error: {exc}"), file=sys.stderr or sys.stdout)

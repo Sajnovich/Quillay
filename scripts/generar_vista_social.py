@@ -27,19 +27,19 @@ def font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.Im
 
 
 def main() -> None:
-    img = Image.new("RGB", (W, H), "#16191b")
+    img = Image.new("RGB", (W, H), "#14181e")
     d = ImageDraw.Draw(img)
-    # Franja verde en diagonal de fondo.
-    d.polygon([(0, H), (W * 0.55, H), (W * 0.35, 0), (0, 0)], fill="#1d2a24")
+    # Franja azul cordillera en diagonal de fondo.
+    d.polygon([(0, H), (W * 0.55, H), (W * 0.35, 0), (0, 0)], fill="#1a2738")
 
     icon = Image.open(ROOT / "src/quillay/assets/icono.png").convert("RGBA").resize((150, 150))
     img.paste(icon, (72, 86), icon)
-    d.text((72, 262), "Quillay", font=font(84, bold=True), fill="#e7ecea")
+    d.text((72, 262), "Quillay", font=font(84, bold=True), fill="#e6eaf0")
     d.multiline_text((76, 372), "Todo para tus PDF e imágenes.\nNada sale de tu equipo.", font=font(30),
-                     fill="#b7c4bf", spacing=8)
+                     fill="#b4c0cf", spacing=8)
     for i, line in enumerate(("Convertir, unir, comprimir y firmar PDF", "Imágenes, web, privacidad y recetas",
                               "Windows · macOS · Linux · Código abierto")):
-        d.text((76, 474 + i * 36), line, font=font(22), fill="#7fae96")
+        d.text((76, 474 + i * 36), line, font=font(22), fill="#8db4e2")
 
     # Captura de la app inclinada a la derecha, con sombra.
     shot = Image.open(ROOT / "docs/capturas/inicio-oscuro.webp").convert("RGB")

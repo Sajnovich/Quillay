@@ -41,6 +41,7 @@ dependencies = [
   "numpy>=1.26",
   "PyYAML>=6.0",                        # recetas
   "platformdirs>=4.0",                  # carpeta de configuración por sistema operativo
+  "certifi>=2024.2",                    # certificados HTTPS para buscar actualizaciones
 ]
 
 [project.optional-dependencies]

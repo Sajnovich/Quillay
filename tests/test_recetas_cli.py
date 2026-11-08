@@ -101,3 +101,13 @@ def test_cli_sin_consola(photo, out, monkeypatch):
     monkeypatch.setattr(sys, "stderr", None)
     assert main(["convertir", str(photo), "--formato", "png", "-o", str(out)]) == 0
     assert (out / "foto playa.png").exists()
+
+
+def test_version_muestra_la_firma(capsys):
+    from quillay import FIRMA, __version__
+
+    with pytest.raises(SystemExit) as salida:
+        main(["--version"])
+    assert salida.value.code == 0
+    texto = capsys.readouterr().out
+    assert f"Quillay {__version__}" in texto and FIRMA in texto

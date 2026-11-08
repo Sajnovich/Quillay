@@ -60,7 +60,17 @@ def main() -> int:
                 failures += 1
                 print(result.stdout.decode("utf-8", "replace")[-800:])
                 print(result.stderr.decode("utf-8", "replace")[-1500:])
-        print(f"\n{len(checks) - failures} de {len(checks)} herramientas funcionan en el ejecutable.")
+        # Comandos sin archivos: confirman que el paquete incluye los módulos nuevos
+        # (no usan internet; «libreoffice estado» solo busca el programa en el equipo).
+        for cmd in (["libreoffice", "estado"], ["--version"]):
+            result = subprocess.run([str(binary), *cmd], capture_output=True, timeout=120, check=False)
+            ok = result.returncode == 0
+            print(f"{'✓' if ok else '✗'} {' '.join(cmd)}")
+            if not ok:
+                failures += 1
+                print(result.stderr.decode("utf-8", "replace")[-1500:])
+        total = len(checks) + 2
+        print(f"\n{total - failures} de {total} pruebas funcionan en el ejecutable.")
         return 1 if failures else 0
 
 

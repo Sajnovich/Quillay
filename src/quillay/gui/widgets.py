@@ -132,7 +132,7 @@ class FileList(QWidget):
         image = reader.read()
         if image.isNull():  # HEIC, PDF u otros que Qt no lee: ícono genérico
             pix = QPixmap(self.THUMB, self.THUMB)
-            pix.fill(QColor("#2f7d5b" if path.suffix.lower() == ".pdf" else "#5f6d68"))
+            pix.fill(QColor("#2c5282" if path.suffix.lower() == ".pdf" else "#5d6878"))
             return QIcon(pix)
         return QIcon(QPixmap.fromImage(image))
 

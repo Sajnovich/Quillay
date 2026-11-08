@@ -368,5 +368,5 @@ def test_externas_mensaje_si_falta(monkeypatch, out, tmp_path):
     monkeypatch.setattr(ext, "find_libreoffice", lambda: None)
     doc = tmp_path / "x.docx"
     doc.write_bytes(b"")
-    with pytest.raises(ValueError, match="libreoffice.org"):
+    with pytest.raises(ValueError, match="quillay libreoffice instalar"):
         run("office_a_pdf", [doc], out)

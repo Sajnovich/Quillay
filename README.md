@@ -2,7 +2,7 @@
 
 **Español** · [English](README.en.md)
 
-<img src="src/quillay/assets/icono.png" width="96" alt="Ícono de Quillay: una hoja blanca sobre fondo verde" />
+<img src="src/quillay/assets/icono.png" width="96" alt="Logo de Quillay: una hoja de documento con la cordillera de los Andes nevada" />
 
 # Quillay
 
@@ -11,11 +11,11 @@
 Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, firma y censura PDF; transforma y aliviana imágenes; prepara archivos para la web y las redes. A diferencia de los sitios en línea, **no sube tus documentos a ningún servidor**: todo pasa en tu computador.
 
 [![CI](https://github.com/Sajnovich/Quillay/actions/workflows/ci.yml/badge.svg)](https://github.com/Sajnovich/Quillay/actions/workflows/ci.yml)
-![Python 3.11+](https://img.shields.io/badge/python-3.11+-2f7d5b)
-![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2f7d5b)
+![Python 3.11+](https://img.shields.io/badge/python-3.11+-2c5282)
+![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2c5282)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-1f5c42)](LICENSE)
 [![Estrellas](https://img.shields.io/github/stars/Sajnovich/Quillay?style=social)](https://github.com/Sajnovich/Quillay/stargazers)
-[![Contribuciones bienvenidas](https://img.shields.io/badge/contribuciones-bienvenidas-2f7d5b)](CONTRIBUTING.md)
+[![Contribuciones bienvenidas](https://img.shields.io/badge/contribuciones-bienvenidas-2c5282)](CONTRIBUTING.md)
 
 **[Descargar](https://github.com/Sajnovich/Quillay/releases/latest)** · [Guía de contribución](CONTRIBUTING.md) · [Reportar un problema](https://github.com/Sajnovich/Quillay/issues/new/choose) · [Conversaciones](https://github.com/Sajnovich/Quillay/discussions)
 
@@ -23,14 +23,14 @@ Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, f
 
 </div>
 
-> 🌿 **¿Por qué «Quillay»?** El quillay es un árbol nativo de Chile de muchos usos: su corteza fue jabón por generaciones, hoy está en alimentos y bebidas, y sus compuestos se usan incluso en vacunas. Quillay, la app, es igual: una sola herramienta para casi todo lo que haces con tus PDF e imágenes.
+> 🏔️ **¿Por qué «Quillay»?** El quillay es un árbol nativo de Chile de muchos usos: su corteza fue jabón por generaciones, hoy está en alimentos y bebidas, y sus compuestos se usan incluso en vacunas. Quillay, la app, es igual: una sola herramienta para casi todo lo que haces con tus PDF e imágenes. El logo es una hoja de documento con la cordillera de los Andes nevada, la que se ve desde Santiago, donde nace el proyecto.
 
 > [!TIP]
 > **¿Quillay te sirve?** Dale una ⭐ arriba a la derecha. Es gratis, toma un segundo y ayuda a que más personas lo encuentren.
 
 ## Lo que hace distinto a Quillay
 
-- **Nada sale de tu equipo.** Contratos con RUT, documentos firmados o fotos con GPS no viajan a servidores ajenos. Sin cuentas, sin límites diarios y funciona sin internet.
+- **Nada sale de tu equipo.** Contratos con RUT, documentos firmados o fotos con GPS no viajan a servidores ajenos. Sin cuentas, sin límites diarios y funciona sin internet (solo se conecta si tú buscas actualizaciones o instalas LibreOffice).
 - **Una sola app en vez de diez sitios.** PDF, imágenes, web y privacidad en el mismo lugar, procesando 1 o 500 archivos a la vez.
 - **Privacidad de verdad.** Censura que borra el texto (no solo lo tapa), detección de fotos con ubicación GPS y difuminado de rostros.
 - **Recetas reutilizables.** Guarda una cadena de pasos (encajar → marca de agua → WebP sin GPS) y repítela con un clic o un comando.
@@ -105,7 +105,9 @@ sudo apt install libegl1 libxkbcommon0 libxcb-cursor0
 ```
 </details>
 
-**Funciones opcionales en todos los sistemas:** «Office a PDF» necesita [LibreOffice](https://www.libreoffice.org) y «HTML a PDF» necesita Edge, Chrome o Chromium (Windows ya trae Edge). Quillay te avisa si faltan.
+**Funciones opcionales en todos los sistemas:** «Office a PDF» y «PDF a Word igual al original» usan [LibreOffice](https://www.libreoffice.org), y «HTML a PDF» necesita Edge, Chrome o Chromium (Windows ya trae Edge). Si falta LibreOffice, **Quillay lo instala por ti** con un clic (en la ventana: *Mantener → Actualizaciones*; en la terminal: `quillay libreoffice instalar`), usando winget en Windows, Homebrew o el instalador oficial en macOS, y apt o dnf en Linux.
+
+**Actualizaciones:** en *Mantener → Actualizaciones* (o con `quillay actualizaciones`) ves si hay una versión nueva de Quillay o de LibreOffice y actualizas LibreOffice con un clic. Puedes activar «Revisar al abrir Quillay»; viene apagado para que Quillay no use internet si no se lo pides.
 
 ### Opción 2 · Con Python (recomendado si programas)
 
@@ -134,7 +136,7 @@ sudo apt install python3-venv libegl1 libxkbcommon0 libxcb-cursor0
 quillay herramientas                                   # lista todo
 quillay convertir fotos/ --formato webp --calidad 80   # carpeta completa
 quillay comprimir *.png --png-reducir-colores -o livianas/
-quillay favicons logo.png --nombre-sitio "Mi sitio" --color-tema "#2f7d5b"
+quillay favicons logo.png --nombre-sitio "Mi sitio" --color-tema "#2c5282"
 quillay redes_sociales producto.jpg --plataformas instagram-post,historia
 quillay metadatos foto.jpg                             # ¿tiene GPS?
 quillay renombrar viaje/ --patron "{fecha}_{n}" --vista-previa
@@ -178,7 +180,7 @@ quillay receta carpeta            # dónde se guardan tus recetas
 - **Patentes:** experimental. El modelo incluido fue entrenado con patentes rusas y falla con frecuencia en las chilenas.
 - **AVIF:** requiere Pillow 11.3 o superior (ya incluido en los ejecutables).
 - **PDF escaneados:** sin OCR, PDF → Word/Excel y Censurar no "leen" texto dentro de imágenes. El OCR está en la hoja de ruta.
-- **Office → PDF y HTML → PDF** necesitan LibreOffice o Edge/Chrome instalados (Quillay te avisa si faltan).
+- **Office → PDF y HTML → PDF** necesitan LibreOffice o Edge/Chrome. Quillay instala LibreOffice por ti si falta; el navegador lo tienes que tener.
 - **Tamaño del ejecutable:** ~155 MB comprimido, en buena parte por OpenCV. Está en la hoja de ruta reducirlo.
 
 ## Hoja de ruta

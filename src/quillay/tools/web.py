@@ -42,7 +42,7 @@ def _square(img: Image.Image, size: int, background: str, padding: float) -> Ima
     CAT,
     (
         Param("nombre_sitio", "Nombre del sitio", "str", "Mi sitio"),
-        Param("color_tema", "Color del tema", "color", "#2f7d5b",
+        Param("color_tema", "Color del tema", "color", "#2c5282",
               help="Color de la barra del navegador en Android."),
         Param("fondo_apple", "Fondo del ícono de iPhone", "color", "#ffffff",
               help="iOS no admite transparencia: se rellena con este color."),

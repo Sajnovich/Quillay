@@ -10,6 +10,9 @@ Gracias a esta separación, la terminal y la ventana nunca se contradicen:
 ambas llaman exactamente a las mismas funciones.
 """
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 __app_name__ = "Quillay"
 __url__ = "https://github.com/Sajnovich/Quillay"
+__autor__ = "Eduardo Sajnovich"
+# Firma que se muestra siempre al pie de la ventana y en «quillay --version».
+FIRMA = f"Creado por {__autor__} · Hecho en Chile · Libre para todos"

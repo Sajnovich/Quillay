@@ -7,6 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QSettings, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QFont
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFileDialog,
     QFrame,
     QGridLayout,
@@ -27,6 +28,7 @@ from PySide6.QtWidgets import (
 )
 
 from quillay import __url__, __version__, recipes
+from quillay.core import libreoffice
 from quillay.core.params import ParamError
 from quillay.core.registry import STEPS, Context, Report, Tool, tools_by_category
 from quillay.gui.widgets import FileList, ParamForm, Worker
@@ -242,8 +244,31 @@ class ToolPage(QWidget):
     def run(self) -> None:
         if self._context() is None:
             return
+        if libreoffice.necesita_libreoffice(self.tool.id, self.form.values()) and not libreoffice.buscar():
+            if self._ofrecer_libreoffice():
+                return
         self.panel.start(Worker(self.tool.execute, self.files.paths(self.tool.accepts),
                                 self.form.values(), self.panel.out_dir()))
+
+    def _ofrecer_libreoffice(self) -> bool:
+        """Ofrece instalar LibreOffice. Devuelve True si no hay que seguir con la herramienta."""
+        opcional = self.tool.id == "pdf_a_word"
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle("Falta LibreOffice")
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setText("Esta herramienta usa LibreOffice, un programa gratuito que no está instalado.\n\n"
+                    f"{libreoffice.plan().descripcion}\n\nLa descarga pesa unos 300 MB y es lo único de "
+                    "Quillay que usa internet.")
+        instalar = box.addButton("Instalar LibreOffice", QMessageBox.ButtonRole.AcceptRole)
+        seguir = (box.addButton("Seguir sin él (Texto continuo)", QMessageBox.ButtonRole.ActionRole)
+                  if opcional else None)
+        box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() is instalar:
+            self.panel.start(Worker(_instalar_como_reporte, False))
+            return True
+        return box.clickedButton() is not seguir
 
     def preview(self) -> None:
         ctx = self._context()
@@ -497,3 +522,142 @@ class RecipesPage(QWidget):
             rows.append(f"<b>{st.id}</b> — {st.description} <i>({opts})</i>")
         return ("<b>Pasos disponibles</b><br>" + "<br>".join(rows) +
                 "<br><br><b>salida:</b> formato, calidad, quitar_metadatos, sufijo, fondo, png_reducir_colores")
+
+
+def _instalar_como_reporte(actualizar: bool, progress=None, cancel_event=None) -> Report:
+    """Instala o actualiza LibreOffice y lo informa como un resultado normal de Quillay."""
+    report = Report()
+    try:
+        report.lines.append("✓ " + libreoffice.instalar(actualizar, progress, cancel_event))
+        report.lines.append("Listo: ya puedes usar las herramientas que lo necesitan.")
+    except ValueError as exc:
+        report.lines.append(f"✗ No se pudo: {exc}")
+    return report
+
+
+class UpdatesPage(QWidget):
+    """Versiones de Quillay y LibreOffice, y botones para actualizarlos."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.settings = QSettings()
+        self.worker: Worker | None = None
+        self.estado = QLabel()
+        self.estado.setTextFormat(Qt.TextFormat.PlainText)
+        self.estado.setWordWrap(True)
+        self.revisar_btn = QPushButton("Buscar actualizaciones")
+        self.revisar_btn.setObjectName("Primary")
+        self.revisar_btn.clicked.connect(self.revisar)
+        self.lo_btn = QPushButton()
+        self.lo_btn.clicked.connect(self._instalar_lo)
+        self.descargar_btn = QPushButton("Descargar la nueva versión de Quillay")
+        self.descargar_btn.setVisible(False)
+        self.al_abrir = QCheckBox("Revisar al abrir Quillay")
+        self.al_abrir.setChecked(self.settings.value("revisar_al_abrir", False, bool))
+        self.al_abrir.toggled.connect(lambda v: self.settings.setValue("revisar_al_abrir", v))
+        self.bar = QProgressBar()
+        self.bar.setVisible(False)
+        self.log = QPlainTextEdit()
+        self.log.setReadOnly(True)
+        nota = QLabel("Quillay funciona sin internet. Solo se conecta cuando aprietas un botón de esta página "
+                      "(o al abrir, si activas la casilla), y no envía nada tuyo: pregunta a GitHub y a "
+                      "LibreOffice cuáles son sus últimas versiones.")
+        nota.setWordWrap(True)
+        nota.setObjectName("Muted")
+
+        botones = QHBoxLayout()
+        for b in (self.revisar_btn, self.lo_btn, self.descargar_btn):
+            botones.addWidget(b)
+        botones.addStretch(1)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(28, 24, 28, 24)
+        lay.addWidget(_title("Actualizaciones", "Mantén Quillay y LibreOffice al día: las versiones nuevas "
+                                                "traen correcciones de seguridad."))
+        lay.addWidget(self.estado)
+        lay.addLayout(botones)
+        lay.addWidget(self.al_abrir)
+        lay.addWidget(nota)
+        lay.addWidget(self.bar)
+        lay.addWidget(self.log, 1)
+        self._mostrar_local()
+
+    def _mostrar_local(self, version_lo: str = "") -> None:
+        soffice = libreoffice.buscar()
+        lo = f"LibreOffice {version_lo or 'instalado'}" if soffice else "LibreOffice: no instalado"
+        self.estado.setText(f"Quillay {__version__}\n{lo}")
+        self.lo_btn.setText("Actualizar LibreOffice" if soffice else "Instalar LibreOffice")
+
+    def showEvent(self, event) -> None:  # noqa: N802 - nombre de Qt
+        super().showEvent(event)
+        # Preguntarle la versión a LibreOffice tarda un par de segundos: lo hacemos
+        # en otro hilo y solo cuando se abre esta página, no al iniciar Quillay.
+        if not getattr(self, "_version_leida", False):
+            self._version_leida = True
+            self._leer_version()
+
+    def _leer_version(self) -> None:
+        if not libreoffice.buscar():
+            return
+        worker = Worker(lambda progress=None, cancel_event=None: libreoffice.version())
+        worker.finished_ok.connect(lambda v: self._mostrar_local(v or ""))
+        self._hilos = [w for w in getattr(self, "_hilos", []) if w.isRunning()] + [worker]  # mantener referencias
+        worker.start()
+
+    def _ocupado(self, worker: Worker, mensaje: str) -> None:
+        self.worker = worker
+        for b in (self.revisar_btn, self.lo_btn):
+            b.setEnabled(False)
+        self.bar.setVisible(True)
+        self.bar.setRange(0, 0)
+        self.log.setPlainText(mensaje)
+        worker.progress.connect(self._avance)
+        worker.failed.connect(lambda msg: self.log.setPlainText(f"✗ {msg}"))
+        worker.finished.connect(self._libre)
+        worker.start()
+
+    def _avance(self, done: int, total: int, msg: str) -> None:
+        if total:
+            self.bar.setRange(0, total)
+            self.bar.setValue(done)
+        self.log.setPlainText(msg)
+
+    def _libre(self) -> None:
+        for b in (self.revisar_btn, self.lo_btn):
+            b.setEnabled(True)
+        self.bar.setVisible(False)
+        self._mostrar_local()
+        self._leer_version()  # pudo cambiar tras instalar o actualizar
+
+    def revisar(self) -> None:
+        from quillay.core import actualizaciones
+
+        worker = Worker(lambda progress=None, cancel_event=None: actualizaciones.revisar())
+        worker.finished_ok.connect(self._resultado)
+        self._ocupado(worker, "Revisando versiones…")
+
+    def _resultado(self, estados: list) -> None:
+        self.log.setPlainText("\n".join(e.linea() for e in estados))
+        quillay = next((e for e in estados if e.nombre == "Quillay"), None)
+        if quillay and quillay.hay_actualizacion:
+            self.descargar_btn.setVisible(True)
+            try:
+                self.descargar_btn.clicked.disconnect()
+            except (RuntimeError, TypeError):
+                pass
+            self.descargar_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(quillay.url)))
+
+    def _instalar_lo(self) -> None:
+        actualizar = libreoffice.buscar() is not None
+        elegido = libreoffice.plan(actualizar)
+        if elegido.metodo == "manual":
+            QDesktopServices.openUrl(QUrl(libreoffice.PAGINA_DESCARGA))
+            self.log.setPlainText(elegido.descripcion)
+            return
+        respuesta = QMessageBox.question(
+            self, "LibreOffice", f"{elegido.descripcion}\n\nLa descarga pesa unos 300 MB. ¿Continuar?")
+        if respuesta != QMessageBox.StandardButton.Yes:
+            return
+        worker = Worker(_instalar_como_reporte, actualizar)
+        worker.finished_ok.connect(lambda report: self.log.setPlainText(report.as_text()))
+        self._ocupado(worker, elegido.descripcion)
+

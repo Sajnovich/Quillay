@@ -2,6 +2,23 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
+## [0.4.0] — 2026-11-08
+
+Quillay instala y mantiene al día LibreOffice por ti, te avisa cuando hay versiones nuevas y estrena logo.
+
+### Agregado
+- **Nuevo logo:** una hoja de documento con la cordillera de los Andes nevada, la que se ve desde Santiago, en azules de «noche andina». Hay una versión simplificada para tamaños chicos (16–32 px), y `scripts/generar_iconos.py` ahora dibuja los íconos (PNG, ICO, ICNS) a partir del SVG con `rsvg-convert`.
+- **Firma fija al pie de la ventana** y en `quillay --version`: «Creado por Eduardo Sajnovich · Hecho en Chile · Libre para todos».
+- **Instalación asistida de LibreOffice:** si una herramienta lo necesita y no está, Quillay ofrece instalarlo con un clic usando el método oficial de cada sistema: winget (Windows), Homebrew o el `.dmg` oficial verificado con su firma digital (macOS) y apt o dnf (Linux). En la terminal: `quillay libreoffice instalar`, `quillay libreoffice actualizar` y `quillay libreoffice` para ver la versión instalada.
+- **Página «Actualizaciones»** (*Mantener → Actualizaciones*) y comando `quillay actualizaciones`: muestran tu versión de Quillay y de LibreOffice, revisan si hay una nueva y actualizan LibreOffice con un clic.
+- Opción «Revisar al abrir Quillay», **apagada por defecto**: Quillay solo usa internet cuando tú lo pides, y la consulta no envía nada tuyo.
+- 29 pruebas automáticas nuevas, sin internet: las respuestas de GitHub y LibreOffice y los instaladores se simulan.
+
+### Cambiado
+- Colores de la app en azul, a juego con el logo (antes verde), en los temas claro y oscuro; también las capturas, la vista para redes y las insignias del README.
+- Quillay encuentra LibreOffice también en tu carpeta `~/Applications` de macOS.
+- El mensaje cuando falta LibreOffice explica cómo instalarlo desde Quillay.
+
 ## [0.3.2] — 2026-11-05
 
 Primera versión con ejecutables descargables para Windows, macOS y Linux. Corrige problemas de privacidad, estabilidad y seguridad encontrados en una revisión completa y en una auditoría de seguridad.
@@ -113,5 +130,6 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
+[0.4.0]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.0
 [0.3.2]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.1

@@ -1,7 +1,8 @@
 """Colores y hoja de estilos (QSS = el "CSS" de Qt).
 
 Usamos el estilo «Fusion» de Qt, que se ve igual en los tres sistemas, y
-encima una paleta clara u oscura con el verde quillay como color de acento.
+encima una paleta clara u oscura con el azul de la cordillera (el del logo)
+como color de acento.
 """
 
 from __future__ import annotations
@@ -10,17 +11,18 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QGuiApplication, QPalette
 from PySide6.QtWidgets import QApplication
 
-ACCENT = "#2f7d5b"
-ACCENT_HOVER = "#3a9670"
+ACCENT = "#2c5282"        # azul cordillera: el texto blanco encima se lee bien (8:1)
+ACCENT_HOVER = "#38659c"
+LINK = {"claro": "#2c5282", "oscuro": "#8db4e2"}  # enlaces legibles sobre cada fondo
 
 THEMES = {
     "oscuro": {
-        "bg": "#16191b", "panel": "#1d2124", "card": "#242a2d", "border": "#2f373b",
-        "text": "#e7ecea", "muted": "#94a19c", "input": "#14181a",
+        "bg": "#14181e", "panel": "#1a1f26", "card": "#222831", "border": "#2d3540",
+        "text": "#e6eaf0", "muted": "#95a0ae", "input": "#12161b",
     },
     "claro": {
-        "bg": "#f4f6f5", "panel": "#ffffff", "card": "#ffffff", "border": "#d9e0dd",
-        "text": "#1b2421", "muted": "#5f6d68", "input": "#ffffff",
+        "bg": "#f4f6f9", "panel": "#ffffff", "card": "#ffffff", "border": "#d8dee6",
+        "text": "#1b2330", "muted": "#5d6878", "input": "#ffffff",
     },
 }
 
@@ -49,7 +51,7 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
         pal.setColor(role, QColor(c[key]))
     pal.setColor(QPalette.ColorRole.Highlight, QColor(ACCENT))
     pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
-    pal.setColor(QPalette.ColorRole.Link, QColor(ACCENT_HOVER))
+    pal.setColor(QPalette.ColorRole.Link, QColor(LINK[name]))
     app.setPalette(pal)
 
     app.setStyleSheet(f"""
@@ -59,8 +61,9 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
         #Sidebar QListWidget::item {{ padding: 7px 12px; border-radius: 7px; margin: 1px 8px; }}
         #Sidebar QListWidget::item:selected {{ background: {ACCENT}; color: white; }}
         #Sidebar QListWidget::item:hover:!selected {{ background: {c['card']}; }}
-        #Brand {{ font-size: 20px; font-weight: 700; padding: 16px 18px 2px 18px; }}
+        #Brand {{ font-size: 20px; font-weight: 700; padding: 0; }}
         #BrandSub {{ color: {c['muted']}; padding: 0 18px 10px 18px; font-size: 12px; }}
+        #Firma {{ color: {c['muted']}; padding: 0 18px; font-size: 11px; }}
         #FilesPanel {{ background: {c['panel']}; border-right: 1px solid {c['border']}; }}
         #PageTitle {{ font-size: 22px; font-weight: 700; }}
         #Muted, QLabel[muted="true"] {{ color: {c['muted']}; }}

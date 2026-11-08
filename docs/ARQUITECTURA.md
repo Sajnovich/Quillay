@@ -82,6 +82,7 @@ Luego impórtala en `tools/__init__.py`. Listo: aparece en la barra lateral, en 
 | **LibreOffice** para PDF → Word «igual al original» | Su importador de PDF conserva fuentes, colores, imágenes y posiciones. Corregimos su único defecto visible: las franjas de fondo quedaban encima del texto (les damos un `z-index` negativo). |
 | **Censura rasterizando la página** | Tapar con un rectángulo deja el texto debajo; convertir la página en imagen con las cajas "quemadas" lo elimina de verdad. |
 | **pyHanko** para firma digital | Firma con escritura incremental: cualquier cambio posterior invalida la firma y el lector lo muestra. |
+| **LibreOffice instalado aparte, no dentro de Quillay** | Pesa unos 300 MB y recibe parches de seguridad varias veces al año. Si viniera dentro, cada parche exigiría publicar otro Quillay y, mientras tanto, habría un LibreOffice viejo abriendo documentos ajenos. Por eso Quillay lo instala y actualiza con el método oficial de cada sistema (`core/libreoffice.py`). |
 | **LibreOffice / Edge / Chrome externos** | Convertir Office y HTML con fidelidad exige un motor completo; usamos los instalados en modo *headless* y vigilamos el archivo de salida, porque Chrome a veces no cierra su proceso. |
 | **No usamos PyMuPDF** | Es excelente, pero su licencia AGPL obligaría a cambiar la licencia MIT de todo Quillay. |
 | **OpenCV < 5** para caras | Trae clasificadores Haar listos y sin internet. La versión 5 los dejó de incluir. |

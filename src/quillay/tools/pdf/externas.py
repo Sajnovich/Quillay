@@ -64,16 +64,10 @@ def perfil_libreoffice(folder: Path) -> str:
 
 
 def find_libreoffice() -> str | None:
-    system = platform.system()
-    found = shutil.which("soffice") or shutil.which("libreoffice")
-    if found:
-        return found
-    if system == "Windows":
-        roots = [os.environ.get("PROGRAMFILES", r"C:\Program Files"), os.environ.get("PROGRAMFILES(X86)")]
-        return _first_existing([str(Path(r) / "LibreOffice" / "program" / "soffice.exe") for r in roots if r])
-    if system == "Darwin":
-        return _first_existing(["/Applications/LibreOffice.app/Contents/MacOS/soffice"])
-    return None
+    """Ruta a LibreOffice; la lógica vive en ``quillay.core.libreoffice``."""
+    from quillay.core import libreoffice
+
+    return libreoffice.buscar()
 
 
 def find_browser() -> str | None:
@@ -128,8 +122,8 @@ def run_until_file(cmd: list[str], dest: Path, timeout: float) -> None:
                 proc.kill()
 
 
-INSTALL_LO = ("No encontré LibreOffice. Es gratis: descárgalo en https://www.libreoffice.org "
-              "(en Debian/Ubuntu: sudo apt install libreoffice) y vuelve a intentar.")
+INSTALL_LO = ("No encontré LibreOffice (es gratis). Quillay puede instalarlo por ti: en la ventana, "
+              "«Actualizaciones» → «Instalar LibreOffice»; en la terminal, «quillay libreoffice instalar».")
 INSTALL_BROWSER = ("No encontré Microsoft Edge, Google Chrome ni Chromium. Instala cualquiera "
                    "(en Debian: sudo apt install chromium) y vuelve a intentar.")
 

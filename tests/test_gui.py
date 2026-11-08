@@ -88,3 +88,34 @@ def test_ordenar_paginas_con_miniaturas(app, tmp_path):
     assert "1 quitadas" in dialog.count.text()
     dialog.deleteLater()
     app.processEvents()
+
+
+def test_pagina_de_actualizaciones(window, monkeypatch):
+    from quillay.gui.app import UPDATES
+    from quillay.gui.pages import UpdatesPage
+
+    window.select(UPDATES)
+    page = window.stack.currentWidget()
+    assert isinstance(page, UpdatesPage)
+    assert not page.al_abrir.isChecked()  # por defecto Quillay no se conecta a internet
+    assert page.lo_btn.text() in ("Instalar LibreOffice", "Actualizar LibreOffice")
+
+
+def test_al_abrir_no_revisa_si_no_se_pidio(window, monkeypatch):
+    import quillay.core.actualizaciones as act
+
+    llamado = []
+    monkeypatch.setattr(act, "revisar", lambda: llamado.append(1) or [])
+    window.settings.setValue("revisar_al_abrir", False)
+    window.check_updates_on_start()
+    assert not llamado and not hasattr(window, "_update_worker")
+
+
+def test_firma_fija_al_pie(window):
+    from PySide6.QtWidgets import QLabel
+
+    from quillay import FIRMA
+
+    firma = window.findChild(QLabel, "Firma")
+    assert firma is not None and firma.isVisible()
+    assert firma.text().replace("\n", " · ") == FIRMA
