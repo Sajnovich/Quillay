@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Corregido
+- **La terminal no abría con Python 3.14** (el que instala Homebrew en macOS): `quillay` fallaba al arrancar con «badly formed help string». Dos cambios de `argparse` en 3.14: revisa los textos de ayuda (un «%» suelto, como en «Opacidad (%)», ahora se escribe «%%») y no acepta opciones que ya empiezan con «no» en `BooleanOptionalAction` (`--no-agrandar` ahora tiene su contraria `--agrandar` armada a mano). La CI ahora prueba también Python 3.14.
+
 ### Seguridad
 - **«HTML a PDF» trabaja sin red con archivos locales.** Al convertir un `.html` de tu equipo, el navegador corre con la red bloqueada (proxy inexistente y sin resolver nombres de dominio). Así, una página que te mandaron no puede cargar imágenes o scripts de internet que avisen que la abriste o envíen datos. Si escribes una dirección web, se conecta como siempre. Lo explica `SECURITY.md`, junto con lo demás que hace Quillay para protegerte.
 

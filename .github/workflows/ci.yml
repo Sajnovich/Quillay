@@ -25,6 +25,8 @@ jobs:
         include:
           - os: ubuntu-24.04
             python: "3.11"   # la versión mínima soportada
+          - os: ubuntu-24.04
+            python: "3.14"   # la más nueva (la que instala Homebrew en macOS)
     env:
       QT_QPA_PLATFORM: offscreen   # Qt sin pantalla
     steps:

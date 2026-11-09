@@ -24,12 +24,32 @@ from quillay.core.registry import TOOLS, Cancelled, Report, Tool, load_all, tool
 from quillay.core.seguro import para_terminal
 
 
+def _ayuda(texto: str) -> str:
+    """Texto de ayuda apto para argparse.
+
+    argparse usa «%» para insertar valores (como «%(default)s»), así que un «%»
+    suelto, como en «Opacidad (%)», hay que escribirlo «%%». Desde Python 3.14,
+    argparse revisa esto al arrancar y, si falla, el programa no abre.
+    """
+    return texto.replace("%", "%%")
+
+
 def _add_param(parser: argparse.ArgumentParser, p: Param) -> None:
     flag = "--" + p.name.replace("_", "-")
     help_text = p.label + (f". {p.help}" if p.help else "")
+    if p.kind == "bool" and p.name.startswith("no_"):
+        # Opciones que ya empiezan con «no» (ej. --no-agrandar): BooleanOptionalAction
+        # crearía «--no-no-agrandar», y desde Python 3.14 lo rechaza. Se arma el par a mano:
+        # --no-agrandar (sí) y --agrandar (no).
+        positivo = "--" + p.name.removeprefix("no_").replace("_", "-")
+        parser.add_argument(flag, dest=p.name, action="store_const", const=True, default=None,
+                            help=_ayuda(f"{help_text} (por defecto: {'sí' if p.default else 'no'})"))
+        parser.add_argument(positivo, dest=p.name, action="store_const", const=False,
+                            help=_ayuda(f"Lo contrario de {flag}"))
+        return
     if p.kind == "bool":
         parser.add_argument(flag, dest=p.name, action=argparse.BooleanOptionalAction,
-                            default=None, help=f"{help_text} (por defecto: {'sí' if p.default else 'no'})")
+                            default=None, help=_ayuda(f"{help_text} (por defecto: {'sí' if p.default else 'no'})"))
         return
     if p.kind == "multichoice":
         default = ",".join(p.default)
@@ -37,7 +57,7 @@ def _add_param(parser: argparse.ArgumentParser, p: Param) -> None:
     else:
         default = p.default
     kwargs: dict = {"dest": p.name, "default": None, "metavar": p.kind.upper(),
-                    "help": f"{help_text} (por defecto: {default!s})"}
+                    "help": _ayuda(f"{help_text} (por defecto: {default!s})")}
     if p.kind == "choice":
         kwargs["choices"] = p.choices
         kwargs.pop("metavar")
@@ -123,7 +143,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # --- una entrada por herramienta --------------------------------------
     for tool in TOOLS.values():
-        tp = sub.add_parser(tool.id, help=tool.description, description=tool.description)
+        tp = sub.add_parser(tool.id, help=_ayuda(tool.description), description=_ayuda(tool.description))
         tp.add_argument("archivos", nargs="+", help="Archivos, carpetas o comodines (*.jpg)")
         tp.add_argument("-o", "--salida", type=Path,
                         help="Carpeta de salida (por defecto: <carpeta>/quillay)")

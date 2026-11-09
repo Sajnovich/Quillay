@@ -111,3 +111,26 @@ def test_version_muestra_la_firma(capsys):
     assert salida.value.code == 0
     texto = capsys.readouterr().out
     assert f"Quillay {__version__}" in texto and FIRMA in texto
+
+
+def test_ayuda_de_todas_las_herramientas():
+    """La ayuda (--help) de cada herramienta se genera sin errores.
+
+    Un «%» suelto en una etiqueta («Opacidad (%)») rompía la terminal en Python 3.14.
+    """
+    from quillay.core.registry import TOOLS
+
+    for tool_id in TOOLS:
+        with pytest.raises(SystemExit) as salida:
+            main([tool_id, "--help"])
+        assert salida.value.code == 0, tool_id
+
+
+def test_opcion_que_empieza_con_no():
+    """--no-agrandar y --agrandar funcionan (Python 3.14 no acepta «--no-no-agrandar»)."""
+    from quillay.cli import build_parser
+
+    parser = build_parser()
+    assert parser.parse_args(["redimensionar", "x.jpg", "--no-agrandar"]).no_agrandar is True
+    assert parser.parse_args(["redimensionar", "x.jpg", "--agrandar"]).no_agrandar is False
+    assert parser.parse_args(["redimensionar", "x.jpg"]).no_agrandar is None  # usa el valor por defecto
