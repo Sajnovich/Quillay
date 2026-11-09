@@ -36,6 +36,7 @@ A free multi-tool with 35+ features: convert, merge, compress, sign and redact P
 - **One app instead of ten websites.** PDFs, images, web and privacy in one place, 1 or 500 files at a time.
 - **Real privacy.** Redaction that deletes text (not just covers it), GPS detection in photos and face blurring.
 - **Reusable recipes.** Save a chain of steps (fit → watermark → WebP without GPS) and repeat it with one click or one command.
+- **Your way.** Dark or light theme with the moon/sun button, and the window in Spanish or English with the ES/EN button.
 - **First-class command line.** Every tool is also a command (`quillay unir_pdf *.pdf`), generated from the same code as the window.
 
 ## Tools

@@ -370,3 +370,57 @@ def test_externas_mensaje_si_falta(monkeypatch, out, tmp_path):
     doc.write_bytes(b"")
     with pytest.raises(ValueError, match="quillay libreoffice instalar"):
         run("office_a_pdf", [doc], out)
+
+
+def test_html_local_se_convierte_sin_red(monkeypatch, out, tmp_path):
+    """Un .html local se convierte con la red bloqueada; una dirección web sí usa internet."""
+    import quillay.tools.pdf.externas as ext
+
+    comandos: list[list[str]] = []
+
+    def falso(cmd, dest, timeout):
+        comandos.append(cmd)
+        c = canvas.Canvas(str(dest))
+        c.drawString(72, 720, "ok")
+        c.save()
+
+    monkeypatch.setattr(ext, "find_browser", lambda: "chrome")
+    monkeypatch.setattr(ext, "run_until_file", falso)
+    html = tmp_path / "recibido.html"
+    html.write_text('<img src="https://ejemplo.com/rastreo.png">', encoding="utf-8")
+    run("html_a_pdf", [html], out, espera=0, url="https://ejemplo.com", nombre="web")
+    local, web = comandos
+    assert all(flag in local for flag in ext.SIN_RED)
+    assert not any(flag in web for flag in ext.SIN_RED)
+
+
+@pytest.mark.skipif(not find_browser(), reason="No hay Edge/Chrome/Chromium")
+def test_html_local_no_hace_peticiones(out, tmp_path):
+    """Con un navegador de verdad: la página local pide una imagen a un servidor y no le llega nada."""
+    import http.server
+    import threading
+
+    if not os.environ.get("CI") and not _browser_works():
+        pytest.skip("el navegador instalado no arranca en este entorno")
+    pedidos: list[str] = []
+
+    class Espia(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802 - nombre de http.server
+            pedidos.append(self.path)
+            self.send_response(204)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    servidor = http.server.HTTPServer(("127.0.0.1", 0), Espia)
+    threading.Thread(target=servidor.serve_forever, daemon=True).start()
+    try:
+        puerto = servidor.server_address[1]
+        html = tmp_path / "recibido.html"
+        html.write_text(f'<h1>Hola</h1><img src="http://127.0.0.1:{puerto}/rastreo.png">', encoding="utf-8")
+        rep = run("html_a_pdf", [html], out, espera=1)
+        assert not rep.errors
+        assert pedidos == []  # el navegador no pudo conectarse
+    finally:
+        servidor.shutdown()

@@ -269,3 +269,17 @@ def test_formularios_en_ingles(app):
         assert "Posición" not in textos
     finally:
         idioma.establecer("es")
+
+
+def test_informe_en_ingles():
+    """En inglés, el informe de una herramienta se traduce sin perder nombres ni números."""
+    from quillay.gui import idioma
+
+    idioma.establecer("en")
+    try:
+        texto = idioma.informe("PDF unido: todo.pdf · 12 páginas · 3 MB\n— 1 archivo(s) generados, 1 con error")
+        assert texto == "Merged PDF: todo.pdf · 12 pages · 3 MB\n— 1 file(s) created, 1 with errors"
+        assert idioma.informe("línea que no conozco") == "línea que no conozco"
+    finally:
+        idioma.establecer("es")
+    assert idioma.informe("— 1 archivo(s) generados") == "— 1 archivo(s) generados"  # en español no cambia

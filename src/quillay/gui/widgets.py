@@ -458,7 +458,7 @@ class ParamForm(QWidget):
             row.addWidget(btn)
             self.getters[p.name] = edit.text
         else:
-            widget = QLineEdit(str(p.default or ""))
+            widget = QLineEdit(t(str(p.default or "")))  # ej. «© Mi marca» → «© My brand»
             self.getters[p.name] = widget.text
 
         # Cada campo con un ancho acorde a lo que guarda: números y colores cortos,

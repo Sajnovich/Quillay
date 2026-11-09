@@ -162,6 +162,21 @@ def office_a_pdf(ctx: Context) -> Report:
     return report
 
 
+# Para un .html local, el navegador trabaja sin red: así una página que te mandaron no
+# puede cargar imágenes o scripts de internet (que avisarían que la abriste o
+# filtrarían datos), y se cumple «Nada sale de tu equipo». Dos capas:
+# - todo pasa por un proxy inexistente (puerto 9, «discard»), incluso localhost
+#   («<-loopback>» quita la excepción que Chrome hace para tu propio equipo);
+# - ningún nombre de dominio se resuelve (MAP * ~NOTFOUND).
+SIN_RED = ("--proxy-server=socks5://127.0.0.1:9", "--proxy-bypass-list=<-loopback>",
+           "--host-resolver-rules=MAP * ~NOTFOUND")
+
+
+def sin_red(url: str) -> tuple[str, ...]:
+    """Opciones para bloquear la red si la página es un archivo local (file://)."""
+    return SIN_RED if url.startswith("file://") else ()
+
+
 @tool(
     "html_a_pdf", "HTML a PDF",
     "Convierte páginas web (una dirección o archivos .html) en PDF, usando Edge o Chrome.", CAT,
@@ -200,6 +215,7 @@ def html_a_pdf(ctx: Context) -> Report:
                    "--disable-background-networking", "--disable-component-update", "--disable-sync",
                    "--disable-extensions", "--no-default-browser-check", "--metrics-recording-only",
                    f"--user-data-dir={profile}",  # perfil temporal: no toca tu navegador abierto
+                   *sin_red(url),
                    f"--virtual-time-budget={o['espera'] * 1000}", f"--print-to-pdf={dest}", url]
             run_until_file(cmd, dest, timeout=o["espera"] + 90)
             if dest.exists() and dest.stat().st_size:

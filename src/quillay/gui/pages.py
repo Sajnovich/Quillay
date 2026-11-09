@@ -202,15 +202,15 @@ class RunPanel(QWidget):
         self.status.setText(msg)
 
     def _on_done(self, report: Report) -> None:
-        self.log.setPlainText(report.as_text())
-        self.status.setText(report.summary())
+        self.log.setPlainText(idioma.informe(report.as_text()))
+        self.status.setText(idioma.informe(report.summary()))
         if report.outputs:
             self.last_out = report.outputs[0].parent
             self.open_btn.setEnabled(True)
 
     def _on_failed(self, msg: str) -> None:
         self.status.setText("")
-        self.log.setPlainText(f"✗ {msg}")
+        self.log.setPlainText(idioma.informe(f"✗ {msg}"))
 
     def _reset(self) -> None:
         self.run_btn.setEnabled(True)
@@ -315,7 +315,7 @@ class ToolPage(QWidget):
             return self.tool.make_context(self.files.paths(self.tool.accepts), self.form.values(),
                                           self.panel.out_dir())
         except (ParamError, ValueError) as exc:
-            _avisar(self, t("Revisa las opciones"), str(exc))
+            _avisar(self, t("Revisa las opciones"), idioma.informe(str(exc)))
             return None
 
     def run(self) -> None:
@@ -335,7 +335,7 @@ class ToolPage(QWidget):
         box.setWindowTitle(t("Falta LibreOffice"))
         box.setTextFormat(Qt.TextFormat.PlainText)
         box.setText(t("Esta herramienta usa LibreOffice, un programa gratuito que no está instalado.") + "\n\n"
-                    f"{libreoffice.plan().descripcion}\n\n"
+                    f"{idioma.informe(libreoffice.plan().descripcion)}\n\n"
                     + t("La descarga pesa unos 300 MB y es lo único de Quillay que usa internet."))
         instalar = box.addButton(t("Instalar LibreOffice"), QMessageBox.ButtonRole.AcceptRole)
         seguir = (box.addButton(t("Seguir sin él (Texto continuo)"), QMessageBox.ButtonRole.ActionRole)
@@ -352,9 +352,9 @@ class ToolPage(QWidget):
         if ctx and self.tool.preview:
             try:
                 self.panel.log.setPlainText(t("Vista previa (no se modificó nada):") + "\n\n" +
-                                            "\n".join(self.tool.preview(ctx)))
+                                            idioma.informe("\n".join(self.tool.preview(ctx))))
             except ValueError as exc:
-                self.panel.log.setPlainText(f"✗ {exc}")
+                self.panel.log.setPlainText(idioma.informe(f"✗ {exc}"))
 
 
 class HomePage(QWidget):
@@ -556,7 +556,7 @@ class RecipesPage(QWidget):
     def reload(self, select: str | None = None) -> None:
         self.list.clear()
         for r in recipes.available():
-            item = QListWidgetItem(("" if r.incluida else "★ ") + r.nombre)
+            item = QListWidgetItem(t(r.nombre) if r.incluida else "★ " + r.nombre)
             item.setData(Qt.ItemDataRole.UserRole, r)
             self.list.addItem(item)
             if r.slug == select:
@@ -570,7 +570,7 @@ class RecipesPage(QWidget):
         r: recipes.Recipe = item.data(Qt.ItemDataRole.UserRole)
         self.current = r
         origin = t("Receta incluida (solo lectura: duplícala para editar)") if r.incluida else str(r.origen)
-        self.desc.setText(f"{r.descripcion}\n{origin}")
+        self.desc.setText(f"{t(r.descripcion) if r.incluida else r.descripcion}\n{origin}")
         self.editor.setPlainText(r.texto or r.to_yaml())
         self.editor.setReadOnly(r.incluida)
         self.save_btn.setEnabled(not r.incluida)
@@ -635,7 +635,7 @@ def _instalar_como_reporte(actualizar: bool, progress=None, cancel_event=None) -
         report.lines.append("✓ " + libreoffice.instalar(actualizar, progress, cancel_event))
         report.lines.append(t("Listo: ya puedes usar las herramientas que lo necesitan."))
     except ValueError as exc:
-        report.lines.append(f"✗ No se pudo: {exc}")
+        report.lines.append(f"✗ No se pudo: {exc}")  # se traduce al mostrarse
     return report
 
 
@@ -692,7 +692,7 @@ class UpdatesPage(QWidget):
         self.bar.setRange(0, 0)
         self.log.setPlainText(mensaje)
         worker.progress.connect(self._avance)
-        worker.failed.connect(lambda msg: self.log.setPlainText(f"✗ {msg}"))
+        worker.failed.connect(lambda msg: self.log.setPlainText(idioma.informe(f"✗ {msg}")))
         worker.finished.connect(self._libre)
         worker.start()
 
@@ -717,7 +717,7 @@ class UpdatesPage(QWidget):
         self._ocupado(worker, t("Revisando versiones…"))
 
     def _resultado(self, estados: list) -> None:
-        self.log.setPlainText("\n".join(e.linea() for e in estados))
+        self.log.setPlainText(idioma.informe("\n".join(e.linea() for e in estados)))
         quillay = next((e for e in estados if e.nombre == "Quillay"), None)
         if quillay and quillay.hay_actualizacion:
             self.descargar_btn.setVisible(True)
@@ -732,13 +732,14 @@ class UpdatesPage(QWidget):
         elegido = libreoffice.plan(actualizar)
         if elegido.metodo == "manual":
             QDesktopServices.openUrl(QUrl(libreoffice.PAGINA_DESCARGA))
-            self.log.setPlainText(elegido.descripcion)
+            self.log.setPlainText(idioma.informe(elegido.descripcion))
             return
         respuesta = QMessageBox.question(
-            self, "LibreOffice", f"{elegido.descripcion}\n\n" + t("La descarga pesa unos 300 MB. ¿Continuar?"))
+            self, "LibreOffice",
+            idioma.informe(elegido.descripcion) + "\n\n" + t("La descarga pesa unos 300 MB. ¿Continuar?"))
         if respuesta != QMessageBox.StandardButton.Yes:
             return
         worker = Worker(_instalar_como_reporte, actualizar)
-        worker.finished_ok.connect(lambda report: self.log.setPlainText(report.as_text()))
+        worker.finished_ok.connect(lambda report: self.log.setPlainText(idioma.informe(report.as_text())))
         self._ocupado(worker, elegido.descripcion)
 

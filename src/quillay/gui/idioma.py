@@ -363,6 +363,25 @@ EN.update({
     "Quitar también los metadatos": "Also remove the metadata",
 })
 
+# Recetas incluidas (las tuyas se muestran tal como las escribiste).
+EN.update({
+    "Anonimizar para publicar": "Anonymize for posting",
+    "Difumina caras, quita la ubicación GPS y reduce a 2048 px. Revisa siempre el resultado.":
+        "Blurs faces, removes the GPS location and scales down to 2048 px. Always check the result.",
+    "Catálogo de producto": "Product catalog",
+    "Centra cada producto en un lienzo blanco de 1200×1200 y agrega la marca de agua en texto.":
+        "Centers each product on a 1200×1200 white canvas and adds a text watermark.",
+    "Instagram cuadrado": "Square Instagram",
+    "Recorta al centro en 1:1, lleva a 1080×1080 y guarda en JPG de alta calidad.":
+        "Crops the center to 1:1, scales to 1080×1080 and saves as high-quality JPG.",
+    "Miniaturas": "Thumbnails",
+    "Miniaturas de 400 px de ancho en WebP, livianas para galerías.": "400 px wide WebP thumbnails, light for galleries.",
+    "Web optimizado": "Web-optimized",
+    "Reduce a máximo 1920 px, convierte a WebP calidad 80 y elimina GPS y datos de cámara. Ideal para subir a WordPress.":
+        "Scales down to at most 1920 px, converts to WebP quality 80 and removes GPS and camera data. Ideal for uploading to WordPress.",
+    "© Mi marca": "© My brand",
+})
+
 # Páginas, avisos y diálogos de la ventana.
 EN.update({
     "Carpeta de salida": "Output folder", "Agrega primero un PDF en el panel de archivos.": "First add a PDF in the files panel.",
@@ -416,3 +435,138 @@ EN.update({
         "Quillay works offline. It only connects when you press a button on this page (or when opening, if you tick the box), "
         "and it sends nothing of yours: it asks GitHub and LibreOffice for their latest versions.",
 })
+
+
+# ---------------------------------------------------------------- informes
+# Las herramientas escriben su informe en español (la terminal lo muestra así).
+# En la ventana, si el idioma es inglés, cada línea pasa por estas frases.
+# Cada par es (expresión regular, reemplazo): los grupos guardan los datos
+# (nombres de archivo, tamaños, números) y solo cambian las palabras. Si una
+# línea no calza con nada, se muestra tal cual.
+import re  # noqa: E402
+
+_FRASES = [
+    # Mensajes completos
+    (r"^listo \(no se crearon archivos nuevos\)$", "done (no new files were created)"),
+    (r"(\d+) archivo\(s\) generados", r"\1 file(s) created"),
+    (r"(\d+) con error", r"\1 with errors"),
+    (r"LibreOffice no pudo convertirlo \(¿archivo dañado o protegido\?\)", "LibreOffice couldn't convert it (damaged or protected file?)"),
+    (r"LibreOffice no pudo convertirlo", "LibreOffice couldn't convert it"),
+    (r"LibreOffice tardó más de (\d+) s", r"LibreOffice took more than \1 s"),
+    (r"el navegador no generó el PDF \(¿la dirección existe\?\)", "the browser didn't create the PDF (does the address exist?)"),
+    (r"no se encontraron tablas ni texto \(¿es un PDF escaneado\? requiere OCR\)", "no tables or text found (is it a scanned PDF? it needs OCR)"),
+    (r"no se pudo recuperar: el archivo está demasiado dañado o no es un PDF", "couldn't recover it: the file is too damaged or isn't a PDF"),
+    (r"no tiene campos de formulario rellenables", "it has no fillable form fields"),
+    (r"tiene contraseña: usa «Desbloquear PDF» primero", "it has a password: use «Unlock PDF» first"),
+    (r"no se pudo reparar \((.*)\)", r"couldn't repair it (\1)"),
+    (r"el archivo de datos no tiene filas", "the data file has no rows"),
+    (r"el archivo de salida quedaría fuera de la carpeta de salida", "the output file would end up outside the output folder"),
+    (r"el patrón genera nombres repetidos: agrega \{n\}", "the pattern creates duplicate names: add {n}"),
+    (r"elige al menos un formato", "choose at least one format"),
+    (r"elige comparación visual, de texto o ambas", "choose visual comparison, text comparison or both"),
+    (r"elige el archivo Excel o CSV con los datos", "choose the Excel or CSV file with the data"),
+    (r"elige qué censurar: un tipo de dato, palabras o una expresión regular", "choose what to redact: a data type, words or a regular expression"),
+    (r"elige una imagen de firma, escribe tu nombre o indica un certificado", "choose a signature image, type your name or provide a certificate"),
+    (r"escribe el nuevo orden \(ej\. 3,1,2\) o marca «Invertir el orden»", "type the new order (e.g. 3,1,2) or tick «Reverse the order»"),
+    (r"escribe un texto o elige un logo", "type a text or choose a logo"),
+    (r"escribe una dirección web o agrega archivos \.html", "type a web address or add .html files"),
+    (r"indica las páginas, por ejemplo: 3,1,2,5-7", "enter the pages, for example: 3,1,2,5-7"),
+    (r"la contraseña debe tener al menos 4 caracteres", "the password must have at least 4 characters"),
+    (r"la firma digital de LibreOffice no es válida; no se instaló", "LibreOffice's digital signature isn't valid; it wasn't installed"),
+    (r"la instalación tardó demasiado y se detuvo", "the installation took too long and was stopped"),
+    (r"la instalación terminó, pero no encuentro LibreOffice; reinicia Quillay e intenta de nuevo", "the installation finished, but I can't find LibreOffice; restart Quillay and try again"),
+    (r"los anchos deben ser números separados por coma", "widths must be comma-separated numbers"),
+    (r"los márgenes son más grandes que la página", "the margins are larger than the page"),
+    (r"ninguna página es legible", "no page is readable"),
+    (r"no pude leer la última versión de LibreOffice", "I couldn't read LibreOffice's latest version"),
+    (r"no se pudo abrir el certificado: revisa la clave", "couldn't open the certificate: check the password"),
+    (r"no se pudo abrir el certificado \((.*)\)\. ¿Es la clave correcta\?", r"couldn't open the certificate (\1). Is the password right?"),
+    (r"solo se permiten conexiones https", "only https connections are allowed"),
+    (r"ficha desconocida en el patrón: (.*)", r"unknown token in the pattern: \1"),
+    (r"la expresión regular no es válida: (.*)", r"the regular expression isn't valid: \1"),
+    (r"no encontré un instalador automático para tu sistema\.", "I couldn't find an automatic installer for your system."),
+    (r"no entiendo «(.*)»: usa números, rangos \(2-5\), «pares» o «impares»", r"I don't understand «\1»: use numbers, ranges (2-5), «pares» (even) or «impares» (odd)"),
+    (r"paso desconocido: (.*)", r"unknown step: \1"),
+    (r"rango de páginas inválido «(.*)» \(el PDF tiene (\d+)\)", r"invalid page range «\1» (the PDF has \2)"),
+    (r"la imagen está incompleta o dañada", "the image is incomplete or damaged"),
+    (r"no es una imagen válida o está dañada", "isn't a valid image or is damaged"),
+    (r"(.*) necesita al menos (\d+) archivo\(s\)", r"\1 needs at least \2 file(s)"),
+    (r"^✗ No se pudo: ", "✗ It failed: "),
+    # Líneas de resultado
+    (r"Comparación visual: (.*) · páginas con cambios: ", r"Visual comparison: \1 · pages with changes: "),
+    (r"Código HTML: ", "HTML code: "),
+    (r"\(width/height evitan saltos de diseño — CLS\)", "(width/height prevent layout shifts — CLS)"),
+    (r"Informe de texto: (.*) · (\d+) línea\(s\) distintas", r"Text report: \1 · \2 different line(s)"),
+    (r"^Informe: ", "Report: "),
+    (r"PDF de (\d+) página\(s\): ", r"PDF with \1 page(s): "),
+    (r"PDF unido: (.*) · (\d+) páginas · ", r"Merged PDF: \1 · \2 pages · "),
+    (r"Plantilla: (.*) \(ábrela en Excel, una fila por documento\)", r"Template: \1 (open it in Excel, one row per document)"),
+    (r"Variables CSS: ", "CSS variables: "),
+    (r"\(código para tu <head>\)", "(code for your <head>)"),
+    (r"^Carpeta: ", "Folder: "),
+    (r" limpio \(sin recomprimir\)", " cleaned (not recompressed)"),
+    (r" página (\d+) → ", r" page \1 → "),
+    (r"Contiene metadatos XMP adicionales", "Contains additional XMP metadata"),
+    (r"Sin metadatos", "No metadata"),
+    (r"⚠ Muy grande para incrustar: mejor enlazar el archivo\.", "⚠ Too large to embed: better to link the file."),
+    (r"Los sobrantes se movieron \(no se borró nada\)\.", "The extra copies were moved (nothing was deleted)."),
+    (r"Para comprobarla, ábrelo en Adobe Acrobat Reader: panel «Firmas»\.", "To check it, open it in Adobe Acrobat Reader: «Signatures» panel."),
+    (r"Revisa el resultado: la detección automática puede omitir caras de perfil o pequeñas\.", "Check the result: automatic detection may miss small or side-facing faces."),
+    (r"Revisa el resultado: los datos en imágenes escaneadas no se detectan sin OCR\.", "Check the result: data in scanned images isn't detected without OCR."),
+    (r"firma digital con certificado", "digital signature with certificate"),
+    (r"⚠ AVIF no disponible en este equipo; se omitió\.", "⚠ AVIF isn't available on this computer; it was skipped."),
+    (r"⚠ La imagen no es cuadrada: se centró con bordes transparentes\.", "⚠ The image isn't square: it was centered with transparent borders."),
+    (r"^(\s*)duplicado: ", r"\1duplicate: "),
+    (r"etiquetas EXIF: ", "EXIF tags: "),
+    (r"(\d+) página\(s\) o imagen\(es\) con metadatos propios", r"\1 page(s) or image(s) with their own metadata"),
+    (r"⚠ ubicación GPS: (.*)  ← revela dónde se tomó", r"⚠ GPS location: \1  ← reveals where it was taken"),
+    (r"No se encontraron duplicados entre (\d+) imágenes\.", r"No duplicates found among \1 images."),
+    (r"^Receta: ", "Recipe: "),
+    (r"Se compararon solo los dos primeros: (.*) y (.*)", r"Only the first two were compared: \1 and \2"),
+    (r"Se usó solo la primera imagen: ", "Only the first image was used: "),
+    (r"(\d+) de (\d+) imagen\(es\) tienen ubicación GPS\.", r"\1 of \2 image(s) have a GPS location."),
+    (r"(\d+) grupo\(s\) de duplicados; (\d+) archivo\(s\) sobrante\(s\)\.", r"\1 duplicate group(s); \2 extra file(s)."),
+    (r"▸ Grupo (\d+): conservar ", r"▸ Group \1: keep "),
+    (r"(\d+) páginas", r"\1 pages"),
+    (r": (\d+) campo\(s\)", r": \1 field(s)"),
+    (r"⚠ Columnas que no son campos del PDF \(se ignoran\): ", "⚠ Columns that aren't PDF fields (ignored): "),
+    (r"✓ página (\d+): ", r"✓ page \1: "),
+    (r": (.*) de texto$", r": \1 of text"),
+    (r": (\d+) archivo\(s\) en ", r": \1 file(s) in "),
+    (r": (\d+) página\(s\)", r": \1 page(s)"),
+    (r": (\d+) PDF rellenos en ", r": \1 filled PDFs in "),
+    (r": (\d+) anchos × (\d+) formatos", r": \1 widths × \2 formats"),
+    (r"\(ahorro de ", "(saved "),
+    (r"\(aumento de ", "(grew by "),
+    (r", cifrado", ", encrypted"),
+    (r"Vista previa \(no se modificó nada\):", "Preview (nothing was changed):"),
+]
+_FRASES += [
+    # Instalación de LibreOffice
+    (r"Se instalará con winget, el instalador oficial de Windows\. Windows puede pedirte confirmar\.",
+     "It will be installed with winget, Windows' official installer. Windows may ask you to confirm."),
+    (r"Se instalará con Homebrew\.", "It will be installed with Homebrew."),
+    (r"Se descargará el instalador oficial \(\.dmg\) de The Document Foundation y LibreOffice quedará en tu carpeta ~/Applications\. No pide contraseña\.",
+     "The official installer (.dmg) from The Document Foundation will be downloaded and LibreOffice will go in your ~/Applications folder. No password needed."),
+    (r"Se instalará con (apt|dnf)\. El sistema te pedirá tu contraseña\.", r"It will be installed with \1. The system will ask for your password."),
+    (r"Descárgalo desde (\S+) e instálalo; luego vuelve a Quillay\.", r"Download it from \1 and install it; then come back to Quillay."),
+    # Página Actualizaciones
+    (r": no instalado \(última: ", ": not installed (latest: "),
+    (r"\(no se pudo revisar: ", "(couldn't check: "),
+    (r"no instalado", "not installed"),
+    (r" → hay una versión nueva: ", " → a new version is available: "),
+    (r" \(al día\)", " (up to date)"),
+]
+_REGLAS = [(re.compile(p), r) for p, r in _FRASES]
+
+
+def informe(texto: str) -> str:
+    """Traduce al inglés el informe de una herramienta (si el idioma es inglés)."""
+    if _actual != "en":
+        return texto
+    lineas = []
+    for linea in texto.split("\n"):
+        for patron, reemplazo in _REGLAS:
+            linea = patron.sub(reemplazo, linea)
+        lineas.append(linea)
+    return "\n".join(lineas)

@@ -19,10 +19,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Ubuntu fijo (no «latest»): así la CI no cambia sola cuando GitHub migra a una versión nueva.
+        os: [ubuntu-24.04, windows-latest, macos-latest]
         python: ["3.13"]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python: "3.11"   # la versión mínima soportada
     env:
       QT_QPA_PLATFORM: offscreen   # Qt sin pantalla
@@ -58,7 +59,7 @@ jobs:
     # actionlint revisa los workflows con las mismas reglas que GitHub
     # (por ejemplo, que en las condiciones solo se usen comillas simples).
     name: Revisar workflows (actionlint)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Descargar actionlint 1.7.7

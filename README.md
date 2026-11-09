@@ -34,6 +34,7 @@ Una multiherramienta libre con más de 35 funciones: convierte, une, comprime, f
 - **Una sola app en vez de diez sitios.** PDF, imágenes, web y privacidad en el mismo lugar, procesando 1 o 500 archivos a la vez.
 - **Privacidad de verdad.** Censura que borra el texto (no solo lo tapa), detección de fotos con ubicación GPS y difuminado de rostros.
 - **Recetas reutilizables.** Guarda una cadena de pasos (encajar → marca de agua → WebP sin GPS) y repítela con un clic o un comando.
+- **A tu gusto.** Tema oscuro o claro con el botón luna/sol, y la ventana en español o inglés con el botón ES/EN.
 - **Terminal de primera clase.** Cada herramienta es también un comando (`quillay unir_pdf *.pdf`), generado desde el mismo código que la ventana.
 
 ## Herramientas

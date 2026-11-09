@@ -2,6 +2,17 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Seguridad
+- **«HTML a PDF» trabaja sin red con archivos locales.** Al convertir un `.html` de tu equipo, el navegador corre con la red bloqueada (proxy inexistente y sin resolver nombres de dominio). Así, una página que te mandaron no puede cargar imágenes o scripts de internet que avisen que la abriste o envíen datos. Si escribes una dirección web, se conecta como siempre. Lo explica `SECURITY.md`, junto con lo demás que hace Quillay para protegerte.
+
+### Cambiado
+- **Informes en inglés:** con la ventana en EN, el resultado de cada herramienta, los avisos de error, las líneas de *Actualizaciones* y las explicaciones al instalar LibreOffice también se muestran en inglés. En la terminal siguen en español.
+- Las recetas incluidas y el texto de ejemplo «© Mi marca» también se traducen al inglés.
+- El README menciona los botones de tema luna/sol e idioma ES/EN.
+- La CI y la publicación usan `ubuntu-24.04` fijo en vez de `ubuntu-latest`, para que no cambien solas cuando GitHub pase a Ubuntu 26.
+
 ## [0.4.2] — 2026-11-09
 
 ### Cambiado
