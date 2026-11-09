@@ -474,7 +474,12 @@ class ParamForm(QWidget):
         elif not isinstance(widget, QCheckBox) and p.kind != "multichoice":
             widget.setSizePolicy(QSizePolicy.Policy.Expanding, widget.sizePolicy().verticalPolicy())
             widget.setMaximumWidth(420)
-        self.form.addRow(p.label, widget)
+        # Etiqueta que puede bajar de línea: con fuentes anchas (Windows), una etiqueta
+        # larga como «Si una página no tiene tablas, exportar su texto» no empuja la página.
+        etiqueta = QLabel(p.label)
+        etiqueta.setWordWrap(True)
+        etiqueta.setMinimumWidth(120)
+        self.form.addRow(etiqueta, widget)
         self.rows[p.name] = [widget]
         if p.help:
             # La ayuda va en su propia fila, a todo lo ancho de la columna de campos,
