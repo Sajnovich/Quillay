@@ -126,7 +126,7 @@ class RunPanel(QWidget):
         out_row.addWidget(self.out_edit, 1)
         out_row.addWidget(pick)
 
-        self.run_btn = QPushButton("Procesar")
+        self.run_btn = QPushButton(t("Procesar"))
         self.run_btn.setObjectName("Primary")
         self.run_btn.clicked.connect(self.run_requested)
         self.cancel_btn = QPushButton(t("Cancelar"))
@@ -236,7 +236,9 @@ class ToolPage(QWidget):
         self.tool, self.files = tool, files
         self.form = ParamForm(tool.params)
         self.panel = RunPanel(with_preview=tool.preview is not None)
-        self.panel.run_btn.setText(t(tool.name))
+        # El botón dice «Procesar» y no el nombre de la herramienta (que ya está en el título):
+        # nombres largos como «Ordenar y eliminar páginas» no cabían en Windows.
+        self.panel.run_btn.setToolTip(t(tool.name))
         self.panel.run_requested.connect(self.run)
         self.panel.preview_requested.connect(self.preview)
         self.form.page_order_requested.connect(self._order_pages)

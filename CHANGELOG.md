@@ -9,6 +9,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - La tarjeta «Guardar y procesar» queda siempre a la vista abajo; si una herramienta tiene muchas opciones, solo se desplaza esa parte y la ventana no se mueve.
 - Las casillas marcadas muestran un visto y los campos numéricos tienen el mismo estilo que el resto, con sus flechas.
 - **Botones de tema e idioma arriba, junto al logo:** la luna y el sol cambian entre tema oscuro y claro (el oscuro es el predeterminado; se quitó la opción «sistema»), y ES/EN cambia el idioma de la ventana (español por defecto). En inglés ya están el menú, los nombres y descripciones de las herramientas, el panel de archivos y la zona de procesar; las opciones de cada herramienta llegan en la próxima versión.
+- El botón principal dice «Procesar» (el nombre de la herramienta ya está en el título y queda como ayuda al pasar el mouse), y las etiquetas de los formularios bajan de línea si no caben.
 - Campos más compactos: los números y el color ocupan poco ancho, los menús un ancho mediano y los textos el resto.
 - La línea entre el panel de archivos y la herramienta es más fina, y el aviso dice «1 imagen» en vez de «1 imágenes».
 

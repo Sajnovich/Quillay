@@ -47,7 +47,7 @@ EN = {
     # Página de herramienta
     "Opciones": "Options", "Guardar y procesar": "Save & process", "Guardar en": "Save to",
     "Cambiar…": "Change…", "Cancelar": "Cancel", "Abrir resultados": "Open results", "Vista previa": "Preview",
-    "Aquí aparecerá el resultado.": "The result will appear here.", "Ejecutar": "Run",
+    "Aquí aparecerá el resultado.": "The result will appear here.", "Ejecutar": "Run", "Procesar": "Process",
     "Abre la carpeta donde quedaron los archivos generados": "Opens the folder with the generated files",
     "Por defecto: subcarpeta «quillay» junto a los archivos": "Default: a «quillay» subfolder next to the files",
     # Herramientas: nombre y descripción
