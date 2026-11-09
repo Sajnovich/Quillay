@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -30,6 +31,7 @@ from PySide6.QtWidgets import (
 
 from quillay.core.imageio import ACCEPTS, ALL_EXTS, IMAGE_EXTS, PDF_EXTS, collect_files, human_size
 from quillay.core.params import Param
+from quillay.gui.idioma import t
 
 # ---------------------------------------------------------------- lista
 
@@ -46,9 +48,9 @@ class FileList(QWidget):
         self.setAcceptDrops(True)
         self._paths: list[Path] = []
 
-        title = QLabel("Archivos")
+        title = QLabel(t("Archivos"))
         title.setStyleSheet("font-weight: 700; font-size: 15px;")
-        self.count = QLabel("Arrastra imágenes, PDF o documentos aquí")
+        self.count = QLabel(t("Arrastra imágenes, PDF o documentos aquí"))
         self.count.setObjectName("Muted")
         self.count.setWordWrap(True)  # el panel se angosta con la ventana: el texto baja de línea
 
@@ -60,18 +62,19 @@ class FileList(QWidget):
         self.list.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         self.list.model().rowsMoved.connect(self._sync_from_widget)
 
-        self.hint = QLabel("Suelta aquí tus imágenes,\nPDF, documentos o carpetas")
+        self.hint = QLabel(t("Suelta aquí tus imágenes,\nPDF, documentos o carpetas"))
         self.hint.setObjectName("DropHint")
         self.hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hint.setWordWrap(True)
 
-        add = QPushButton("Agregar…")
+        add = QPushButton(t("Agregar…"))
         add.clicked.connect(self._pick_files)
-        folder = QPushButton("Carpeta…")
+        folder = QPushButton(t("Carpeta…"))
         folder.clicked.connect(self._pick_folder)
-        remove = QPushButton("Quitar")
+        remove = QPushButton(t("Quitar"))
         remove.setToolTip("Quita los seleccionados (tecla Supr)")
         remove.clicked.connect(self.remove_selected)
-        clear = QPushButton("Vaciar")
+        clear = QPushButton(t("Vaciar"))
         clear.clicked.connect(self.clear)
 
         row1 = QHBoxLayout()
@@ -151,7 +154,7 @@ class FileList(QWidget):
             total = sum(p.stat().st_size for p in self._paths if p.exists())
             self.count.setText(f"{n} archivo(s) · {human_size(total)}")
         else:
-            self.count.setText("Arrastra imágenes, PDF o documentos aquí")
+            self.count.setText(t("Arrastra imágenes, PDF o documentos aquí"))
         self.changed.emit()
 
     def _pick_files(self) -> None:
@@ -349,6 +352,8 @@ class ParamForm(QWidget):
     # La página de la herramienta sabe qué PDF está cargado; el formulario no.
     # Por eso el formulario solo "pide" el ordenador visual con esta señal.
     page_order_requested = Signal(QLineEdit)
+    # Se mostraron u ocultaron filas: el alto del formulario cambió.
+    rows_changed = Signal()
 
     def __init__(self, params: tuple[Param, ...], parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -456,6 +461,19 @@ class ParamForm(QWidget):
             widget = QLineEdit(str(p.default or ""))
             self.getters[p.name] = widget.text
 
+        # Cada campo con un ancho acorde a lo que guarda: números y colores cortos,
+        # menús medianos y textos más largos. Así el formulario se ve ordenado y liviano.
+        if isinstance(widget, (QSpinBox, QDoubleSpinBox)):
+            widget.setFixedWidth(130)
+            widget.lineEdit().setTextMargins(6, 0, 0, 0)  # que el número no toque el borde
+        elif isinstance(widget, ColorButton):
+            widget.setFixedWidth(130)
+        elif isinstance(widget, QComboBox):
+            widget.setSizePolicy(QSizePolicy.Policy.Expanding, widget.sizePolicy().verticalPolicy())
+            widget.setMaximumWidth(320)
+        elif not isinstance(widget, QCheckBox) and p.kind != "multichoice":
+            widget.setSizePolicy(QSizePolicy.Policy.Expanding, widget.sizePolicy().verticalPolicy())
+            widget.setMaximumWidth(420)
         self.form.addRow(p.label, widget)
         self.rows[p.name] = [widget]
         if p.help:
@@ -464,6 +482,8 @@ class ParamForm(QWidget):
             hint = QLabel(p.help)
             hint.setWordWrap(True)
             hint.setProperty("help", True)
+            hint.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            hint.setMaximumWidth(420)  # mismo ancho que su campo
             widget.setToolTip(p.help)
             self.form.addRow("", hint)
             self.rows[p.name].append(hint)
@@ -483,6 +503,7 @@ class ParamForm(QWidget):
                 other, allowed = p.visible_if
                 for w in self.rows[p.name]:
                     self.form.setRowVisible(w, current.get(other) in allowed)
+        self.rows_changed.emit()
 
 
 # ------------------------------------------------------------------- worker

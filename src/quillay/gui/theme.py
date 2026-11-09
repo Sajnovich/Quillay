@@ -7,8 +7,7 @@ como color de acento.
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QGuiApplication, QPalette
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 
 ACCENT = "#2c5282"        # azul cordillera: el texto blanco encima se lee bien (8:1)
@@ -30,6 +29,13 @@ THEMES = {
 _actual = "oscuro"  # tema aplicado ahora mismo (lo usan los íconos para elegir su color)
 
 
+def _asset(name: str) -> str:
+    """Ruta de un archivo de assets/ para usar en QSS (con «/» también en Windows)."""
+    from importlib import resources
+
+    return str(resources.files("quillay") / "assets" / name).replace("\\", "/")
+
+
 def actual() -> str:
     return _actual
 
@@ -39,14 +45,12 @@ def colores() -> dict[str, str]:
 
 
 def resolve(mode: str) -> str:
-    """'sistema' → 'claro' u 'oscuro' según la configuración del sistema operativo."""
-    if mode in THEMES:
-        return mode
-    scheme = QGuiApplication.styleHints().colorScheme()
-    return "oscuro" if scheme == Qt.ColorScheme.Dark else "claro"
+    """Tema a usar: «claro» u «oscuro». Cualquier otro valor (como el antiguo
+    «sistema») queda en oscuro, que es el predeterminado."""
+    return mode if mode in THEMES else "oscuro"
 
 
-def apply(app: QApplication, mode: str = "sistema") -> str:
+def apply(app: QApplication, mode: str = "oscuro") -> str:
     global _actual
     name = resolve(mode)
     _actual = name
@@ -82,7 +86,6 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
         #FilesPanel {{ background: {c['panel']}; border-right: 1px solid {c['border']}; }}
         #PageTitle, QLabel[rol="titulo"] {{ font-size: 22px; font-weight: 700; }}
         #Muted, QLabel[muted="true"] {{ color: {c['muted']}; }}
-        QLabel[help="true"] {{ color: {c['muted']}; font-size: 11px; }}
         #Card {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 12px; }}
         #Card:hover {{ border-color: {ACCENT}; }}
         #Grupo {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 10px; }}
@@ -99,12 +102,30 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
         QPushButton#Primary:disabled, QPushButton[rol="principal"]:disabled {{
             background: {c['border']}; color: {c['muted']}; }}
         QLineEdit, QComboBox, QPlainTextEdit {{
-            background: {c['input']}; border: 1px solid {c['border']}; border-radius: 7px; padding: 5px 8px; }}
+            background: {c['input']}; border: 1px solid {c['border']}; border-radius: 7px; padding: 4px 8px; }}
         QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus {{ border-color: {ACCENT}; }}
-        QSpinBox, QDoubleSpinBox {{ min-height: 26px; }}
+        QSpinBox, QDoubleSpinBox {{ background: {c['input']}; border: 1px solid {c['border']}; border-radius: 7px;
+                                    padding: 3px 2px; min-height: 20px; }}
+        QSpinBox:focus, QDoubleSpinBox:focus {{ border-color: {ACCENT}; }}
+        QSpinBox::up-button, QDoubleSpinBox::up-button, QSpinBox::down-button, QDoubleSpinBox::down-button {{
+            width: 20px; border: none; background: transparent; }}
+        QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{ image: url("{_asset('flecha-arriba.png')}"); }}
+        QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{ image: url("{_asset('flecha-abajo.png')}"); }}
+        QToolButton#BotonBarra {{ background: transparent; border: 1px solid {c['border']}; border-radius: 8px;
+                                  min-width: 30px; min-height: 28px; font-weight: 700; font-size: 11px; }}
+        QToolButton#BotonBarra:hover {{ border-color: {ACCENT}; }}
+        #Seccion {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 12px; }}
+        #Seccion QLabel, #Seccion QCheckBox, #Seccion QWidget#FormFondo {{ background: transparent; }}
+        #SeccionTitulo {{ color: {c['muted']}; font-size: 11px; font-weight: 700; letter-spacing: 1px; }}
+        #IconoTitulo {{ background: {c['card']}; border: 1px solid {c['border']}; border-radius: 10px; }}
+        #Aviso {{ background: {c['card']}; border: 1px solid {c['border']}; border-left: 3px solid {ACCENT};
+                  border-radius: 8px; padding: 8px 12px; color: {c['text']}; }}
+        #Registro {{ font-size: 12px; }}
+        QLabel[help="true"] {{ color: {c['muted']}; font-size: 12px; background: transparent; }}
         QCheckBox::indicator {{ width: 16px; height: 16px; border-radius: 4px;
                                 border: 1px solid {c['muted']}; background: {c['input']}; }}
-        QCheckBox::indicator:checked {{ background: {ACCENT}; border-color: {ACCENT}; }}
+        QCheckBox::indicator:checked {{ background: {ACCENT}; border-color: {ACCENT};
+                                        image: url("{_asset('check.png')}"); }}
         QCheckBox::indicator:hover {{ border-color: {ACCENT}; }}
         QListWidget::item {{ padding: 3px 2px; }}
         QListWidget#Files {{ background: {c['input']}; border: 1px solid {c['border']}; border-radius: 10px; }}
@@ -117,6 +138,6 @@ def apply(app: QApplication, mode: str = "sistema") -> str:
         QScrollBar::handle:vertical:hover {{ background: {c['muted']}; }}
         QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
         QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
-        QSplitter::handle {{ background: {c['border']}; }}
+        QSplitter::handle {{ background: {c['border']}; width: 1px; }}
     """)
     return name

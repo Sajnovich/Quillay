@@ -221,3 +221,28 @@ def test_ninguna_pagina_se_sale_hacia_los_lados(window, app):
         scroll = window.stack.currentWidget().findChild(QScrollArea)
         if scroll is not None:
             assert scroll.widget().width() <= scroll.viewport().width(), key
+
+
+def test_tema_e_idioma_desde_la_barra(window, app):
+    """Luna/sol cambia el tema; ES/EN reconstruye la ventana en el otro idioma."""
+    from quillay.gui import idioma, theme
+    from quillay.gui.app import MainWindow
+
+    antes = theme.actual()
+    window._toggle_theme()
+    assert theme.actual() != antes
+    window._toggle_theme()
+    assert theme.actual() == antes
+
+    assert idioma.actual() == "es"
+    window._toggle_language()
+    nueva = MainWindow._ventanas[-1]
+    try:
+        assert idioma.actual() == "en"
+        assert nueva.lang_btn.text() == "EN"
+        textos = [nueva.nav.item(i).text() for i in range(nueva.nav.count())]
+        assert "Merge PDF" in textos and "Home" in textos
+    finally:
+        nueva._toggle_language()  # vuelve a español para las demás pruebas
+        app.processEvents()
+    assert idioma.actual() == "es"

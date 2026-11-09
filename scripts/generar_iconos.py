@@ -53,7 +53,9 @@ def main() -> None:
     # Imágenes que se usan dentro de la ventana: el logo sin su cuadrado de fondo
     # (se funde con la barra lateral) y los dibujos de la firma. «@2x» es la
     # versión para pantallas de alta densidad (Retina): Qt la elige sola.
-    for nombre, ancho, alto in (("marca", 53, 72), ("bandera-chile", 18, 12), ("corazon-azul", 13, 12)):
+    dibujos = (("marca", 53, 72), ("bandera-chile", 18, 12), ("corazon-azul", 13, 12), ("check", 16, 16),
+               ("flecha-arriba", 12, 12), ("flecha-abajo", 12, 12))
+    for nombre, ancho, alto in dibujos:
         for escala, sufijo in ((1, ""), (2, "@2x")):
             render_rect(ASSETS / f"{nombre}.svg", ancho * escala, alto * escala).save(
                 ASSETS / f"{nombre}{sufijo}.png", optimize=True)

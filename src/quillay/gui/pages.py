@@ -30,7 +30,8 @@ from quillay import __url__, __version__, recipes
 from quillay.core import libreoffice
 from quillay.core.params import ParamError
 from quillay.core.registry import STEPS, Context, Report, Tool, tools_by_category
-from quillay.gui import iconos
+from quillay.gui import iconos, idioma
+from quillay.gui.idioma import t
 from quillay.gui.ui.ui_actualizaciones import Ui_Actualizaciones
 from quillay.gui.widgets import FileList, GroupGrid, ParamForm, Worker
 
@@ -42,18 +43,67 @@ def _avisar(parent: QWidget, title: str, text: str) -> None:
     box.exec()
 
 
-def _title(text: str, sub: str) -> QWidget:
+def _title(text: str, sub: str, icon: str = "") -> QWidget:
+    """Encabezado de página: ícono en un recuadro suave, título y descripción."""
     box = QWidget()
     lay = QVBoxLayout(box)
-    lay.setContentsMargins(0, 0, 0, 6)
+    lay.setContentsMargins(0, 0, 0, 4)
+    lay.setSpacing(4)
+    head = QHBoxLayout()
+    head.setSpacing(12)
+    if icon:
+        tile = QFrame()
+        tile.setObjectName("IconoTitulo")
+        tile.setFixedSize(40, 40)
+        tl = QVBoxLayout(tile)
+        tl.setContentsMargins(0, 0, 0, 0)
+        tl.addWidget(iconos.IconLabel(icon, "acento", 22), 0, Qt.AlignmentFlag.AlignCenter)
+        head.addWidget(tile)
     t = QLabel(text)
     t.setObjectName("PageTitle")
+    head.addWidget(t, 1)
+    lay.addLayout(head)
     s = QLabel(sub)
     s.setObjectName("Muted")
     s.setWordWrap(True)
-    lay.addWidget(t)
     lay.addWidget(s)
     return box
+
+
+class FitScroll(QScrollArea):
+    """Zona desplazable que pide solo el alto de su contenido.
+
+    Si el contenido es corto, no deja espacio vacío (el resto lo usa el cuadro
+    de resultado); si es largo, se achica y muestra su propia barra para bajar.
+    """
+
+    def __init__(self, inner: QWidget) -> None:
+        super().__init__()
+        self.setWidgetResizable(True)
+        # Las páginas se adaptan al ancho: nunca hay que moverse hacia los lados.
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        self.setWidget(inner)
+
+    def sizeHint(self) -> QSize:  # noqa: N802 - nombre de Qt
+        return QSize(super().sizeHint().width(), self.widget().sizeHint().height() + 2 * self.frameWidth())
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802 - nombre de Qt
+        return QSize(super().minimumSizeHint().width(), 160)
+
+
+def _section(title: str, content: QWidget) -> QFrame:
+    """Tarjeta con un título corto en mayúsculas (agrupa opciones o la ejecución)."""
+    card = QFrame()
+    card.setObjectName("Seccion")
+    lay = QVBoxLayout(card)
+    lay.setContentsMargins(16, 12, 16, 14)
+    lay.setSpacing(8)
+    head = QLabel(title.upper())
+    head.setObjectName("SeccionTitulo")
+    lay.addWidget(head)
+    lay.addWidget(content, 1)
+    return card
 
 
 class RunPanel(QWidget):
@@ -68,26 +118,26 @@ class RunPanel(QWidget):
         self.last_out: Path | None = None
 
         self.out_edit = QLineEdit(self.settings.value("salida", "", str))
-        self.out_edit.setPlaceholderText("Por defecto: subcarpeta «quillay» junto a los archivos")
-        pick = QPushButton("Cambiar…")
+        self.out_edit.setPlaceholderText(t("Por defecto: subcarpeta «quillay» junto a los archivos"))
+        pick = QPushButton(t("Cambiar…"))
         pick.clicked.connect(self._pick_out)
         out_row = QHBoxLayout()
-        out_row.addWidget(QLabel("Guardar en"))
+        out_row.addWidget(QLabel(t("Guardar en")))
         out_row.addWidget(self.out_edit, 1)
         out_row.addWidget(pick)
 
         self.run_btn = QPushButton("Procesar")
         self.run_btn.setObjectName("Primary")
         self.run_btn.clicked.connect(self.run_requested)
-        self.cancel_btn = QPushButton("Cancelar")
+        self.cancel_btn = QPushButton(t("Cancelar"))
         self.cancel_btn.setVisible(False)
-        self.open_btn = QPushButton("Abrir resultados")
-        self.open_btn.setToolTip("Abre la carpeta donde quedaron los archivos generados")
+        self.open_btn = QPushButton(t("Abrir resultados"))
+        self.open_btn.setToolTip(t("Abre la carpeta donde quedaron los archivos generados"))
         self.open_btn.setEnabled(False)
         self.open_btn.clicked.connect(self._open_out)
         buttons = QHBoxLayout()
         if with_preview:
-            prev = QPushButton("Vista previa")
+            prev = QPushButton(t("Vista previa"))
             prev.clicked.connect(self.preview_requested)
             buttons.addWidget(prev)
         buttons.addWidget(self.run_btn)
@@ -103,18 +153,17 @@ class RunPanel(QWidget):
         self.status.setObjectName("Muted")
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
-        self.log.setPlaceholderText("Aquí aparecerá el resultado.")
-        mono = QFont("monospace")
-        mono.setStyleHint(QFont.StyleHint.Monospace)
-        self.log.setFont(mono)
+        self.log.setPlaceholderText(t("Aquí aparecerá el resultado."))
+        self.log.setObjectName("Registro")
         # Bajo para que los formularios largos quepan sin tener que bajar; crece si hay espacio.
-        self.log.setMinimumHeight(90)
+        self.log.setMinimumHeight(70)
         # «Ignored» en vertical: el registro no pide su alto preferido (unas 12 líneas),
         # solo usa el espacio que sobre. Si no, empuja la página y aparece la barra para bajar.
         self.log.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
 
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 8, 0, 0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(10)
         lay.addLayout(out_row)
         lay.addLayout(buttons)
         lay.addWidget(self.bar)
@@ -187,7 +236,7 @@ class ToolPage(QWidget):
         self.tool, self.files = tool, files
         self.form = ParamForm(tool.params)
         self.panel = RunPanel(with_preview=tool.preview is not None)
-        self.panel.run_btn.setText(f"{tool.name}")
+        self.panel.run_btn.setText(t(tool.name))
         self.panel.run_requested.connect(self.run)
         self.panel.preview_requested.connect(self.preview)
         self.form.page_order_requested.connect(self._order_pages)
@@ -196,37 +245,52 @@ class ToolPage(QWidget):
                 "html": "páginas HTML"}.get(tool.accepts, "archivos")
         self.files_note = QLabel()
         self.files_note.setWordWrap(True)
-        self.files_note.setObjectName("Muted")
+        self.files_note.setObjectName("Aviso")
         files.changed.connect(lambda: self._update_note(need))
         self._update_note(need)
 
+        # Arriba, lo que se desplaza si es largo: encabezado, aviso y opciones.
         inner = QWidget()
         lay = QVBoxLayout(inner)
-        lay.setContentsMargins(28, 22, 28, 22)
-        lay.addWidget(_title(tool.name, tool.description))
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(10)
+        lay.addWidget(_title(t(tool.name), t(tool.description), iconos.HERRAMIENTAS.get(tool.id, iconos.GENERICO)))
         lay.addWidget(self.files_note)
         if tool.params:
-            lay.addSpacing(6)
-            lay.addWidget(self.form)
-        lay.addWidget(self.panel, 1)
+            lay.addWidget(_section(t("Opciones"), self.form))
+        lay.addStretch(1)
+        scroll = FitScroll(inner)
+        self.form.rows_changed.connect(scroll.updateGeometry)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        # Las páginas se adaptan al ancho: nunca hay que moverse hacia los lados.
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setWidget(inner)
+        # Abajo y siempre a la vista: dónde guardar, el botón y el resultado.
+        # Así la ventana no se mueve: si hay muchas opciones, solo se desplaza esa parte.
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setContentsMargins(28, 20, 28, 20)
+        outer.setSpacing(10)
         outer.addWidget(scroll)
+        outer.addWidget(_section(t("Guardar y procesar"), self.panel), 1)
 
     def _update_note(self, need: str) -> None:
         n = len(self.files.paths(self.tool.accepts))
         ignored = len(self.files.paths()) - n
-        text = f"Se procesarán {n} {need}."
-        if ignored:
-            text += f" ({ignored} archivo(s) de otro tipo se ignorarán)"
-        if n < self.tool.min_files:
-            text = f"Agrega al menos {self.tool.min_files} {need} en el panel de archivos."
+        if idioma.en_ingles():
+            need_en = {"PDF": "PDFs", "imágenes": "images", "documentos de Office": "Office documents",
+                       "páginas HTML": "HTML pages"}.get(need, "files")
+            text = f"{n} {need_en} will be processed."
+            if ignored:
+                text += f" ({ignored} file(s) of another type will be skipped)"
+            if n < self.tool.min_files:
+                cuantos = need_en.rstrip("s") if self.tool.min_files == 1 else need_en
+                text = f"Add at least {self.tool.min_files} {cuantos} in the files panel."
+        else:
+            text = f"Se procesarán {n} {need}."
+            if ignored:
+                text += f" ({ignored} archivo(s) de otro tipo se ignorarán)"
+            if n < self.tool.min_files:
+                una = {"PDF": "PDF", "imágenes": "imagen", "documentos de Office": "documento de Office",
+                       "páginas HTML": "página HTML"}.get(need, "archivo")
+                cuantos = f"1 {una}" if self.tool.min_files == 1 else f"{self.tool.min_files} {need}"
+                text = f"Agrega al menos {cuantos} en el panel de archivos."
         self.files_note.setText(text)
         self.panel.run_btn.setEnabled(n >= self.tool.min_files)
 
@@ -304,7 +368,7 @@ class HomePage(QWidget):
         # (etiqueta, nombre del ícono, rol): para volver a pintarlos si cambia el tema.
         self._iconos: list[tuple[QLabel, str, str]] = []
         for category, tools in tools_by_category().items():
-            lay.addWidget(self._heading(category, iconos.CATEGORIAS.get(category, iconos.GENERICO)))
+            lay.addWidget(self._heading(t(category), iconos.CATEGORIAS.get(category, iconos.GENERICO)))
             # Hasta 3 tarjetas por fila; con la ventana angosta se reacomodan en 2 o 1.
             lay.addWidget(GroupGrid([self._card(tool) for tool in tools], max_columnas=3, ancho_tarjeta=200))
         lay.addWidget(self._heading("Automatizar", iconos.CATEGORIAS["Automatizar"]))
@@ -351,9 +415,9 @@ class HomePage(QWidget):
         card.setCursor(Qt.CursorShape.PointingHandCursor)
         card.setMinimumHeight(86)
         lay = QVBoxLayout(card)
-        lay.addLayout(self._icon_row(tool.name, iconos.HERRAMIENTAS.get(tool.id, iconos.GENERICO),
+        lay.addLayout(self._icon_row(t(tool.name), iconos.HERRAMIENTAS.get(tool.id, iconos.GENERICO),
                                      "font-weight: 600;"))
-        desc = QLabel(tool.description)
+        desc = QLabel(t(tool.description))
         desc.setWordWrap(True)
         desc.setObjectName("Muted")
         desc.setStyleSheet("background: transparent; font-size: 12px;")
@@ -449,7 +513,7 @@ class RecipesPage(QWidget):
         ref.setObjectName("Muted")
 
         self.panel = RunPanel()
-        self.panel.run_btn.setText("Ejecutar")  # corto: la página ya dice que es una receta
+        self.panel.run_btn.setText(t("Ejecutar"))  # corto: la página ya dice que es una receta
         self.panel.run_requested.connect(self._run)
 
         right = QWidget()

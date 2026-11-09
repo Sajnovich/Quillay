@@ -10,7 +10,6 @@ from PySide6.QtCore import QSettings, QSize, Qt
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
-    QComboBox,
     QHBoxLayout,
     QLabel,
     QListWidget,
@@ -19,13 +18,15 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QSplitter,
     QStackedWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
 from quillay import FIRMA, __app_name__, __autor__, __version__
 from quillay.core.registry import tools_by_category
-from quillay.gui import iconos, theme
+from quillay.gui import iconos, idioma, theme
+from quillay.gui.idioma import t
 from quillay.gui.pages import HomePage, RecipesPage, ToolPage, UpdatesPage
 from quillay.gui.widgets import FileList, Worker
 
@@ -33,6 +34,9 @@ HOME, RECIPES, UPDATES = "__inicio__", "__recetas__", "__actualizaciones__"
 
 
 class MainWindow(QMainWindow):
+    # Ventanas creadas al cambiar de idioma: se guardan para que Python no las borre.
+    _ventanas: list[MainWindow] = []
+
     def __init__(self, app: QApplication) -> None:
         super().__init__()
         self.app = app
@@ -63,8 +67,21 @@ class MainWindow(QMainWindow):
         brand_row.addWidget(logo, 0, Qt.AlignmentFlag.AlignVCenter)
         brand_row.addWidget(name, 0, Qt.AlignmentFlag.AlignVCenter)
         brand_row.addStretch(1)
-        sub = QLabel("Todo para tus PDF e imágenes.\nNada sale de tu equipo.")
+        # Arriba a la derecha: tema (luna = oscuro, sol = claro) e idioma (ES/EN).
+        self.theme_btn = QToolButton()
+        self.theme_btn.setObjectName("BotonBarra")
+        self.theme_btn.setIconSize(QSize(18, 18))
+        self.theme_btn.clicked.connect(self._toggle_theme)
+        self.lang_btn = QToolButton()
+        self.lang_btn.setObjectName("BotonBarra")
+        self.lang_btn.setText("ES" if not idioma.en_ingles() else "EN")
+        self.lang_btn.setToolTip("Switch to English" if not idioma.en_ingles() else "Cambiar a español")
+        self.lang_btn.clicked.connect(self._toggle_language)
+        brand_row.addWidget(self.theme_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+        brand_row.addWidget(self.lang_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+        sub = QLabel(t("Todo para tus PDF e imágenes.\nNada sale de tu equipo."))
         sub.setObjectName("BrandSub")
+        sub.setWordWrap(True)
         self.nav = QListWidget()
         self.nav.setIconSize(QSize(18, 18))
         self.nav.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -73,15 +90,6 @@ class MainWindow(QMainWindow):
         side.addWidget(sub)
         side.addWidget(self.nav, 1)
 
-        theme_row = QHBoxLayout()
-        theme_row.setContentsMargins(16, 0, 16, 0)
-        theme_row.addWidget(QLabel("Tema"))
-        self.theme_box = QComboBox()
-        self.theme_box.addItems(["sistema", "claro", "oscuro"])
-        self.theme_box.setCurrentText(self.settings.value("tema", "sistema", str))
-        self.theme_box.currentTextChanged.connect(self._set_theme)
-        theme_row.addWidget(self.theme_box, 1)
-        side.addLayout(theme_row)
         # Firma fija al pie: está escrita en el código, no es un ajuste.
         firma = QLabel(firma_html())
         firma.setObjectName("Firma")
@@ -95,19 +103,20 @@ class MainWindow(QMainWindow):
         home = HomePage()
         home.open_tool.connect(self.select)
         self.home = home
-        self._add_nav(HOME, "Inicio", home)
+        self._add_nav(HOME, t("Inicio"), home)
         for category, tools in tools_by_category().items():
-            self._add_header(category.upper())
+            self._add_header(t(category).upper())
             for tool in tools:
-                self._add_nav(tool.id, tool.name, ToolPage(tool, self.files))
+                self._add_nav(tool.id, t(tool.name), ToolPage(tool, self.files))
         # Recetas al final: es lo más avanzado; quien solo quiere unir un PDF no lo necesita primero.
-        self._add_header("AUTOMATIZAR")
-        self._add_nav(RECIPES, "Recetas", RecipesPage(self.files))
-        self._add_header("MANTENER")
-        self._add_nav(UPDATES, "Actualizaciones", UpdatesPage())
+        self._add_header(t("Automatizar").upper())
+        self._add_nav(RECIPES, t("Recetas"), RecipesPage(self.files))
+        self._add_header(t("Mantener").upper())
+        self._add_nav(UPDATES, t("Actualizaciones"), UpdatesPage())
         self._refresh_icons()
 
         split = QSplitter()
+        split.setHandleWidth(1)  # línea fina entre el panel de archivos y la herramienta
         split.addWidget(self.files)
         split.addWidget(self.stack)
         split.setSizes([300, 900])
@@ -151,6 +160,9 @@ class MainWindow(QMainWindow):
             if key := item.data(Qt.ItemDataRole.UserRole):
                 item.setIcon(iconos.de_herramienta(key))
         self.home.refresh_icons()
+        oscuro = theme.actual() == "oscuro"
+        self.theme_btn.setIcon(iconos.icono("moon" if oscuro else "sun", "texto"))
+        self.theme_btn.setToolTip(t("Cambiar a tema claro") if oscuro else t("Cambiar a tema oscuro"))
 
     def select(self, key: str) -> None:
         for i in range(self.nav.count()):
@@ -188,6 +200,29 @@ class MainWindow(QMainWindow):
         self.settings.setValue("tema", mode)
         theme.apply(self.app, mode)
         self._refresh_icons()
+
+    def _toggle_theme(self) -> None:
+        self._set_theme("claro" if theme.actual() == "oscuro" else "oscuro")
+
+    def _toggle_language(self) -> None:
+        """Cambia ES ↔ EN y vuelve a construir la ventana con los textos nuevos.
+
+        Los textos se eligen al crear cada widget, así que lo más simple y seguro es
+        una ventana nueva en el mismo lugar, con los mismos archivos y la misma página.
+        """
+        nuevo = "en" if idioma.actual() == "es" else "es"
+        self.settings.setValue("idioma", nuevo)
+        idioma.establecer(nuevo)
+        ventana = MainWindow(self.app)
+        ventana.setGeometry(self.geometry())
+        ventana.files.add_paths(self.files.paths())
+        item = self.nav.currentItem()
+        if item is not None and item.data(Qt.ItemDataRole.UserRole):
+            ventana.select(item.data(Qt.ItemDataRole.UserRole))
+        ventana.show()
+        MainWindow._ventanas.append(ventana)
+        self.close()
+        self.deleteLater()
 
 
 def asset_path(name: str) -> str:
@@ -233,7 +268,9 @@ def main() -> int:
     app.setApplicationName("Quillay")
     app.setApplicationVersion(__version__)
     app.setWindowIcon(app_icon())
-    theme.apply(app, QSettings().value("tema", "sistema", str))
+    settings = QSettings()
+    idioma.establecer(settings.value("idioma", "es", str))
+    theme.apply(app, settings.value("tema", "oscuro", str))
     window = MainWindow(app)
     window.show()
     window.check_updates_on_start()
@@ -244,7 +281,11 @@ def main() -> int:
     Worker.detener_todos()  # que ningún hilo quede corriendo al cerrar
     # Liberamos la ventana antes que la aplicación: si Python las destruye en
     # otro orden al salir, Qt (C++) puede liberar memoria dos veces y caerse.
-    window.deleteLater()
+    for ventana in [window, *MainWindow._ventanas]:
+        try:
+            ventana.deleteLater()
+        except RuntimeError:  # ya la borró Qt (se cerró al cambiar de idioma)
+            pass
     app.processEvents()
     del window
     return code
