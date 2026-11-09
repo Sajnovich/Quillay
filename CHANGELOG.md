@@ -2,7 +2,7 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.4.1] — 2026-11-08
 
 ### Agregado
 - **Íconos en el menú y en las tarjetas de inicio**, uno por herramienta, con [QtAwesome](https://github.com/spyder-ide/qtawesome) (set Phosphor, licencia MIT). Se ven nítidos en pantallas Retina y cambian de color con el tema; el ítem seleccionado lo muestra en blanco.
@@ -150,6 +150,7 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
+[0.4.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.1
 [0.4.0]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.0
 [0.3.2]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.1
