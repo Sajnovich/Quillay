@@ -93,7 +93,6 @@ class RunPanel(QWidget):
         buttons.addWidget(self.run_btn)
         buttons.addWidget(self.cancel_btn)
         buttons.addStretch(1)
-        buttons.addWidget(self.open_btn)
 
         self.bar = QProgressBar()
         self.bar.setVisible(False)
@@ -119,7 +118,13 @@ class RunPanel(QWidget):
         lay.addLayout(out_row)
         lay.addLayout(buttons)
         lay.addWidget(self.bar)
-        lay.addWidget(self.status)
+        # «Abrir resultados» va junto al estado y no al lado de «Procesar»: con nombres
+        # largos («Difuminar caras y patentes») y fuentes anchas, la fila no cabía.
+        self.status.setWordWrap(True)
+        status_row = QHBoxLayout()
+        status_row.addWidget(self.status, 1)
+        status_row.addWidget(self.open_btn)
+        lay.addLayout(status_row)
         lay.addWidget(self.log, 1)
 
     def out_dir(self) -> Path | None:
