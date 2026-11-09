@@ -403,9 +403,23 @@ class ParamForm(QWidget):
             box.setSpacing(4)
             checks = []
             for choice in p.choices:
-                cb = QCheckBox(p.label_for(choice))
+                # «AVIF · página web moderna…»: la casilla dice el nombre y la sugerencia va
+                # al lado, en gris, y puede bajar de línea (las casillas no se ajustan solas).
+                nombre, _, ayuda = p.label_for(choice).partition(" · ")
+                cb = QCheckBox(nombre)
                 cb.setChecked(choice in p.default)
-                box.addWidget(cb)
+                if ayuda:
+                    row = QHBoxLayout()
+                    row.setSpacing(8)
+                    row.addWidget(cb)
+                    hint = QLabel(ayuda)
+                    hint.setWordWrap(True)
+                    hint.setProperty("muted", True)
+                    hint.setStyleSheet("font-size: 12px;")
+                    row.addWidget(hint, 1)
+                    box.addLayout(row)
+                else:
+                    box.addWidget(cb)
                 checks.append((choice, cb))
             self.getters[p.name] = lambda checks=checks: [c for c, cb in checks if cb.isChecked()]
         elif p.kind == "color":
