@@ -61,6 +61,7 @@ def _title(text: str, sub: str, icon: str = "") -> QWidget:
         head.addWidget(tile)
     t = QLabel(text)
     t.setObjectName("PageTitle")
+    t.setWordWrap(True)  # títulos largos («Ordenar y eliminar páginas») bajan de línea en vez de salirse
     head.addWidget(t, 1)
     lay.addLayout(head)
     s = QLabel(sub)
