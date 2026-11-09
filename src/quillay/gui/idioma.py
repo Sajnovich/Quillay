@@ -1,3 +1,4 @@
+# ruff: noqa: E501  (las traducciones son líneas largas a propósito: se leen mejor enteras)
 """Idioma de la ventana: español (predeterminado) o inglés.
 
 Los textos se escriben en español en el código y se pasan por ``t()``: si el
@@ -161,3 +162,257 @@ EN = {
     "Muestra qué cambió entre dos versiones: informe de texto y páginas con los cambios marcados en rojo.":
         "Shows what changed between two versions: a text report and pages with the changes marked in red.",
 }
+
+# Opciones de las herramientas (etiquetas, ayudas y valores de los menús).
+EN.update({
+    # Valores sueltos de menús
+    "caras": "faces", "patentes": "license plates", "centro": "center", "arriba": "top", "abajo": "bottom",
+    "izquierda": "left", "derecha": "right", "arriba-izquierda": "top-left", "arriba-derecha": "top-right",
+    "abajo-izquierda": "bottom-left", "abajo-derecha": "bottom-right", "igual": "unchanged",
+    "minusculas": "lowercase", "mayusculas": "UPPERCASE", "guiones": "hyphens", "guion_bajo": "underscores",
+    "mosaico": "tiled",
+    # Web y redes
+    "Nombre del sitio": "Site name", "Color del tema": "Theme color",
+    "Color de la barra del navegador en Android.": "Browser bar color on Android.",
+    "Fondo del ícono de iPhone": "iPhone icon background",
+    "iOS no admite transparencia: se rellena con este color.": "iOS doesn't support transparency: it's filled with this color.",
+    "Margen interno (%)": "Inner padding (%)", "Anchos (px, separados por coma)": "Widths (px, comma-separated)",
+    "Formatos": "Formats",
+    "El navegador elige el primero que soporte; el último es el respaldo.":
+        "The browser picks the first one it supports; the last one is the fallback.",
+    "AVIF · página web moderna, el más liviano": "AVIF · modern websites, the lightest",
+    "WebP · página web: liviano y con transparencia": "WebP · websites: light and with transparency",
+    "JPG · fotos para compartir, abre en todas partes": "JPG · photos to share, opens everywhere",
+    "PNG · logos, capturas y fondos transparentes": "PNG · logos, screenshots and transparent backgrounds",
+    "Calidad": "Quality", "Ruta en el sitio": "Path on the site",
+    "Prefijo de las URLs en el HTML generado.": "Prefix for the URLs in the generated HTML.",
+    "Atributo sizes": "sizes attribute", "Carga diferida (loading=lazy)": "Lazy loading (loading=lazy)",
+    "Post 1:1 · 1080×1080": "Post 1:1 · 1080×1080", "Vertical 4:5 · 1080×1350": "Portrait 4:5 · 1080×1350",
+    "Vertical 9:16 · 1080×1920": "Portrait 9:16 · 1080×1920", "Portada · 1584×396": "Cover · 1584×396",
+    "Miniatura · 1280×720": "Thumbnail · 1280×720", "Vista previa · 1200×630": "Link preview · 1200×630",
+    "Historias y Reels": "Stories & Reels", "Enlaces web": "Web links",
+    "Ajuste": "Fit", "Cubrir (recorta)": "Cover (crops)", "Contener (agrega bordes)": "Contain (adds borders)",
+    "Color de bordes": "Border color", "Formato": "Format",
+    "Sugerencia: JPG para publicar; PNG si la imagen tiene texto o un logo.":
+        "Tip: JPG for posting; PNG if the image has text or a logo.",
+    "Modo": "Mode", "LQIP: miniatura borrosa": "LQIP: blurred thumbnail",
+    "Base64 de la imagen completa": "Base64 of the full image", "Ancho del LQIP (px)": "LQIP width (px)",
+    "Desenfoque": "Blur",
+    # Privacidad
+    "Detectar": "Detect",
+    "Patentes es experimental: el modelo incluido no fue entrenado con patentes chilenas.":
+        "License plates are experimental: the included model wasn't trained on Chilean plates.",
+    "Estilo": "Style", "Pixelado": "Pixelate", "Caja negra": "Black box", "Intensidad": "Strength",
+    "Sensibilidad de detección": "Detection sensitivity",
+    "Más alta encuentra más caras, pero también más falsos positivos.":
+        "Higher finds more faces, but also more false positives.",
+    "Quitar también metadatos GPS": "Also remove GPS metadata",
+    "Solo aplica a JPG, WebP, AVIF y HEIC. 75-85 es un buen equilibrio.":
+        "Only applies to JPG, WebP, AVIF and HEIC. 75-85 is a good balance.",
+    "Sufijo del nombre": "Name suffix", "Ej: «-web» → foto-web.jpg": "E.g. «-web» → photo-web.jpg",
+    "Tolerancia": "Tolerance",
+    "0 = solo idénticas. 6 = mismas fotos recomprimidas o redimensionadas. Más de 10 puede agrupar fotos distintas.":
+        "0 = identical only. 6 = same photos recompressed or resized. Over 10 may group different photos.",
+    "Acción": "Action", "Solo informe": "Report only",
+    "Copiar cada grupo a una carpeta para revisar": "Copy each group to a folder to review",
+    "Mover las copias sobrantes (conserva la mejor)": "Move the extra copies (keeps the best one)",
+    "Ver (no modifica nada)": "View (changes nothing)", "Quitar metadatos (crea copias limpias)": "Remove metadata (makes clean copies)",
+    "Exportar informe JSON": "Export JSON report",
+    # Imágenes
+    "Formato de salida": "Output format",
+    "Sugerencia: WebP para una página web, JPG para enviar fotos, PNG para logos.":
+        "Tip: WebP for a website, JPG to send photos, PNG for logos.",
+    "Igual que el original": "Same as the original", "HEIC · fotos en equipos Apple": "HEIC · photos on Apple devices",
+    "TIFF · imprenta y archivo, sin pérdida": "TIFF · printing and archiving, lossless",
+    "BMP · programas antiguos": "BMP · older programs", "GIF · animaciones simples (256 colores)": "GIF · simple animations (256 colors)",
+    "Quitar metadatos (EXIF/GPS)": "Remove metadata (EXIF/GPS)",
+    "Elimina datos de cámara, fecha y ubicación GPS. El perfil de color se conserva.":
+        "Removes camera data, date and GPS location. The color profile is kept.",
+    "Menos calidad = menos peso. Bajo 60 se empiezan a notar artefactos.":
+        "Lower quality = smaller file. Below 60, artifacts start to show.",
+    "PNG: reducir a 256 colores": "PNG: reduce to 256 colors",
+    "Gran ahorro en logos, capturas e ilustraciones. Evítalo en fotos.":
+        "Big savings on logos, screenshots and illustrations. Avoid it on photos.",
+    "Ancho máximo (px, 0 = sin límite)": "Max width (px, 0 = no limit)",
+    "Reducir dimensiones es lo que más baja el peso.": "Reducing dimensions is what lowers file size the most.",
+    "Caber en una caja (mantiene proporción)": "Fit in a box (keeps proportions)", "Fijar ancho": "Set width",
+    "Fijar alto": "Set height", "Porcentaje": "Percentage", "Tamaño exacto (deforma)": "Exact size (distorts)",
+    "Ancho (px)": "Width (px)", "Alto (px)": "Height (px)", "No agrandar imágenes pequeñas": "Don't enlarge small images",
+    "Proporción": "Aspect ratio", "Zona a conservar": "Area to keep", "Cubrir (recorta lo que sobra)": "Cover (crops the excess)",
+    "Logo (PNG transparente)": "Logo (transparent PNG)", "Déjalo vacío para usar texto.": "Leave it empty to use text.",
+    "Texto (si no hay logo)": "Text (if there's no logo)", "Posición": "Position", "Tamaño (% del ancho)": "Size (% of width)",
+    "Opacidad (%)": "Opacity (%)", "Margen (% del ancho)": "Margin (% of width)", "Color del texto": "Text color",
+    "Patrón": "Pattern",
+    "Fichas: {nombre} {n} {fecha} {ancho} {alto}. Ej: viaje_{fecha}_{n}":
+        "Tokens: {nombre} (name) {n} {fecha} (date) {ancho} (width) {alto} (height). E.g. trip_{fecha}_{n}",
+    "Número inicial": "Starting number", "Dígitos del número": "Number digits", "3 → 001, 002...": "3 → 001, 002...",
+    "Mayúsculas": "Case", "Espacios": "Spaces",
+    "Los espacios en nombres de archivo complican las URLs.": "Spaces in file names make URLs awkward.",
+    "Copiar con el nombre nuevo (seguro)": "Copy with the new name (safe)", "Renombrar los originales": "Rename the originals",
+    "Cantidad de colores": "Number of colors", "Guardar muestra PNG": "Save PNG swatch",
+    # PDF · Organizar
+    "Nombre del PDF final": "Final PDF name", "Agregar un marcador por archivo": "Add a bookmark per file",
+    "El índice lateral del lector mostrará dónde empieza cada documento.":
+        "The reader's sidebar will show where each document starts.",
+    "Cómo dividir": "How to split", "Un archivo por página": "One file per page",
+    "Por rangos (cada rango = un archivo)": "By ranges (each range = one file)", "Cada N páginas": "Every N pages",
+    "Rangos": "Ranges", "Cada grupo separado por coma será un archivo. Ej: 1-3,4,5-10":
+        "Each comma-separated group will be one file. E.g. 1-3,4,5-10",
+    "Páginas por archivo": "Pages per file", "Nuevo orden": "New order",
+    "Páginas en el orden final; las que no escribas se eliminan. Ej: 3,1,2,5-7":
+        "Pages in their final order; the ones you leave out are deleted. E.g. 3,1,2,5-7",
+    "Invertir el orden": "Reverse the order", "Útil para escaneos hechos al revés.": "Useful for scans made backwards.",
+    "Girar": "Rotate", "90° a la derecha": "90° clockwise", "180°": "180°", "90° a la izquierda": "90° counterclockwise",
+    "Páginas": "Pages", "Vacío = todas. También: 2-4, «pares», «impares».":
+        "Empty = all. Also: 2-4, «pares» (even), «impares» (odd).",
+    "Automático (detecta el contenido)": "Automatic (detects the content)", "Márgenes exactos en mm": "Exact margins in mm",
+    "Holgura alrededor del contenido (mm)": "Padding around the content (mm)", "Arriba (mm)": "Top (mm)",
+    "Abajo (mm)": "Bottom (mm)", "Izquierda (mm)": "Left (mm)", "Derecha (mm)": "Right (mm)", "Vacío = todas.": "Empty = all.",
+    # PDF · Optimizar
+    "Compresión": "Compression", "Baja: casi sin pérdida (220 DPI)": "Low: almost lossless (220 DPI)",
+    "Recomendada: buena calidad (150 DPI)": "Recommended: good quality (150 DPI)",
+    "Extrema: lo más liviano posible (96 DPI)": "Extreme: as light as possible (96 DPI)",
+    "Quitar metadatos (autor, programa, fechas)": "Remove metadata (author, program, dates)",
+    "Si falla, rescatar como imágenes": "If it fails, rescue as images",
+    "Último recurso: convierte cada página legible en imagen. Se pierde el texto seleccionable.":
+        "Last resort: turns each readable page into an image. Selectable text is lost.",
+    # PDF · Convertir
+    "Nombre del PDF": "PDF name", "Tamaño de página": "Page size", "Igual a cada imagen": "Same as each image",
+    "Carta": "Letter", "Oficio (Chile)": "Legal (Chile)", "Margen (mm)": "Margin (mm)", "Resolución (DPI)": "Resolution (DPI)",
+    "150 sirve para pantalla y oficina; 300 para imprimir.": "150 works for screen and office; 300 for printing.",
+    "Calidad JPEG interna": "Internal JPEG quality", "Qué obtener": "What to get", "Cada página como imagen": "Each page as an image",
+    "Las imágenes incrustadas (calidad original)": "The embedded images (original quality)",
+    "Vacío = todas. Ej: 1-3,5": "Empty = all. E.g. 1-3,5",
+    "«Igual al original» deja el texto en cuadros ubicados como en el PDF y necesita LibreOffice (gratis); si no está, "
+    "Quillay usa «Texto continuo», que fluye como un documento normal.":
+        "«Same as the original» keeps the text in boxes placed as in the PDF and needs LibreOffice (free); "
+        "if it isn't installed, Quillay uses «Flowing text», which flows like a normal document.",
+    "Igual al original: fuentes, colores e imágenes (usa LibreOffice)":
+        "Same as the original: fonts, colors and images (uses LibreOffice)",
+    "Texto continuo: títulos, párrafos, tablas e imágenes": "Flowing text: headings, paragraphs, tables and images",
+    "Cada página como imagen (no editable)": "Each page as an image (not editable)", "Calidad (DPI)": "Quality (DPI)",
+    "150 se ve nítido en un proyector; 300 para pantallas 4K (archivo más pesado).":
+        "150 looks sharp on a projector; 300 for 4K screens (bigger file).",
+    "Copiar el texto de cada página a las notas": "Copy each page's text to the notes",
+    "Así la presentación se puede buscar y sirve de guion al presentar.":
+        "That way the presentation is searchable and works as a script when presenting.",
+    "Convertir números (formato chileno)": "Convert numbers (Chilean format)",
+    "1.234,5 → número; $ 15.990 → pesos; 19% → porcentaje. Los RUT quedan como texto.":
+        "1.234,5 → number; $ 15.990 → pesos; 19% → percentage. RUT IDs stay as text.",
+    "Si una página no tiene tablas, exportar su texto": "If a page has no tables, export its text",
+    "Tiempo máximo por archivo (segundos)": "Max time per file (seconds)", "Dirección web (opcional)": "Web address (optional)",
+    "Ej: https://www.duoc.cl — o deja vacío y agrega archivos .html al panel.":
+        "E.g. https://www.duoc.cl — or leave it empty and add .html files to the panel.",
+    "Nombre del PDF (para la dirección web)": "PDF name (for the web address)",
+    "Esperar a que cargue (segundos)": "Wait for it to load (seconds)",
+    "Algunas páginas cargan contenido de a poco; más espera = más completo.":
+        "Some pages load content gradually; a longer wait = more complete.",
+    # PDF · Editar
+    "Página 3": "Page 3", "Página 3 de 10": "Page 3 of 10", "Abajo al centro": "Bottom center",
+    "Abajo a la derecha": "Bottom right", "Abajo a la izquierda": "Bottom left", "Arriba al centro": "Top center",
+    "Arriba a la derecha": "Top right", "Arriba a la izquierda": "Top left", "Empezar a contar en": "Start counting at",
+    "Sin número en las primeras": "No number on the first", "Por ejemplo 1 para no numerar la portada.":
+        "For example 1 to skip numbering the cover.",
+    "Fuente": "Font", "Tamaño (pt)": "Size (pt)", "Distancia al borde (mm)": "Distance from edge (mm)", "Texto": "Text",
+    "Se usa si no eliges un logo.": "Used if you don't choose a logo.", "Logo (PNG)": "Logo (PNG)",
+    "«mosaico» repite la marca en toda la página: más difícil de recortar.":
+        "«tiled» repeats the mark across the page: harder to crop out.",
+    "Tamaño (% del ancho de página)": "Size (% of page width)", "Giro (grados)": "Rotation (degrees)",
+    "Poner debajo del contenido": "Place under the content",
+    "Queda detrás del texto. No sirve en PDF escaneados (la imagen la taparía).":
+        "It goes behind the text. Doesn't work on scanned PDFs (the image would cover it).",
+    "Ver campos y crear plantilla CSV": "List fields and create a CSV template", "Rellenar desde Excel o CSV": "Fill from Excel or CSV",
+    "Datos (Excel o CSV)": "Data (Excel or CSV)",
+    "La primera fila debe tener los nombres de los campos (usa la plantilla).":
+        "The first row must have the field names (use the template).",
+    "Columna para nombrar cada PDF": "Column to name each PDF",
+    "Ej: nombre → «Juan Pérez.pdf». Vacío = numerados.": "E.g. name → «Juan Pérez.pdf». Empty = numbered.",
+    "Aplanar (que ya no se pueda editar)": "Flatten (so it can't be edited anymore)",
+    # PDF · Revisar
+    "Comparación visual (páginas lado a lado)": "Visual comparison (pages side by side)",
+    "Informe de diferencias de texto (HTML)": "Text differences report (HTML)", "Sensibilidad visual": "Visual sensitivity",
+    "Más bajo detecta cambios mínimos, pero también diferencias de compresión.":
+        "Lower detects tiny changes, but also compression differences.",
+    # PDF · Seguridad
+    "Contraseña para abrir": "Password to open",
+    "Guárdala bien: sin ella el PDF no se puede recuperar.": "Keep it safe: without it the PDF can't be recovered.",
+    "Permitir imprimir": "Allow printing", "Permitir copiar texto": "Allow copying text", "Permitir modificar": "Allow editing",
+    "Contraseña": "Password",
+    "Déjala vacía si el PDF abre sin contraseña pero no deja imprimir o copiar.":
+        "Leave it empty if the PDF opens without a password but won't let you print or copy.",
+    "Editar título, autor y asunto": "Edit title, author and subject", "Limpiar todos los metadatos": "Clear all metadata",
+    "Título": "Title", "Autor": "Author", "Asunto": "Subject", "Palabras clave": "Keywords",
+    "Imagen de tu firma (PNG)": "Image of your signature (PNG)",
+    "Firma en papel blanco, fotografiada o escaneada. Mejor con fondo transparente.":
+        "Sign on white paper, photographed or scanned. Best with a transparent background.",
+    "Nombre bajo la firma": "Name under the signature", "Segunda línea (RUT, cargo…)": "Second line (ID, job title…)",
+    "Agregar la fecha de hoy": "Add today's date", "En qué página": "Which page", "Última": "Last", "Primera": "First",
+    "Todas": "All", "Ancho de la firma (mm)": "Signature width (mm)", "Certificado digital (.p12/.pfx)": "Digital certificate (.p12/.pfx)",
+    "Opcional. Hazlo como último paso: cualquier cambio posterior invalida la firma.":
+        "Optional. Do it as the last step: any later change invalidates the signature.",
+    "Clave del certificado": "Certificate password", "Motivo": "Reason", "Lugar": "Location",
+    "Buscar automáticamente": "Find automatically", "RUT": "RUT (Chilean ID)", "Correos electrónicos": "Email addresses",
+    "Teléfonos chilenos": "Chilean phone numbers", "Tarjetas bancarias": "Bank cards", "Patentes de vehículos": "License plates",
+    "Palabras o nombres a censurar": "Words or names to redact",
+    "Separadas por coma. No distingue mayúsculas. Ej: Juan Pérez, Av. Siempreviva 742":
+        "Comma-separated. Not case-sensitive. E.g. Juan Pérez, 742 Evergreen Terrace",
+    "Expresión regular (avanzado)": "Regular expression (advanced)",
+    "Resolución de las páginas censuradas": "Resolution of the redacted pages",
+    "Esas páginas se convierten en imagen para eliminar el texto original.":
+        "Those pages are turned into images to remove the original text.",
+    "Quitar también los metadatos": "Also remove the metadata",
+})
+
+# Páginas, avisos y diálogos de la ventana.
+EN.update({
+    "Carpeta de salida": "Output folder", "Agrega primero un PDF en el panel de archivos.": "First add a PDF in the files panel.",
+    "Sin PDF": "No PDF", "  (el orden se aplicará a todos los PDF)": "  (the order will apply to every PDF)",
+    "Revisa las opciones": "Check the options", "Falta LibreOffice": "LibreOffice is missing",
+    "Esta herramienta usa LibreOffice, un programa gratuito que no está instalado.":
+        "This tool uses LibreOffice, a free program that isn't installed.",
+    "La descarga pesa unos 300 MB y es lo único de Quillay que usa internet.":
+        "The download is about 300 MB and it's the only part of Quillay that uses the internet.",
+    "Instalar LibreOffice": "Install LibreOffice", "Actualizar LibreOffice": "Update LibreOffice",
+    "Seguir sin él (Texto continuo)": "Continue without it (Flowing text)",
+    "Vista previa (no se modificó nada):": "Preview (nothing was changed):",
+    "¿Qué necesitas hacer hoy?": "What do you need to do today?",
+    "Agrega archivos a la izquierda y elige una herramienta, o automatízalo con una receta. Todo se procesa en tu equipo.":
+        "Add files on the left and pick a tool, or automate it with a recipe. Everything is processed on your computer.",
+    "Automatizar con recetas": "Automate with recipes",
+    "Encadena pasos (encajar → marca de agua → WebP sin GPS) y repítelos con un clic. "
+    "Incluye: web optimizado, Instagram cuadrado, anonimizar, catálogo y miniaturas.":
+        "Chain steps (fit → watermark → WebP without GPS) and repeat them with one click. "
+        "Includes: web-optimized, square Instagram, anonymize, catalog and thumbnails.",
+    "código abierto (MIT)": "open source (MIT)", "⭐ Dale una estrella": "⭐ Give it a star",
+    "Reportar un problema": "Report a problem", "Nueva receta": "New recipe", "Abrir carpeta": "Open folder",
+    "Guardar": "Save", "Duplicar como mía": "Duplicate as mine",
+    "Encadena varios pasos y guárdalos para repetirlos con un clic (o desde la terminal: quillay receta correr <nombre> fotos/).":
+        "Chain several steps and save them to repeat with one click (or from the terminal: quillay receta correr <name> photos/).",
+    "Receta incluida (solo lectura: duplícala para editar)": "Built-in recipe (read-only: duplicate it to edit)",
+    "Nueva receta: edita el texto y presiona Guardar.": "New recipe: edit the text and press Save.",
+    "Guardar receta": "Save recipe", "Nombre del archivo:": "File name:", "La receta tiene un error": "The recipe has an error",
+    "Agrega imágenes en el panel de archivos.": "Add images in the files panel.", "Sin imágenes": "No images",
+    "Pasos disponibles": "Available steps",
+    "Listo: ya puedes usar las herramientas que lo necesitan.": "Done: you can now use the tools that need it.",
+    "Revisando versiones…": "Checking versions…", "Contribuir": "Contribute", "La descarga pesa unos 300 MB. ¿Continuar?": "The download is about 300 MB. Continue?",
+    "Hay actualizaciones": "Updates available",
+    # Ordenar páginas
+    "Ordenar páginas": "Reorder pages",
+    "Arrastra las miniaturas para cambiar el orden. Selecciona páginas y presiona Supr para quitarlas. Lo que quede aquí será el nuevo PDF.":
+        "Drag the thumbnails to change the order. Select pages and press Delete to remove them. What stays here will be the new PDF.",
+    "Quitar seleccionadas": "Remove selected", "Usar este orden": "Use this order",
+    # Archivos y campos
+    "Quita los seleccionados (tecla Supr)": "Removes the selected ones (Delete key)", "Todos los compatibles": "All supported",
+    "Documentos de Office": "Office documents", "Páginas web": "Web pages", "Elegir archivos": "Choose files",
+    "Elegir carpeta": "Choose folder", "Elegir color": "Choose color", "Ordenar con miniaturas…": "Reorder with thumbnails…",
+    "Elegir archivo": "Choose file", "Elegir…": "Choose…", "(ninguno)": "(none)", "ej. 3,1,2,5-7": "e.g. 3,1,2,5-7",
+    # Actualizaciones (pantalla de Qt Designer)
+    "Mantén Quillay y LibreOffice al día: las versiones nuevas traen correcciones de seguridad.":
+        "Keep Quillay and LibreOffice up to date: new versions bring security fixes.",
+    "Buscar actualizaciones": "Check for updates", "Descargar la nueva versión de Quillay": "Download the new Quillay version",
+    "Revisar al abrir Quillay": "Check when Quillay opens",
+    "Quillay funciona sin internet. Solo se conecta cuando aprietas un botón de esta página (o al abrir, si activas la casilla), "
+    "y no envía nada tuyo: pregunta a GitHub y a LibreOffice cuáles son sus últimas versiones.":
+        "Quillay works offline. It only connects when you press a button on this page (or when opening, if you tick the box), "
+        "and it sends nothing of yours: it asks GitHub and LibreOffice for their latest versions.",
+})

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from quillay.gui.idioma import t
 from quillay.gui.widgets import pdf_thumbnail
 from quillay.tools.pdf.comun import compact_spec, parse_order
 
@@ -30,12 +31,12 @@ class PageOrderDialog(QDialog):
 
     def __init__(self, pdf_path: Path, current_spec: str = "", parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(f"Ordenar páginas — {pdf_path.name}")
+        self.setWindowTitle(f"{t('Ordenar páginas')} — {pdf_path.name}")
         self.resize(900, 640)
         self.path = pdf_path
 
-        hint = QLabel("Arrastra las miniaturas para cambiar el orden. Selecciona páginas y presiona "
-                      "Supr para quitarlas. Lo que quede aquí será el nuevo PDF.")
+        hint = QLabel(t("Arrastra las miniaturas para cambiar el orden. Selecciona páginas y presiona "
+                        "Supr para quitarlas. Lo que quede aquí será el nuevo PDF."))
         hint.setWordWrap(True)
         hint.setObjectName("Muted")
 
@@ -49,7 +50,7 @@ class PageOrderDialog(QDialog):
         self.list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
         self.list.setWrapping(True)
 
-        remove = QPushButton("Quitar seleccionadas")
+        remove = QPushButton(t("Quitar seleccionadas"))
         remove.clicked.connect(self.remove_selected)
         reverse = QPushButton("Invertir")
         reverse.clicked.connect(self.reverse)
@@ -64,7 +65,7 @@ class PageOrderDialog(QDialog):
         tools.addWidget(self.count)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Usar este orden")
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText(t("Usar este orden"))
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancelar")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)

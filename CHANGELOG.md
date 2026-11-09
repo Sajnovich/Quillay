@@ -2,13 +2,13 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.4.2] — 2026-11-09
 
 ### Cambiado
 - **Páginas de herramientas rediseñadas:** encabezado con el ícono de la herramienta, el aviso de archivos como una franja suave, y las opciones y la ejecución en tarjetas («Opciones» y «Guardar y procesar»).
 - La tarjeta «Guardar y procesar» queda siempre a la vista abajo; si una herramienta tiene muchas opciones, solo se desplaza esa parte y la ventana no se mueve.
 - Las casillas marcadas muestran un visto y los campos numéricos tienen el mismo estilo que el resto, con sus flechas.
-- **Botones de tema e idioma arriba, junto al logo:** la luna y el sol cambian entre tema oscuro y claro (el oscuro es el predeterminado; se quitó la opción «sistema»), y ES/EN cambia el idioma de la ventana (español por defecto). En inglés ya están el menú, los nombres y descripciones de las herramientas, el panel de archivos y la zona de procesar; las opciones de cada herramienta llegan en la próxima versión.
+- **Botones de tema e idioma arriba, junto al logo:** la luna y el sol cambian entre tema oscuro y claro (el oscuro es el predeterminado; se quitó la opción «sistema»), y ES/EN cambia el idioma de la ventana (español por defecto). En inglés ya están el menú, los nombres y descripciones de las herramientas, el panel de archivos y la zona de procesar; también las opciones de cada herramienta (etiquetas, ayudas y menús), la página de inicio, las recetas, las actualizaciones y los avisos. Los informes que escribe cada herramienta y las descripciones de las recetas incluidas siguen en español.
 - El botón principal dice «Procesar» (el nombre de la herramienta ya está en el título y queda como ayuda al pasar el mouse), y las etiquetas de los formularios bajan de línea si no caben.
 - Campos más compactos: los números y el color ocupan poco ancho, los menús un ancho mediano y los textos el resto.
 - La línea entre el panel de archivos y la herramienta es más fina, y el aviso dice «1 imagen» en vez de «1 imágenes».
@@ -161,6 +161,7 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
+[0.4.2]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.2
 [0.4.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.1
 [0.4.0]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.0
 [0.3.2]: https://github.com/Sajnovich/Quillay/releases/tag/v0.3.2

@@ -72,7 +72,7 @@ class FileList(QWidget):
         folder = QPushButton(t("Carpeta…"))
         folder.clicked.connect(self._pick_folder)
         remove = QPushButton(t("Quitar"))
-        remove.setToolTip("Quita los seleccionados (tecla Supr)")
+        remove.setToolTip(t("Quita los seleccionados (tecla Supr)"))
         remove.clicked.connect(self.remove_selected)
         clear = QPushButton(t("Vaciar"))
         clear.clicked.connect(self.clear)
@@ -162,15 +162,15 @@ class FileList(QWidget):
             return " ".join(f"*.{e}" for e in sorted(group))
 
         filters = ";;".join([
-            f"Todos los compatibles ({pattern(ALL_EXTS)})", f"Imágenes ({pattern(IMAGE_EXTS)})",
-            f"PDF ({pattern(PDF_EXTS)})", f"Documentos de Office ({pattern(ACCEPTS['office'])})",
-            f"Páginas web ({pattern(ACCEPTS['html'])})",
+            f"{t('Todos los compatibles')} ({pattern(ALL_EXTS)})", f"Imágenes ({pattern(IMAGE_EXTS)})",
+            f"PDF ({pattern(PDF_EXTS)})", f"{t('Documentos de Office')} ({pattern(ACCEPTS['office'])})",
+            f"{t('Páginas web')} ({pattern(ACCEPTS['html'])})",
         ])
-        files, _ = QFileDialog.getOpenFileNames(self, "Elegir archivos", "", filters)
+        files, _ = QFileDialog.getOpenFileNames(self, t("Elegir archivos"), "", filters)
         self.add_paths(files)
 
     def _pick_folder(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Elegir carpeta")
+        folder = QFileDialog.getExistingDirectory(self, t("Elegir carpeta"))
         if folder:
             self.add_paths([folder])
 
@@ -234,7 +234,7 @@ class ColorButton(QPushButton):
         self.changed.emit()
 
     def _pick(self) -> None:
-        color = QColorDialog.getColor(QColor(self._value[:7]), self, "Elegir color",
+        color = QColorDialog.getColor(QColor(self._value[:7]), self, t("Elegir color"),
                                       QColorDialog.ColorDialogOption.ShowAlphaChannel)
         if color.isValid():
             a = f"{color.alpha():02x}" if color.alpha() < 255 else ""
@@ -318,7 +318,7 @@ def _grouped_checks(p: Param) -> tuple[QWidget, list[tuple[str, QCheckBox]]]:
             head = QHBoxLayout()
             head.setSpacing(6)
             head.addWidget(iconos.IconLabel(iconos.REDES.get(grupo, iconos.GENERICO), "texto", 15))
-            title = QLabel(grupo)
+            title = QLabel(t(grupo))
             title.setStyleSheet("font-weight: 600; background: transparent;")
             head.addWidget(title)
             head.addStretch(1)
@@ -326,12 +326,12 @@ def _grouped_checks(p: Param) -> tuple[QWidget, list[tuple[str, QCheckBox]]]:
             grupos[grupo] = lay
             cards.append(card)
         # «Post 1:1 · 1080×1080»: el nombre en la casilla y la medida en gris a la derecha.
-        nombre, _, medida = p.label_for(choice).partition(" · ")
+        nombre, _, medida = t(p.label_for(choice)).partition(" · ")
         row = QHBoxLayout()
         row.setSpacing(8)
         cb = QCheckBox(nombre)
         cb.setChecked(choice in p.default)
-        cb.setToolTip(p.label_for(choice))
+        cb.setToolTip(t(p.label_for(choice)))
         row.addWidget(cb)
         row.addStretch(1)
         if medida:
@@ -394,7 +394,7 @@ class ParamForm(QWidget):
         elif p.kind == "choice":
             widget = ShrinkCombo()
             for choice in p.choices:
-                widget.addItem(p.label_for(choice), choice)
+                widget.addItem(t(p.label_for(choice)), choice)
             widget.setCurrentIndex(p.choices.index(p.default))
             widget.currentIndexChanged.connect(self._update_visibility)
             self.getters[p.name] = widget.currentData
@@ -410,7 +410,7 @@ class ParamForm(QWidget):
             for choice in p.choices:
                 # «AVIF · página web moderna…»: la casilla dice el nombre y la sugerencia va
                 # al lado, en gris, y puede bajar de línea (las casillas no se ajustan solas).
-                nombre, _, ayuda = p.label_for(choice).partition(" · ")
+                nombre, _, ayuda = t(p.label_for(choice)).partition(" · ")
                 cb = QCheckBox(nombre)
                 cb.setChecked(choice in p.default)
                 if ayuda:
@@ -440,8 +440,8 @@ class ParamForm(QWidget):
             row = QHBoxLayout(widget)
             row.setContentsMargins(0, 0, 0, 0)
             edit = QLineEdit(p.default or "")
-            edit.setPlaceholderText("ej. 3,1,2,5-7")
-            btn = QPushButton("Ordenar con miniaturas…")
+            edit.setPlaceholderText(t("ej. 3,1,2,5-7"))
+            btn = QPushButton(t("Ordenar con miniaturas…"))
             btn.clicked.connect(lambda: self.page_order_requested.emit(edit))
             row.addWidget(edit, 1)
             row.addWidget(btn)
@@ -451,8 +451,8 @@ class ParamForm(QWidget):
             row = QHBoxLayout(widget)
             row.setContentsMargins(0, 0, 0, 0)
             edit = QLineEdit(p.default or "")
-            edit.setPlaceholderText("(ninguno)")
-            btn = QPushButton("Elegir…")
+            edit.setPlaceholderText(t("(ninguno)"))
+            btn = QPushButton(t("Elegir…"))
             btn.clicked.connect(lambda: self._pick_file(edit))
             row.addWidget(edit, 1)
             row.addWidget(btn)
@@ -476,7 +476,7 @@ class ParamForm(QWidget):
             widget.setMaximumWidth(420)
         # Etiqueta que puede bajar de línea: con fuentes anchas (Windows), una etiqueta
         # larga como «Si una página no tiene tablas, exportar su texto» no empuja la página.
-        etiqueta = QLabel(p.label)
+        etiqueta = QLabel(t(p.label))
         etiqueta.setWordWrap(True)
         etiqueta.setMinimumWidth(120)
         self.form.addRow(etiqueta, widget)
@@ -484,17 +484,18 @@ class ParamForm(QWidget):
         if p.help:
             # La ayuda va en su propia fila, a todo lo ancho de la columna de campos,
             # para que el texto tenga espacio y no se encime con el control.
-            hint = QLabel(p.help)
+            hint = QLabel(t(p.help))
             hint.setWordWrap(True)
             hint.setProperty("help", True)
             hint.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             hint.setMaximumWidth(420)  # mismo ancho que su campo
-            widget.setToolTip(p.help)
+            widget.setToolTip(t(p.help))
             self.form.addRow("", hint)
             self.rows[p.name].append(hint)
 
     def _pick_file(self, edit: QLineEdit) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Elegir archivo", "", "Imágenes (*.png *.jpg *.jpeg *.webp *.svg)")
+        path, _ = QFileDialog.getOpenFileName(self, t("Elegir archivo"), "",
+                                              f"{t('Imágenes')} (*.png *.jpg *.jpeg *.webp *.svg)")
         if path:
             edit.setText(path)
 

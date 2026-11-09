@@ -222,7 +222,7 @@ class RunPanel(QWidget):
         self.bar.setVisible(False)
 
     def _pick_out(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Carpeta de salida", self.out_edit.text())
+        folder = QFileDialog.getExistingDirectory(self, t("Carpeta de salida"), self.out_edit.text())
         if folder:
             self.out_edit.setText(folder)
 
@@ -302,11 +302,11 @@ class ToolPage(QWidget):
 
         pdfs = self.files.paths("pdf")
         if not pdfs:
-            QMessageBox.information(self, "Sin PDF", "Agrega primero un PDF en el panel de archivos.")
+            QMessageBox.information(self, t("Sin PDF"), t("Agrega primero un PDF en el panel de archivos."))
             return
         dialog = PageOrderDialog(pdfs[0], edit.text(), self)
         if len(pdfs) > 1:
-            dialog.setWindowTitle(dialog.windowTitle() + "  (el orden se aplicará a todos los PDF)")
+            dialog.setWindowTitle(dialog.windowTitle() + t("  (el orden se aplicará a todos los PDF)"))
         if dialog.exec():
             edit.setText(dialog.spec())
 
@@ -315,7 +315,7 @@ class ToolPage(QWidget):
             return self.tool.make_context(self.files.paths(self.tool.accepts), self.form.values(),
                                           self.panel.out_dir())
         except (ParamError, ValueError) as exc:
-            _avisar(self, "Revisa las opciones", str(exc))
+            _avisar(self, t("Revisa las opciones"), str(exc))
             return None
 
     def run(self) -> None:
@@ -332,13 +332,13 @@ class ToolPage(QWidget):
         opcional = self.tool.id == "pdf_a_word"
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Question)
-        box.setWindowTitle("Falta LibreOffice")
+        box.setWindowTitle(t("Falta LibreOffice"))
         box.setTextFormat(Qt.TextFormat.PlainText)
-        box.setText("Esta herramienta usa LibreOffice, un programa gratuito que no está instalado.\n\n"
-                    f"{libreoffice.plan().descripcion}\n\nLa descarga pesa unos 300 MB y es lo único de "
-                    "Quillay que usa internet.")
-        instalar = box.addButton("Instalar LibreOffice", QMessageBox.ButtonRole.AcceptRole)
-        seguir = (box.addButton("Seguir sin él (Texto continuo)", QMessageBox.ButtonRole.ActionRole)
+        box.setText(t("Esta herramienta usa LibreOffice, un programa gratuito que no está instalado.") + "\n\n"
+                    f"{libreoffice.plan().descripcion}\n\n"
+                    + t("La descarga pesa unos 300 MB y es lo único de Quillay que usa internet."))
+        instalar = box.addButton(t("Instalar LibreOffice"), QMessageBox.ButtonRole.AcceptRole)
+        seguir = (box.addButton(t("Seguir sin él (Texto continuo)"), QMessageBox.ButtonRole.ActionRole)
                   if opcional else None)
         box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
         box.exec()
@@ -351,7 +351,7 @@ class ToolPage(QWidget):
         ctx = self._context()
         if ctx and self.tool.preview:
             try:
-                self.panel.log.setPlainText("Vista previa (no se modificó nada):\n\n" +
+                self.panel.log.setPlainText(t("Vista previa (no se modificó nada):") + "\n\n" +
                                             "\n".join(self.tool.preview(ctx)))
             except ValueError as exc:
                 self.panel.log.setPlainText(f"✗ {exc}")
@@ -365,24 +365,24 @@ class HomePage(QWidget):
         inner = QWidget()
         lay = QVBoxLayout(inner)
         lay.setContentsMargins(28, 22, 28, 22)
-        lay.addWidget(_title("¿Qué necesitas hacer hoy?",
-                             "Agrega archivos a la izquierda y elige una herramienta, o automatízalo con una receta. "
-                             "Todo se procesa en tu equipo."))
+        lay.addWidget(_title(t("¿Qué necesitas hacer hoy?"),
+                             t("Agrega archivos a la izquierda y elige una herramienta, o automatízalo con una receta. "
+                               "Todo se procesa en tu equipo.")))
         # (etiqueta, nombre del ícono, rol): para volver a pintarlos si cambia el tema.
         self._iconos: list[tuple[QLabel, str, str]] = []
         for category, tools in tools_by_category().items():
             lay.addWidget(self._heading(t(category), iconos.CATEGORIAS.get(category, iconos.GENERICO)))
             # Hasta 3 tarjetas por fila; con la ventana angosta se reacomodan en 2 o 1.
             lay.addWidget(GroupGrid([self._card(tool) for tool in tools], max_columnas=3, ancho_tarjeta=200))
-        lay.addWidget(self._heading("Automatizar", iconos.CATEGORIAS["Automatizar"]))
+        lay.addWidget(self._heading(t("Automatizar"), iconos.CATEGORIAS["Automatizar"]))
         recipes_card = QPushButton()
         recipes_card.setObjectName("Card")
         recipes_card.setCursor(Qt.CursorShape.PointingHandCursor)
         rc = QVBoxLayout(recipes_card)
-        rc.addLayout(self._icon_row("Automatizar con recetas", iconos.HERRAMIENTAS["__recetas__"],
+        rc.addLayout(self._icon_row(t("Automatizar con recetas"), iconos.HERRAMIENTAS["__recetas__"],
                                     "font-weight: 700; font-size: 15px;"))
-        lbl = QLabel("Encadena pasos (encajar → marca de agua → WebP sin GPS) y repítelos con un clic. "
-                     "Incluye: web optimizado, Instagram cuadrado, anonimizar, catálogo y miniaturas.")
+        lbl = QLabel(t("Encadena pasos (encajar → marca de agua → WebP sin GPS) y repítelos con un clic. "
+                       "Incluye: web optimizado, Instagram cuadrado, anonimizar, catálogo y miniaturas."))
         lbl.setWordWrap(True)
         lbl.setStyleSheet("background: transparent; font-size: 12px;")
         lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -393,10 +393,10 @@ class HomePage(QWidget):
         lay.addStretch(1)
         # Enlaces a GitHub: openExternalLinks hace que Qt abra el navegador al hacer clic.
         foot = QLabel(
-            f'Quillay {__version__} · código abierto (MIT) · '
-            f'<a href="{__url__}">⭐ Dale una estrella</a> · '
-            f'<a href="{__url__}/issues/new/choose">Reportar un problema</a> · '
-            f'<a href="{__url__}/blob/main/CONTRIBUTING.md">Contribuir</a>'
+            f'Quillay {__version__} · {t("código abierto (MIT)")} · '
+            f'<a href="{__url__}">{t("⭐ Dale una estrella")}</a> · '
+            f'<a href="{__url__}/issues/new/choose">{t("Reportar un problema")}</a> · '
+            f'<a href="{__url__}/blob/main/CONTRIBUTING.md">{t("Contribuir")}</a>'
         )
         foot.setObjectName("Muted")
         foot.setTextFormat(Qt.TextFormat.RichText)
@@ -480,9 +480,9 @@ class RecipesPage(QWidget):
 
         self.list = QListWidget()
         self.list.currentItemChanged.connect(self._select)
-        new_btn = QPushButton("Nueva receta")
+        new_btn = QPushButton(t("Nueva receta"))
         new_btn.clicked.connect(self._new)
-        folder_btn = QPushButton("Abrir carpeta")
+        folder_btn = QPushButton(t("Abrir carpeta"))
         folder_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(recipes.user_dir()))))
         left = QWidget()
         ll = QVBoxLayout(left)
@@ -500,9 +500,9 @@ class RecipesPage(QWidget):
         mono.setStyleHint(QFont.StyleHint.Monospace)
         self.editor.setFont(mono)
         self.editor.setMinimumHeight(200)
-        self.save_btn = QPushButton("Guardar")
+        self.save_btn = QPushButton(t("Guardar"))
         self.save_btn.clicked.connect(self._save)
-        self.copy_btn = QPushButton("Duplicar como mía")
+        self.copy_btn = QPushButton(t("Duplicar como mía"))
         self.copy_btn.clicked.connect(self._duplicate)
         edit_row = QHBoxLayout()
         edit_row.addWidget(self.save_btn)
@@ -535,8 +535,8 @@ class RecipesPage(QWidget):
         inner = QWidget()
         lay = QVBoxLayout(inner)
         lay.setContentsMargins(28, 22, 28, 22)
-        lay.addWidget(_title("Recetas", "Encadena varios pasos y guárdalos para repetirlos con un clic "
-                             "(o desde la terminal: quillay receta correr <nombre> fotos/)."))
+        lay.addWidget(_title(t("Recetas"), t("Encadena varios pasos y guárdalos para repetirlos con un clic "
+                                             "(o desde la terminal: quillay receta correr <nombre> fotos/).")))
         lay.addWidget(split, 1)
         frame = QFrame()
         frame.setObjectName("Card")
@@ -569,7 +569,7 @@ class RecipesPage(QWidget):
             return
         r: recipes.Recipe = item.data(Qt.ItemDataRole.UserRole)
         self.current = r
-        origin = "Receta incluida (solo lectura: duplícala para editar)" if r.incluida else str(r.origen)
+        origin = t("Receta incluida (solo lectura: duplícala para editar)") if r.incluida else str(r.origen)
         self.desc.setText(f"{r.descripcion}\n{origin}")
         self.editor.setPlainText(r.texto or r.to_yaml())
         self.editor.setReadOnly(r.incluida)
@@ -577,7 +577,7 @@ class RecipesPage(QWidget):
 
     def _new(self) -> None:
         self.current = None
-        self.desc.setText("Nueva receta: edita el texto y presiona Guardar.")
+        self.desc.setText(t("Nueva receta: edita el texto y presiona Guardar."))
         self.editor.setReadOnly(False)
         self.editor.setPlainText(TEMPLATE)
         self.save_btn.setEnabled(True)
@@ -592,13 +592,13 @@ class RecipesPage(QWidget):
 
     def _save(self) -> None:
         default = self.current.slug if self.current and not self.current.incluida else "mi-receta"
-        slug, ok = QInputDialog.getText(self, "Guardar receta", "Nombre del archivo:", text=default)
+        slug, ok = QInputDialog.getText(self, t("Guardar receta"), t("Nombre del archivo:"), text=default)
         if not ok:
             return
         try:
             r = recipes.save_user(self.editor.toPlainText(), slug)
         except Exception as exc:  # YAML o validación
-            _avisar(self, "La receta tiene un error", str(exc))
+            _avisar(self, t("La receta tiene un error"), str(exc))
             return
         self.reload(select=r.slug)
 
@@ -606,11 +606,11 @@ class RecipesPage(QWidget):
         try:
             recipe = recipes.parse(self.editor.toPlainText())
         except Exception as exc:
-            _avisar(self, "La receta tiene un error", str(exc))
+            _avisar(self, t("La receta tiene un error"), str(exc))
             return
         files = self.files.paths("images")
         if not files:
-            QMessageBox.information(self, "Sin imágenes", "Agrega imágenes en el panel de archivos.")
+            QMessageBox.information(self, t("Sin imágenes"), t("Agrega imágenes en el panel de archivos."))
             return
 
         def job(progress, cancel_event):
@@ -624,7 +624,7 @@ class RecipesPage(QWidget):
         for st in STEPS.values():
             opts = ", ".join(f"{p.name}" for p in st.params) or "—"
             rows.append(f"<b>{st.id}</b> — {st.description} <i>({opts})</i>")
-        return ("<b>Pasos disponibles</b><br>" + "<br>".join(rows) +
+        return (f"<b>{t('Pasos disponibles')}</b><br>" + "<br>".join(rows) +
                 "<br><br><b>salida:</b> formato, calidad, quitar_metadatos, sufijo, fondo, png_reducir_colores")
 
 
@@ -633,7 +633,7 @@ def _instalar_como_reporte(actualizar: bool, progress=None, cancel_event=None) -
     report = Report()
     try:
         report.lines.append("✓ " + libreoffice.instalar(actualizar, progress, cancel_event))
-        report.lines.append("Listo: ya puedes usar las herramientas que lo necesitan.")
+        report.lines.append(t("Listo: ya puedes usar las herramientas que lo necesitan."))
     except ValueError as exc:
         report.lines.append(f"✗ No se pudo: {exc}")
     return report
@@ -651,6 +651,9 @@ class UpdatesPage(QWidget):
         ui = Ui_Actualizaciones()
         ui.setupUi(self)
         self.ui = ui
+        # Textos del .ui en el idioma elegido (el .ui guarda la versión en español).
+        for w in (ui.titulo, ui.subtitulo, ui.revisar_btn, ui.lo_btn, ui.descargar_btn, ui.al_abrir, ui.nota):
+            w.setText(t(w.text()))
         self.estado, self.bar, self.log, self.al_abrir = ui.estado, ui.bar, ui.log, ui.al_abrir
         self.revisar_btn, self.lo_btn, self.descargar_btn = ui.revisar_btn, ui.lo_btn, ui.descargar_btn
         self.revisar_btn.clicked.connect(self.revisar)
@@ -663,7 +666,7 @@ class UpdatesPage(QWidget):
         soffice = libreoffice.buscar()
         lo = f"LibreOffice {version_lo or 'instalado'}" if soffice else "LibreOffice: no instalado"
         self.estado.setText(f"Quillay {__version__}\n{lo}")
-        self.lo_btn.setText("Actualizar LibreOffice" if soffice else "Instalar LibreOffice")
+        self.lo_btn.setText(t("Actualizar LibreOffice") if soffice else t("Instalar LibreOffice"))
 
     def showEvent(self, event) -> None:  # noqa: N802 - nombre de Qt
         super().showEvent(event)
@@ -711,7 +714,7 @@ class UpdatesPage(QWidget):
 
         worker = Worker(lambda progress=None, cancel_event=None: actualizaciones.revisar())
         worker.finished_ok.connect(self._resultado)
-        self._ocupado(worker, "Revisando versiones…")
+        self._ocupado(worker, t("Revisando versiones…"))
 
     def _resultado(self, estados: list) -> None:
         self.log.setPlainText("\n".join(e.linea() for e in estados))
@@ -732,7 +735,7 @@ class UpdatesPage(QWidget):
             self.log.setPlainText(elegido.descripcion)
             return
         respuesta = QMessageBox.question(
-            self, "LibreOffice", f"{elegido.descripcion}\n\nLa descarga pesa unos 300 MB. ¿Continuar?")
+            self, "LibreOffice", f"{elegido.descripcion}\n\n" + t("La descarga pesa unos 300 MB. ¿Continuar?"))
         if respuesta != QMessageBox.StandardButton.Yes:
             return
         worker = Worker(_instalar_como_reporte, actualizar)

@@ -251,3 +251,21 @@ def test_tema_e_idioma_desde_la_barra(window, app):
         nueva._toggle_language()  # vuelve a español para las demás pruebas
         app.processEvents()
     assert idioma.actual() == "es"
+
+
+def test_formularios_en_ingles(app):
+    """En inglés, las opciones de las herramientas también se traducen."""
+    from PySide6.QtWidgets import QLabel
+
+    from quillay.core.registry import TOOLS
+    from quillay.gui import idioma
+    from quillay.gui.widgets import ParamForm
+
+    idioma.establecer("en")
+    try:
+        form = ParamForm(TOOLS["marca_agua"].params)
+        textos = {lbl.text() for lbl in form.findChildren(QLabel)}
+        assert "Position" in textos and "Opacity (%)" in textos
+        assert "Posición" not in textos
+    finally:
+        idioma.establecer("es")

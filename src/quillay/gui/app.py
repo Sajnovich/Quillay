@@ -185,7 +185,7 @@ class MainWindow(QMainWindow):
         nuevas = [e for e in estados if e.hay_actualizacion]
         if not nuevas:
             return
-        box = QMessageBox(QMessageBox.Icon.Information, "Hay actualizaciones",
+        box = QMessageBox(QMessageBox.Icon.Information, t("Hay actualizaciones"),
                           "\n".join(e.linea() for e in nuevas), QMessageBox.StandardButton.Ok, self)
         box.setTextFormat(Qt.TextFormat.PlainText)
         ver = box.addButton("Ver", QMessageBox.ButtonRole.ActionRole)
