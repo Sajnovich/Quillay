@@ -11,8 +11,9 @@ sigue funcionando igual, solo que sin dibujos en el menú.
 from __future__ import annotations
 
 import os
+import weakref
 
-from PySide6.QtCore import QEvent, QSize
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QLabel
 
@@ -99,24 +100,37 @@ def icono(nombre: str, rol: str = "menu") -> QIcon:
     return qta.icon(nombre, color=c["muted"], color_active=c["text"], color_selected="#ffffff")
 
 
+# Íconos sueltos vivos, para volver a pintarlos al cambiar de tema. WeakSet: si una
+# etiqueta se borra, desaparece sola de la lista.
+_sueltos: weakref.WeakSet[IconLabel] = weakref.WeakSet()
+
+
 class IconLabel(QLabel):
-    """Un ícono suelto que se vuelve a pintar solo cuando cambia el tema."""
+    """Un ícono suelto que se vuelve a pintar cuando cambia el tema.
+
+    No sobreescribe ``changeEvent``: en Python 3.11, PySide6 tiene un error de
+    conteo de referencias en ese camino que cierra el programa («deallocating
+    None»). En cambio, la ventana llama a ``repintar_todos()`` al cambiar de tema.
+    """
 
     def __init__(self, nombre: str, rol: str = "acento", size: int = 18) -> None:
         super().__init__()
         self.nombre, self.rol, self.size_px = nombre, rol, size
         self.setFixedSize(size, size)
         self.setStyleSheet("background: transparent;")
-        self._pintar()
+        self.pintar()
+        _sueltos.add(self)
 
-    def _pintar(self) -> None:
+    def pintar(self) -> None:
         self.setPixmap(icono(self.nombre, self.rol).pixmap(QSize(self.size_px, self.size_px)))
 
-    def changeEvent(self, event: QEvent) -> None:  # noqa: N802 - nombre de Qt
-        # Cambiar de tema reemplaza la paleta de la app: Qt avisa a cada widget.
-        if event.type() == QEvent.Type.PaletteChange:
-            self._pintar()
-        super().changeEvent(event)
+
+def repintar_todos() -> None:
+    for etiqueta in list(_sueltos):
+        try:
+            etiqueta.pintar()
+        except RuntimeError:  # Qt ya borró el widget (ej. una ventana cerrada)
+            pass
 
 
 def de_herramienta(tool_id: str, rol: str = "menu") -> QIcon:

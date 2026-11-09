@@ -160,6 +160,7 @@ class MainWindow(QMainWindow):
             if key := item.data(Qt.ItemDataRole.UserRole):
                 item.setIcon(iconos.de_herramienta(key))
         self.home.refresh_icons()
+        iconos.repintar_todos()
         oscuro = theme.actual() == "oscuro"
         self.theme_btn.setIcon(iconos.icono("moon" if oscuro else "sun", "texto"))
         self.theme_btn.setToolTip(t("Cambiar a tema claro") if oscuro else t("Cambiar a tema oscuro"))
@@ -210,6 +211,8 @@ class MainWindow(QMainWindow):
         Los textos se eligen al crear cada widget, así que lo más simple y seguro es
         una ventana nueva en el mismo lugar, con los mismos archivos y la misma página.
         """
+        # La ventana vieja se borra: antes hay que detener y esperar sus hilos, o Qt aborta.
+        Worker.detener_todos()
         nuevo = "en" if idioma.actual() == "es" else "es"
         self.settings.setValue("idioma", nuevo)
         idioma.establecer(nuevo)

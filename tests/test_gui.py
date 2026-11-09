@@ -38,6 +38,11 @@ def window(app, tmp_path, monkeypatch):
     yield w
     # Destruir la ventana mientras Qt sigue vivo. Si se deja al recolector de
     # Python al cerrar el intérprete, el orden es impredecible y Qt puede caerse.
+    # Antes, esperar los hilos (ej. la lectura de la versión de LibreOffice): borrar
+    # una ventana con un hilo corriendo hace que Qt aborte el programa.
+    from quillay.gui.widgets import Worker
+
+    Worker.detener_todos()
     w.close()
     w.deleteLater()
     app.processEvents()
