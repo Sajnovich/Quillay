@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, destino, guardar, limpiar_metadatos, linea
+from quillay.tools.pdf.comun import ERRORES, abrir, destino, guardar, limpiar_metadatos, linea, motivo
 
 CAT = "PDF · Seguridad"
 
@@ -57,6 +57,8 @@ def find_matches(page, patterns) -> tuple[list[tuple[float, float, float, float]
         rects, counts = [], {}
         for name, rx in patterns:
             for m in rx.finditer(text):
+                if m.end() == m.start():  # una expresión como «\d*» también calza con «nada»
+                    continue
                 counts[name] = counts.get(name, 0) + 1
                 # PDFium agrupa los caracteres del rango en rectángulos (uno por línea).
                 n = tp.count_rects(m.start(), m.end() - m.start())
@@ -122,8 +124,8 @@ def censurar_pdf(ctx: Context) -> Report:
                 if o["quitar_metadatos"]:
                     limpiar_metadatos(pdf)
                 dest = guardar(pdf, destino(ctx, src, "-censurado"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
             continue
         names = dict(zip(PATRONES, ETIQUETAS, strict=True)) | {"palabra": "Palabras", "regex": "Expresión regular"}
         found = ", ".join(f"{v} {names[k].lower()}" for k, v in totals.items()) or "nada que censurar"

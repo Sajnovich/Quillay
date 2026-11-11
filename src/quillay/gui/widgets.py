@@ -162,7 +162,7 @@ class FileList(QWidget):
             return " ".join(f"*.{e}" for e in sorted(group))
 
         filters = ";;".join([
-            f"{t('Todos los compatibles')} ({pattern(ALL_EXTS)})", f"Imágenes ({pattern(IMAGE_EXTS)})",
+            f"{t('Todos los compatibles')} ({pattern(ALL_EXTS)})", f"{t('Imágenes')} ({pattern(IMAGE_EXTS)})",
             f"PDF ({pattern(PDF_EXTS)})", f"{t('Documentos de Office')} ({pattern(ACCEPTS['office'])})",
             f"{t('Páginas web')} ({pattern(ACCEPTS['html'])})",
         ])
@@ -346,6 +346,20 @@ def _grouped_checks(p: Param) -> tuple[QWidget, list[tuple[str, QCheckBox]]]:
     return GroupGrid(cards), checks
 
 
+def file_filter(p: Param) -> str:
+    """Filtro del diálogo «Elegir archivo» para un parámetro de tipo archivo.
+
+    Muestra los archivos que ese campo espera (``Param.extensions``): un Excel o
+    CSV para los datos de un formulario, un .p12/.pfx para el certificado. Sin
+    esto el diálogo solo mostraba imágenes y esos archivos no se podían elegir.
+    """
+    if p.extensions:
+        tipos = f"{t(p.label)} ({' '.join(f'*.{e}' for e in p.extensions)})"
+    else:  # logos y firmas: los formatos de imagen que Quillay sabe abrir
+        tipos = f"{t('Imágenes')} (*.png *.jpg *.jpeg *.webp *.tif *.tiff *.bmp *.gif)"
+    return f"{tipos};;{t('Todos los archivos')} (*)"
+
+
 class ParamForm(QWidget):
     """Construye el formulario automáticamente a partir de una lista de ``Param``."""
 
@@ -366,7 +380,6 @@ class ParamForm(QWidget):
         self.form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         self.form.setVerticalSpacing(6)  # compacto: los formularios largos caben sin bajar
         self.form.setContentsMargins(0, 0, 0, 0)
-        self.form.setVerticalSpacing(6)
         self.form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
         for p in params:
             self._add(p)
@@ -453,7 +466,7 @@ class ParamForm(QWidget):
             edit = QLineEdit(p.default or "")
             edit.setPlaceholderText(t("(ninguno)"))
             btn = QPushButton(t("Elegir…"))
-            btn.clicked.connect(lambda: self._pick_file(edit))
+            btn.clicked.connect(lambda: self._pick_file(edit, p))
             row.addWidget(edit, 1)
             row.addWidget(btn)
             self.getters[p.name] = edit.text
@@ -493,9 +506,8 @@ class ParamForm(QWidget):
             self.form.addRow("", hint)
             self.rows[p.name].append(hint)
 
-    def _pick_file(self, edit: QLineEdit) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, t("Elegir archivo"), "",
-                                              f"{t('Imágenes')} (*.png *.jpg *.jpeg *.webp *.svg)")
+    def _pick_file(self, edit: QLineEdit, p: Param) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, t("Elegir archivo"), "", file_filter(p))
         if path:
             edit.setText(path)
 

@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
         box = QMessageBox(QMessageBox.Icon.Information, t("Hay actualizaciones"),
                           "\n".join(e.linea() for e in nuevas), QMessageBox.StandardButton.Ok, self)
         box.setTextFormat(Qt.TextFormat.PlainText)
-        ver = box.addButton("Ver", QMessageBox.ButtonRole.ActionRole)
+        ver = box.addButton(t("Ver"), QMessageBox.ButtonRole.ActionRole)
         box.exec()
         if box.clickedButton() is ver:
             self.select(UPDATES)

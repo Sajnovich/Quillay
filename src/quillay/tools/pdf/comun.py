@@ -7,6 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pikepdf
+from PIL import Image
 from reportlab.pdfgen import canvas as rl_canvas
 
 from quillay.core.imageio import human_size, unique_path
@@ -29,6 +30,17 @@ def mensaje_pdf(path: Path, exc: BaseException) -> str:
     if any(word in text for word in ("password", "decrypt", "encrypt")):
         return f"{path.name} está protegido con contraseña: usa «Desbloquear PDF» primero"
     return f"{path.name} está dañado o no es un PDF válido. Prueba «Reparar PDF»."
+
+
+# Lo que puede fallar con UN archivo sin que sea un error del programa: nuestros
+# propios avisos (ValueError) y los de pikepdf, que a veces recién aparecen al leer
+# una página o al guardar (un PDF dañado puede abrir bien y fallar después).
+ERRORES = (ValueError, pikepdf.PdfError)
+
+
+def motivo(path: Path, exc: BaseException) -> str:
+    """Texto para el informe: nuestros avisos tal cual; los de pikepdf, traducidos."""
+    return mensaje_pdf(path, exc) if isinstance(exc, pikepdf.PdfError) else str(exc)
 
 
 def abrir(path: Path, password: str = "", al_desbloquear: bool = False) -> pikepdf.Pdf:
@@ -85,6 +97,42 @@ def guardar(pdf: pikepdf.Pdf, dest: Path, **kwargs) -> Path:
     kwargs.setdefault("object_stream_mode", pikepdf.ObjectStreamMode.generate)
     pdf.save(dest, **kwargs)
     return dest
+
+
+class PdfDeImagenes:
+    """Arma un PDF con una imagen por página, sin tenerlas todas en memoria.
+
+    Cada imagen se convierte de inmediato en una página comprimida (JPEG) y se
+    suelta. Antes se juntaban todas las imágenes sin comprimir y recién al final
+    se escribía el PDF: 200 fotos de celular ocupaban varios GB de memoria.
+    """
+
+    def __init__(self) -> None:
+        self._pdf = pikepdf.new()
+        self._partes: list[pikepdf.Pdf] = []  # deben seguir abiertas hasta guardar
+
+    def __len__(self) -> int:
+        return len(self._pdf.pages)
+
+    def agregar(self, img: Image.Image, dpi: float, quality: int = 75) -> None:
+        buf = io.BytesIO()
+        img.convert("RGB").save(buf, "PDF", resolution=dpi, quality=quality)
+        buf.seek(0)
+        parte = pikepdf.open(buf)
+        self._partes.append(parte)
+        self._pdf.pages.extend(parte.pages)
+
+    def guardar(self, dest: Path) -> Path:
+        try:
+            return guardar(self._pdf, dest)
+        finally:
+            self.cerrar()
+
+    def cerrar(self) -> None:
+        for parte in self._partes:
+            parte.close()
+        self._partes.clear()
+        self._pdf.close()
 
 
 def destino(ctx: Context, src: Path, sufijo: str, ext: str = ".pdf") -> Path:

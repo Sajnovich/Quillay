@@ -59,15 +59,15 @@ def _title(text: str, sub: str, icon: str = "") -> QWidget:
         tl.setContentsMargins(0, 0, 0, 0)
         tl.addWidget(iconos.IconLabel(icon, "acento", 22), 0, Qt.AlignmentFlag.AlignCenter)
         head.addWidget(tile)
-    t = QLabel(text)
-    t.setObjectName("PageTitle")
-    t.setWordWrap(True)  # títulos largos («Ordenar y eliminar páginas») bajan de línea en vez de salirse
-    head.addWidget(t, 1)
+    title = QLabel(text)  # no «t»: taparía la función de traducción t()
+    title.setObjectName("PageTitle")
+    title.setWordWrap(True)  # títulos largos («Ordenar y eliminar páginas») bajan de línea en vez de salirse
+    head.addWidget(title, 1)
     lay.addLayout(head)
-    s = QLabel(sub)
-    s.setObjectName("Muted")
-    s.setWordWrap(True)
-    lay.addWidget(s)
+    subtitle = QLabel(sub)
+    subtitle.setObjectName("Muted")
+    subtitle.setWordWrap(True)
+    lay.addWidget(subtitle)
     return box
 
 
@@ -340,7 +340,7 @@ class ToolPage(QWidget):
         instalar = box.addButton(t("Instalar LibreOffice"), QMessageBox.ButtonRole.AcceptRole)
         seguir = (box.addButton(t("Seguir sin él (Texto continuo)"), QMessageBox.ButtonRole.ActionRole)
                   if opcional else None)
-        box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+        box.addButton(t("Cancelar"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
         if box.clickedButton() is instalar:
             self.panel.start(Worker(_instalar_como_reporte, False))

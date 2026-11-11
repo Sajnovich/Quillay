@@ -12,6 +12,7 @@ A este patrón se le llama "fuente única de verdad" (single source of truth).
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,6 +47,9 @@ class Param:
     # Para "multichoice": grupo de cada opción (la ventana los muestra en columnas,
     # por ejemplo una por red social). Mismo orden que ``choices``.
     choice_groups: tuple[str, ...] = ()
+    # Para "file": extensiones que ofrece el diálogo de la ventana (sin punto).
+    # Vacío = imágenes, que es lo más común (logos, firmas).
+    extensions: tuple[str, ...] = ()
 
     def label_for(self, choice: str) -> str:
         if self.choice_labels and choice in self.choices:
@@ -58,9 +62,11 @@ class Param:
             return self.default
         try:
             if self.kind == "int":
-                result: Any = int(value)
+                result: Any = _to_int(value)
             elif self.kind == "float":
                 result = float(value)
+                if not math.isfinite(result):  # «nan» e «inf» pasarían los límites sin que se note
+                    raise ValueError(value)
             elif self.kind == "bool":
                 result = _to_bool(value)
             elif self.kind == "choice":
@@ -71,7 +77,8 @@ class Param:
                     )
             elif self.kind == "multichoice":
                 items = value.split(",") if isinstance(value, str) else list(value)
-                result = [str(i).strip() for i in items if str(i).strip()]
+                # dict.fromkeys quita repetidos y conserva el orden («caras,caras» → una vez).
+                result = list(dict.fromkeys(str(i).strip() for i in items if str(i).strip()))
                 bad = [i for i in result if i not in self.choices]
                 if bad:
                     raise ParamError(
@@ -97,6 +104,17 @@ class Param:
             if self.max is not None and result > self.max:
                 raise ParamError(f"«{self.label}» debe ser ≤ {self.max:g}")
         return result
+
+
+def _to_int(value: Any) -> int:
+    """Entero estricto: «3» y 3.0 sirven; 3.7 o «sí» no (antes 3.7 se cortaba a 3 en silencio)."""
+    if isinstance(value, bool):
+        raise ValueError(value)
+    if isinstance(value, float):
+        if not value.is_integer():
+            raise ValueError(value)
+        return int(value)
+    return int(value)
 
 
 def _to_bool(value: Any) -> bool:

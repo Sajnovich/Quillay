@@ -10,6 +10,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 from quillay.core.imageio import unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
+from quillay.tools.pdf.comun import PdfDeImagenes, mensaje_pdf
 
 CAT = "PDF · Revisar"
 
@@ -77,15 +78,23 @@ def comparar_pdf(ctx: Context) -> Report:
     if len(ctx.files) > 2:
         report.lines.append(f"Se compararon solo los dos primeros: {a_path.name} y {b_path.name}")
     out = ctx.output_dir()
-    doc_a, doc_b = pdfium.PdfDocument(a_path), pdfium.PdfDocument(b_path)
+    docs = []
     try:
+        for path in (a_path, b_path):
+            try:
+                docs.append(pdfium.PdfDocument(path))
+            except pdfium.PdfiumError as exc:  # con contraseña o dañado: lo decimos en claro
+                raise ValueError(mensaje_pdf(path, exc)) from exc
+        doc_a, doc_b = docs
         if o["texto"]:
             def lines(doc):
                 result = []
                 for i in range(len(doc)):
                     tp = doc[i].get_textpage()
-                    result += [f"[p.{i + 1}] {ln}" for ln in tp.get_text_range().splitlines() if ln.strip()]
-                    tp.close()
+                    try:
+                        result += [f"[p.{i + 1}] {ln}" for ln in tp.get_text_range().splitlines() if ln.strip()]
+                    finally:
+                        tp.close()
                 return result
 
             la, lb = lines(doc_a), lines(doc_b)
@@ -100,7 +109,9 @@ def comparar_pdf(ctx: Context) -> Report:
             report.add_output(dest, f"Informe de texto: {dest.name} · {changed} línea(s) distintas")
 
         if o["visual"]:
-            pages, changed_pages = [], []
+            # Cada hoja comparada se escribe al PDF y se suelta: un documento de 300
+            # páginas ya no necesita tenerlas todas en memoria.
+            pages, changed_pages = PdfDeImagenes(), []
             total = max(len(doc_a), len(doc_b))
             for i in range(total):
                 ctx.tick(i, total, f"página {i + 1}")
@@ -118,12 +129,14 @@ def comparar_pdf(ctx: Context) -> Report:
                 sheet = Image.new("RGB", (left.width * 2 + 20, left.height), (225, 225, 225))
                 sheet.paste(left, (0, 0))
                 sheet.paste(right, (left.width + 20, 0))
-                pages.append(sheet)
-            dest = unique_path(out / f"comparacion-{a_path.stem}-vs-{b_path.stem}.pdf")
-            pages[0].save(dest, "PDF", save_all=True, append_images=pages[1:], resolution=100)
+                pages.agregar(sheet, 100)
+            if not len(pages):
+                pages.cerrar()
+                raise ValueError("los PDF no tienen páginas que comparar")
+            dest = pages.guardar(unique_path(out / f"comparacion-{a_path.stem}-vs-{b_path.stem}.pdf"))
             detail = ", ".join(map(str, changed_pages)) if changed_pages else "ninguna"
             report.add_output(dest, f"Comparación visual: {dest.name} · páginas con cambios: {detail}")
     finally:
-        doc_a.close()
-        doc_b.close()
+        for doc in docs:
+            doc.close()
     return report

@@ -8,7 +8,16 @@ import pikepdf
 
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, contar_metadatos_ocultos, destino, guardar, limpiar_metadatos, linea
+from quillay.tools.pdf.comun import (
+    ERRORES,
+    abrir,
+    contar_metadatos_ocultos,
+    destino,
+    guardar,
+    limpiar_metadatos,
+    linea,
+    motivo,
+)
 
 CAT = "PDF · Seguridad"
 
@@ -47,8 +56,8 @@ def proteger_pdf(ctx: Context) -> Report:
                 )
                 dest = guardar(pdf, destino(ctx, src, "-protegido"), encryption=enc)
             report.add_output(dest, linea(src, dest, "cifrado AES-256"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
 
 
@@ -71,8 +80,8 @@ def desbloquear_pdf(ctx: Context) -> Report:
                 dest = guardar(pdf, destino(ctx, src, "-desbloqueado"))
             note = "contraseña y restricciones quitadas" if was_encrypted else "no tenía protección"
             report.add_output(dest, linea(src, dest, note))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
 
 
@@ -137,6 +146,6 @@ def metadatos_pdf(ctx: Context) -> Report:
                         meta["dc:creator"] = [o["autor"]]
                 dest = guardar(pdf, destino(ctx, src, "-editado"))
                 report.add_output(dest, linea(src, dest, "propiedades actualizadas"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report

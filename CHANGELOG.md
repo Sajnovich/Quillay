@@ -5,7 +5,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Corregido
+Revisión general del código: cada punto se confirmó con una prueba antes de corregirlo (`tests/test_mejoras.py`).
+
+- **Fotos HEIC de iPhone** en «Ubicación y metadatos», «Buscar duplicados», «Renombrar» y «Colores de marca»: desde la terminal se informaban como «no es una imagen» (o se saltaban sin avisar al buscar duplicados).
+- **«Difuminar» en modo pixelado tapaba menos al subir la intensidad**, y una cara grande en una foto de alta resolución quedaba reconocible. Ahora el pixelado se mide en cuadros por cara (de 13 a 4), igual para cualquier tamaño de foto. Además la detección se hace una sola vez por foto (antes dos: demoraba el doble).
+- **«Marcadores de carga» escribía un CSS inválido** (sobraba una `}` en cada regla), y las clases ya no empiezan con un número.
+- **«Imágenes responsive»:** `image/jpeg` en vez de `image/jpg`, aviso claro si los anchos están vacíos o son 0, y `picture.html` ya no se sobrescribe.
+- **Firmar un PDF que ya tenía una firma digital la invalidaba.** Si solo agregas tu certificado, Quillay ya no reescribe el archivo: la firma anterior sigue válida y la nueva va en otro campo (`FirmaQuillay2`).
+- **«Formularios PDF»:** el selector de archivos solo mostraba imágenes, así que no se podía elegir el Excel/CSV (ni el certificado `.p12`/`.pfx` en «Firmar PDF»). Ahora lee también los CSV que Excel guarda en Windows (con tildes y «ñ» en codificación regional), celdas de varias líneas y archivos vacíos.
+- **«PDF a Word / Excel / PowerPoint»** fallaban completos si el texto del PDF traía un carácter de control. En Excel, los códigos con ceros a la izquierda («007») ya no se convierten en el número 7.
+- **Una receta mal escrita** (`pasos: 5`, `salida: {calidad: alta}`, `formato: xyz`) se avisa al leerla con un mensaje claro; antes daba un error sin explicación o fallaba en cada imagen. Una receta rota o que no está en UTF-8 en tu carpeta ya no impide abrir Quillay.
+- **Un archivo con problemas ya no detiene el lote** en las herramientas PDF (errores de pikepdf al leer o guardar), «Tamaños para redes», «PDF a imágenes» (rango de páginas que no existe en uno de los PDF), «PDF a Word» y «Formularios PDF».
+- Los nombres escritos a mano («Nombre del PDF») ya no pueden crear carpetas ni salir de la carpeta de salida (`informe/2024`, `../x`).
+- Parámetros: un entero ya no acepta `3.7` cortándolo a 3, ni un decimal `nan`/`inf`; las opciones repetidas (`caras,caras`) se aplican una vez.
+- «Recortar» ya no falla con imágenes de 1 px de ancho; «Renombrar» explica un patrón mal escrito (`{nombre`) y no pisa archivos temporales de una ejecución interrumpida; «Censurar datos» ignora las expresiones regulares que calzan con «nada».
+- «Comprimir PDF» ya no altera los colores de las imágenes CMYK (de imprenta): las deja como están.
+- Botones que quedaban en español con la ventana en inglés («Cancelar», «Ver», «Invertir», «Restablecer»).
 - **La terminal no abría con Python 3.14** (el que instala Homebrew en macOS): `quillay` fallaba al arrancar con «badly formed help string». Dos cambios de `argparse` en 3.14: revisa los textos de ayuda (un «%» suelto, como en «Opacidad (%)», ahora se escribe «%%») y no acepta opciones que ya empiezan con «no» en `BooleanOptionalAction` (`--no-agrandar` ahora tiene su contraria `--agrandar` armada a mano). La CI ahora prueba también Python 3.14.
+
+### Rendimiento
+- **«Imágenes → PDF», «Comparar PDF» y el rescate de «Reparar PDF» ya no guardan todas las páginas en memoria:** cada una se comprime y se escribe al momento. Unir 200 fotos de celular pasaba de varios GB de memoria a unos pocos MB.
+- «Recortar márgenes» (automático) y «PDF a Word» abren el PDF una sola vez, no una vez por página.
 
 ### Seguridad
 - **«HTML a PDF» trabaja sin red con archivos locales.** Al convertir un `.html` de tu equipo, el navegador corre con la red bloqueada (proxy inexistente y sin resolver nombres de dominio). Así, una página que te mandaron no puede cargar imágenes o scripts de internet que avisen que la abriste o envíen datos. Si escribes una dirección web, se conecta como siempre. Lo explica `SECURITY.md`, junto con lo demás que hace Quillay para protegerte.

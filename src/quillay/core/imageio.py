@@ -115,7 +115,7 @@ def collect_files(items: Iterable[str | Path], accepts: str = "images", recursiv
             candidates = [path]
         elif any(ch in str(item) for ch in "*?["):
             # En Windows la terminal no expande comodines (*.jpg): lo hacemos nosotros.
-            candidates = sorted(Path(p) for p in glob.glob(str(path), recursive=recursive))
+            candidates = sorted(p for p in map(Path, glob.glob(str(path), recursive=recursive)) if p.is_file())
         else:
             candidates = []
         for c in candidates:
@@ -124,6 +124,17 @@ def collect_files(items: Iterable[str | Path], accepts: str = "images", recursiv
                 seen.add(resolved)
                 result.append(c)
     return result
+
+
+def peek_image(path: Path) -> Image.Image:
+    """Abre una imagen SIN cargar sus píxeles (para leer tamaño o metadatos).
+
+    Úsalo con ``with``. A diferencia de ``Image.open`` a secas, primero activa el
+    soporte HEIC: sin eso, las fotos de iPhone no se reconocían en «Ubicación y
+    metadatos», «Buscar duplicados», «Renombrar» ni «Colores de marca».
+    """
+    _ensure_heif()
+    return Image.open(path)
 
 
 def open_image(path: Path) -> Image.Image:

@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ExifTags import GPS, IFD, Base
 
-from quillay.core.imageio import human_size, unique_path
+from quillay.core.imageio import human_size, peek_image, unique_path
 from quillay.core.params import Param
 from quillay.core.pipeline import (
     P_CALIDAD,
@@ -25,7 +25,7 @@ from quillay.core.pipeline import (
     run_pipeline,
     save_options_from,
 )
-from quillay.core.registry import STEPS, Context, Report, tool
+from quillay.core.registry import STEPS, Cancelled, Context, Report, tool
 from quillay.tools import pasos  # noqa: F401  (registra los pasos que envolvemos abajo)
 
 CAT = "Imágenes"
@@ -115,7 +115,7 @@ RENAME_PARAMS = (
 def _photo_date(path: Path) -> str:
     """Fecha de captura (EXIF) o, si no hay, fecha de modificación del archivo."""
     try:
-        with Image.open(path) as im:
+        with peek_image(path) as im:
             raw = im.getexif().get_ifd(IFD.Exif).get(Base.DateTimeOriginal)
         if raw:
             return datetime.strptime(str(raw)[:19], "%Y:%m:%d %H:%M:%S").strftime("%Y-%m-%d")
@@ -132,12 +132,14 @@ def plan_names(ctx: Context) -> list[tuple[Path, str]]:
         if "{fecha}" in o["patron"]:
             fields["fecha"] = _photo_date(src)
         if "{ancho}" in o["patron"] or "{alto}" in o["patron"]:
-            with Image.open(src) as im:
+            with peek_image(src) as im:
                 fields["ancho"], fields["alto"] = str(im.width), str(im.height)
         try:
             stem = o["patron"].format(**fields)
-        except (KeyError, IndexError) as exc:
+        except (KeyError, IndexError, AttributeError) as exc:
             raise ValueError(f"ficha desconocida en el patrón: {exc}") from exc
+        except ValueError as exc:  # llave sin cerrar, como «{nombre»
+            raise ValueError("el patrón está mal escrito: revisa que cada «{» tenga su «}»") from exc
         if o["mayusculas"] == "minusculas":
             stem = stem.lower()
         elif o["mayusculas"] == "mayusculas":
@@ -187,7 +189,9 @@ def renombrar(ctx: Context) -> Report:
     done: list[tuple[Path, Path]] = []
     try:
         for i, (src, new) in enumerate(plan):
-            tmp = src.with_name(f".quillay-tmp-{i}{src.suffix}")
+            # unique_path: si quedó un temporal de una ejecución interrumpida, no se pisa
+            # (en macOS y Linux, renombrar encima de otro archivo lo reemplaza sin avisar).
+            tmp = unique_path(src.with_name(f".quillay-tmp-{i}{src.suffix}"))
             src.rename(tmp)
             temps.append((src, tmp, new))
         for i, (src, tmp, new) in enumerate(temps):
@@ -236,7 +240,7 @@ def _as_text(value) -> str:
 
 
 def read_metadata(path: Path) -> dict:
-    with Image.open(path) as im:
+    with peek_image(path) as im:
         exif = im.getexif()
         sub = exif.get_ifd(IFD.Exif)
         gps = exif.get_ifd(IFD.GPSInfo)
@@ -307,7 +311,7 @@ def _strip_metadata(ctx: Context, report: Report) -> Report:
     for i, src in enumerate(ctx.files):
         ctx.tick(i, len(ctx.files), src.name)
         try:
-            with Image.open(src) as im:
+            with peek_image(src) as im:
                 orientation = im.getexif().get(Base.Orientation, 1)
                 dest = unique_path(out / src.name)
                 icc = im.info.get("icc_profile")
@@ -323,6 +327,8 @@ def _strip_metadata(ctx: Context, report: Report) -> Report:
             report.outputs += sub.outputs
             report.errors += sub.errors
             report.lines += [line for line in sub.lines if line.startswith("✓")]
+        except Cancelled:
+            raise
         except Exception as exc:
             report.fail(src, exc)
     return report
@@ -333,7 +339,7 @@ def _strip_metadata(ctx: Context, report: Report) -> Report:
 
 def extract_palette(path: Path, n: int) -> list[tuple[str, float]]:
     """Devuelve [(hex, porcentaje), ...] de los colores dominantes."""
-    with Image.open(path) as im:
+    with peek_image(path) as im:
         im.thumbnail((256, 256))
         rgba = im.convert("RGBA")
     # Ignorar píxeles casi transparentes (fondos de logos). Con NumPy filtramos

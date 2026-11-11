@@ -131,7 +131,7 @@ def _consultar(nombre: str, instalada: str | None, consulta: Callable[[], tuple[
     try:
         ultima, url = consulta()
         return Estado(nombre, instalada, ultima, url)
-    except (OSError, ValueError, KeyError) as exc:
+    except (OSError, ValueError, KeyError, TypeError) as exc:  # TypeError: respuesta con otra forma
         motivo = "sin conexión" if isinstance(exc, OSError) else str(exc)
         return Estado(nombre, instalada, error=motivo)
 

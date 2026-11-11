@@ -23,7 +23,8 @@ from quillay.core.imageio import (
 )
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, imagenes, mensaje_pdf, parse_pages
+from quillay.core.seguro import nombre_seguro
+from quillay.tools.pdf.comun import ERRORES, PdfDeImagenes, abrir, imagenes, mensaje_pdf, motivo, parse_pages
 
 CAT = "PDF · Convertir"
 
@@ -49,7 +50,7 @@ PAGES_MM = {"a4": (210, 297), "carta": (215.9, 279.4), "oficio": (215.9, 330.2)}
 def imagenes_a_pdf(ctx: Context) -> Report:
     o = ctx.options
     report = Report()
-    pages: list[Image.Image] = []
+    pages = PdfDeImagenes()  # cada imagen pasa a ser una página comprimida y se suelta
     dpi = o["dpi"]
     for i, src in enumerate(ctx.files):
         ctx.tick(i, len(ctx.files), src.name)
@@ -70,14 +71,13 @@ def imagenes_a_pdf(ctx: Context) -> Report:
             img.thumbnail(box, Image.Resampling.LANCZOS)
             page.paste(img, ((page.width - img.width) // 2, (page.height - img.height) // 2))
             img = page
-        pages.append(img.convert("RGB"))
+        pages.agregar(img, dpi, o["calidad"])
         report.lines.append(f"✓ página {len(pages)}: {src.name}")
 
-    if not pages:
+    if not len(pages):
+        pages.cerrar()
         return report
-    dest = unique_path(ctx.output_dir() / f"{o['nombre'] or 'documento'}.pdf")
-    pages[0].save(dest, "PDF", save_all=True, append_images=pages[1:], resolution=dpi,
-                  quality=o["calidad"])
+    dest = pages.guardar(unique_path(ctx.output_dir() / f"{nombre_seguro(o['nombre'], 'documento')}.pdf"))
     report.add_output(dest, f"PDF de {len(pages)} página(s): {dest.name} ({human_size(dest.stat().st_size)})")
     return report
 
@@ -123,6 +123,10 @@ def pdf_a_imagenes(ctx: Context) -> Report:
                 dest = save_image(img, src.with_name(f"{src.stem}-p{index + 1:03d}.png"), out,
                                   SaveOptions(formato=o["formato"], calidad=o["calidad"]))
                 report.add_output(dest, f"✓ {src.name} página {index + 1} → {dest.name}")
+        except ValueError as exc:  # páginas mal indicadas para ESTE archivo: los demás siguen
+            report.fail(src, exc)
+        except pdfium.PdfiumError as exc:
+            report.fail(src, mensaje_pdf(src, exc))
         finally:
             pdf.close()
     return report
@@ -155,6 +159,6 @@ def _extraer_imagenes(ctx: Context, report: Report) -> Report:
                         count += 1
             report.lines.append(f"✓ {src.name}: {count} imagen(es) en {out.name}/" if count
                                 else f"• {src.name}: no contiene imágenes")
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
