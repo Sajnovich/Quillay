@@ -354,7 +354,10 @@ def file_filter(p: Param) -> str:
     esto el diálogo solo mostraba imágenes y esos archivos no se podían elegir.
     """
     if p.extensions:
-        tipos = f"{t(p.label)} ({' '.join(f'*.{e}' for e in p.extensions)})"
+        # Sin el paréntesis de la etiqueta («Datos (Excel o CSV)»): en el filtro,
+        # Qt lee lo que va entre paréntesis como la lista de extensiones.
+        nombre = t(p.label).split(" (")[0]
+        tipos = f"{nombre} ({' '.join(f'*.{e}' for e in p.extensions)})"
     else:  # logos y firmas: los formatos de imagen que Quillay sabe abrir
         tipos = f"{t('Imágenes')} (*.png *.jpg *.jpeg *.webp *.tif *.tiff *.bmp *.gif)"
     return f"{tipos};;{t('Todos los archivos')} (*)"

@@ -213,8 +213,10 @@ def pdf_a_word(ctx: Context) -> Report:
         nota = "sin LibreOffice: se usó «Texto continuo»" if modo == "diseno" else ""
         try:
             _word_continuo(ctx, src, pdf, report, "imagen" if modo == "imagen" else "editable", nota)
-        except Cancelled:
+        except (Cancelled, OSError):  # cancelar, o no poder escribir (disco lleno, permisos): no es culpa del PDF
             raise
+        except ValueError as exc:  # nuestros avisos («el PDF no tiene páginas»)
+            report.fail(src, exc)
         except Exception as exc:  # noqa: BLE001 - un PDF que falla a medio leer no detiene los demás
             report.fail(src, mensaje_pdf(src, exc))
     return report

@@ -28,14 +28,32 @@ CAT = "PDF · Seguridad"
 POSICIONES = ("abajo-derecha", "abajo-izquierda", "abajo-centro", "arriba-derecha", "arriba-izquierda")
 
 
+def _campos(pdf: pikepdf.Pdf) -> list[pikepdf.Object]:
+    """Campos del formulario del PDF, incluidos los que están agrupados dentro de otro."""
+    form = pdf.Root.get("/AcroForm")
+    pendientes = list(form.get("/Fields", [])) if form is not None else []
+    campos: list[pikepdf.Object] = []
+    while pendientes and len(campos) < 10_000:  # tope: un PDF mal armado puede tener ciclos
+        campo = pendientes.pop()
+        if not isinstance(campo, pikepdf.Dictionary):
+            continue
+        campos.append(campo)
+        pendientes.extend(campo.get("/Kids", []))
+    return campos
+
+
+def _ya_firmado(pdf: pikepdf.Pdf) -> bool:
+    """¿El PDF ya tiene al menos una firma digital puesta?"""
+    return any(c.get("/FT") == pikepdf.Name.Sig and "/V" in c for c in _campos(pdf))
+
+
 def _campo_libre(pdf: pikepdf.Pdf) -> str:
     """Nombre para el campo de la firma que no esté usado en el formulario del PDF.
 
     Un PDF que ya se firmó con Quillay tiene un campo «FirmaQuillay»: la segunda
     firma (otra persona que firma el mismo documento) va en «FirmaQuillay2», etc.
     """
-    form = pdf.Root.get("/AcroForm")
-    usados = {str(f.get("/T", "")) for f in form.get("/Fields", [])} if form is not None else set()
+    usados = {str(c.get("/T", "")) for c in _campos(pdf)}
     n, nombre = 1, "FirmaQuillay"
     while nombre in usados:
         n += 1
@@ -125,17 +143,21 @@ def firmar_pdf(ctx: Context) -> Report:
         try:
             with abrir(src) as pdf:
                 campo = _campo_libre(pdf)
-                if visual or pdf.is_encrypted:  # pyHanko no firma un PDF cifrado: se guarda sin cifrar
-                    total = len(pdf.pages) if visual else 0
-                    targets = {"ultima": [total - 1], "primera": [0], "todas": range(total)}[o["pagina"]]
-                    for i in targets if visual else ():
-                        superponer(pdf, pdf.pages[i], draw)
+                # Solo si el PDF ya trae firmas digitales y no hay que dibujar nada, se firma
+                # el archivo tal cual. En los demás casos se guarda primero con pikepdf, que
+                # además lo deja ordenado (pyHanko es estricto con los PDF fuera de norma)
+                # y sin cifrar (pyHanko no firma un PDF cifrado).
+                if visual or pdf.is_encrypted or not _ya_firmado(pdf):
+                    if visual:
+                        total = len(pdf.pages)
+                        targets = {"ultima": [total - 1], "primera": [0], "todas": range(total)}[o["pagina"]]
+                        for i in targets:
+                            superponer(pdf, pdf.pages[i], draw)
                     buf = io.BytesIO()
                     pdf.save(buf, compress_streams=True)
                     data = buf.getvalue()
                 else:
-                    # Solo firma digital: partimos del archivo tal cual, sin reescribirlo.
-                    # Así las firmas digitales que ya tenga (de otra persona) siguen válidas;
+                    # Así las firmas que ya tiene (de otra persona) siguen válidas:
                     # reescribir el PDF las habría invalidado todas.
                     data = src.read_bytes()
             notes = ["firma visual"] if visual else []
