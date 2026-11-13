@@ -20,10 +20,15 @@ from quillay.core.imageio import (
     unique_path,
 )
 from quillay.core.params import Param, color_to_rgba
-from quillay.core.registry import Context, Report, tool
+from quillay.core.registry import Cancelled, Context, Report, tool
 from quillay.tools.pasos import encajar
 
 CAT = "Web y redes"
+
+# Tipo MIME de cada formato: no siempre coincide con la extensión («jpg» → image/jpeg).
+MIME = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp", "avif": "image/avif",
+        "heic": "image/heic", "heif": "image/heif", "tif": "image/tiff", "tiff": "image/tiff", "bmp": "image/bmp",
+        "gif": "image/gif", "ico": "image/x-icon"}
 
 
 def _slug(text: str) -> str:
@@ -150,12 +155,15 @@ def responsive(ctx: Context) -> Report:
         widths = sorted({int(w) for w in o["anchos"].replace(" ", "").split(",") if w})
     except ValueError as exc:
         raise ValueError("los anchos deben ser números separados por coma") from exc
+    if not widths or widths[0] < 1:
+        raise ValueError("escribe al menos un ancho mayor que 0, por ejemplo: 480,768,1024")
     formats = [f for f in o["formatos"] if f != "avif" or avif_available()]
     if not formats:
         raise ValueError("elige al menos un formato")
     if "avif" in o["formatos"] and "avif" not in formats:
         report.lines.append("⚠ AVIF no disponible en este equipo; se omitió.")
-    prefix = o["ruta_web"] if o["ruta_web"].endswith("/") else o["ruta_web"] + "/"
+    # Va dentro de atributos HTML: escapado, unas comillas en la ruta no rompen el código.
+    prefix = escape(o["ruta_web"] if o["ruta_web"].endswith("/") else o["ruta_web"] + "/")
     out = ctx.output_dir() / "responsive"
     out.mkdir(parents=True, exist_ok=True)
     snippets: list[str] = []
@@ -183,7 +191,7 @@ def responsive(ctx: Context) -> Report:
             fh = round(img.height * fallback_w / img.width)
             lines = ["<picture>"]
             for fmt in formats[:-1]:
-                lines.append(f'  <source type="image/{fmt}" srcset="{", ".join(srcsets[fmt])}" '
+                lines.append(f'  <source type="{MIME[fmt]}" srcset="{", ".join(srcsets[fmt])}" '
                              f'sizes="{escape(o["sizes"])}">')
             lazy = ' loading="lazy" decoding="async"' if o["lazy"] else ""
             lines.append(
@@ -201,7 +209,7 @@ def responsive(ctx: Context) -> Report:
             report.fail(src, exc)
 
     if snippets:
-        html = out / "picture.html"
+        html = unique_path(out / "picture.html")  # no pisa el de una ejecución anterior
         html.write_text("\n\n".join(snippets) + "\n", encoding="utf-8")
         report.add_output(html, f"Código HTML: {html}\n(width/height evitan saltos de diseño — CLS)")
     return report
@@ -245,28 +253,39 @@ def redes_sociales(ctx: Context) -> Report:
     o = ctx.options
     report = Report()
     total = len(ctx.files) * len(o["plataformas"])
-    done = 0
-    for src in ctx.files:
+    if not o["plataformas"]:
+        raise ValueError("elige al menos un formato de red social")
+    for n, src in enumerate(ctx.files):
+        done = n * len(o["plataformas"])  # el avance sigue aunque un archivo falle
+        ctx.tick(done, total, src.name)
         try:
             img = open_image(src)
-        except Exception as exc:
+            for key in o["plataformas"]:
+                ctx.tick(done, total, f"{src.name} → {key}")
+                red, tamano, w, h = SOCIAL[key]
+                label = f"{red} · {tamano}"
+                fitted = encajar(img, {"ancho": w, "alto": h, "ajuste": o["ajuste"],
+                                       "color_fondo": o["color_fondo"]})
+                dest = save_image(fitted, src, ctx.output_dir(),
+                                  SaveOptions(formato=o["formato"], calidad=o["calidad"],
+                                              quitar_metadatos=True, sufijo=f"_{key}"))
+                report.add_output(dest, f"✓ {dest.name}  ({label})")
+                done += 1
+        except Cancelled:
+            raise
+        except Exception as exc:  # un archivo malo no detiene el lote
             report.fail(src, exc)
-            continue
-        for key in o["plataformas"]:
-            ctx.tick(done, total, f"{src.name} → {key}")
-            red, tamano, w, h = SOCIAL[key]
-            label = f"{red} · {tamano}"
-            fitted = encajar(img, {"ancho": w, "alto": h, "ajuste": o["ajuste"],
-                                   "color_fondo": o["color_fondo"]})
-            dest = save_image(fitted, src, ctx.output_dir(),
-                              SaveOptions(formato=o["formato"], calidad=o["calidad"],
-                                          quitar_metadatos=True, sufijo=f"_{key}"))
-            report.add_output(dest, f"✓ {dest.name}  ({label})")
-            done += 1
+    ctx.tick(total, total, "listo")
     return report
 
 
 # ------------------------------------------------------------------------ LQIP
+
+
+def _css_class(filename: str) -> str:
+    """Nombre de clase CSS a partir del archivo; no puede empezar con un número."""
+    slug = _slug(Path(filename).stem)
+    return f"img-{slug}" if slug[0].isdigit() else slug
 
 
 @tool(
@@ -289,7 +308,8 @@ def lqip(ctx: Context) -> Report:
         try:
             if o["modo"] == "base64":
                 data = src.read_bytes()
-                mime = "image/" + ("jpeg" if src.suffix.lower() in (".jpg", ".jpeg") else src.suffix.lower()[1:])
+                ext = src.suffix.lower().lstrip(".")
+                mime = MIME.get(ext, f"image/{ext}")
             else:
                 img = open_image(src).convert("RGB")
                 img.thumbnail((o["ancho"], o["ancho"] * 4), Image.Resampling.LANCZOS)
@@ -311,9 +331,11 @@ def lqip(ctx: Context) -> Report:
         js = unique_path(out / f"{o['modo']}.json")
         js.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
         css = unique_path(out / f"{o['modo']}.css")
+        # Ojo: cada trozo con llaves debe ser f-string. Si no, «}}» se escribe tal cual
+        # y sobra una llave que rompe la regla CSS siguiente.
         css.write_text(
-            "\n".join(f".{_slug(Path(r['archivo']).stem)} {{ background-image: url(\"{r['data_uri']}\"); "
-                      "background-size: cover; }}" for r in rows) + "\n",
+            "\n".join(f".{_css_class(r['archivo'])} {{ background-image: url(\"{r['data_uri']}\"); "
+                      f"background-size: cover; }}" for r in rows) + "\n",
             encoding="utf-8",
         )
         report.add_output(js, f"JSON: {js.name}")

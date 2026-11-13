@@ -27,12 +27,24 @@ from typing import Any
 
 import yaml
 
-from quillay.core.imageio import SaveOptions, safe_suffix
-from quillay.core.params import ParamError, resolve_options
+from quillay.core.imageio import FORMATS, SaveOptions, safe_suffix
+from quillay.core.params import Param, ParamError, resolve_options
 from quillay.core.pipeline import run_pipeline
 from quillay.core.registry import STEPS, Context, Report, load_all
 
-SALIDA_KEYS = set(SaveOptions.__dataclass_fields__)
+# Opciones de «salida:» con su tipo y sus límites. Se validan al leer la receta,
+# no al guardar cada imagen: así «calidad: alta» o «formato: xyz» se avisan una
+# vez y con un mensaje claro, en vez de fallar archivo por archivo.
+SALIDA_PARAMS = (
+    Param("formato", "salida · formato", "choice", "igual", ("igual", *FORMATS)),
+    Param("calidad", "salida · calidad", "int", 85, min=1, max=100),
+    Param("quitar_metadatos", "salida · quitar_metadatos", "bool", False),
+    Param("sufijo", "salida · sufijo", "str", ""),
+    Param("fondo", "salida · fondo", "color", "#ffffff"),
+    Param("png_reducir_colores", "salida · png_reducir_colores", "bool", False),
+)
+SALIDA_KEYS = {p.name for p in SALIDA_PARAMS}
+assert SALIDA_KEYS == set(SaveOptions.__dataclass_fields__)  # si SaveOptions crece, hay que sumarlo aquí
 
 
 @dataclass
@@ -95,11 +107,20 @@ class Recipe:
         unknown = set(self.salida) - SALIDA_KEYS
         if unknown:
             raise ParamError(f"opción de salida desconocida: {', '.join(sorted(unknown))}")
+        salida = self.save_options()
         try:
-            safe_suffix(self.salida.get("sufijo", ""))
+            safe_suffix(salida.sufijo)
         except ValueError as exc:
             raise ParamError(f"salida: {exc}") from exc
         return steps
+
+    def save_options(self) -> SaveOptions:
+        """Las opciones de «salida:» ya validadas y con su tipo («80» → 80, «sí» → True)."""
+        dadas = {k: v for k, v in self.salida.items() if v is not None}
+        if isinstance(dadas.get("formato"), str):
+            dadas["formato"] = dadas["formato"].strip().lower().lstrip(".")
+        resueltas = resolve_options(SALIDA_PARAMS, dadas)
+        return SaveOptions(**{k: resueltas[k] for k in dadas})
 
     def validate(self) -> None:
         """Lanza ParamError con un mensaje claro si algo está mal."""
@@ -118,7 +139,7 @@ class Recipe:
         steps = self.resolved_steps()
         report = Report()
         report.lines.append(f"Receta: {self.nombre}")
-        return run_pipeline(ctx, steps, SaveOptions(**self.salida), report)
+        return run_pipeline(ctx, steps, self.save_options(), report)
 
 
 def parse(text: str, origen: Path | None = None) -> Recipe:
@@ -126,20 +147,28 @@ def parse(text: str, origen: Path | None = None) -> Recipe:
     data = yaml.safe_load(text) or {}
     if not isinstance(data, dict) or "nombre" not in data:
         raise ParamError("la receta debe tener al menos «nombre:» y «pasos:»")
+    # Una receta la escribe una persona (o llega de otra): cada parte puede venir
+    # con otra forma. Lo decimos con un mensaje claro en vez de fallar más adelante.
+    lista = data.get("pasos") or []
+    if not isinstance(lista, list):
+        raise ParamError("«pasos:» debe ser una lista, con un paso por línea que empiece con «- »")
     pasos: list[tuple[str, dict[str, Any]]] = []
-    for item in data.get("pasos") or []:
+    for item in lista:
         if isinstance(item, str):
             pasos.append((item, {}))
-        elif isinstance(item, dict) and len(item) == 1:
+        elif isinstance(item, dict) and len(item) == 1 and isinstance(next(iter(item.values())), dict | None):
             (sid, opts), = item.items()
-            pasos.append((str(sid), dict(opts or {})))
+            pasos.append((str(sid), {str(k): v for k, v in (opts or {}).items()}))
         else:
-            raise ParamError(f"paso mal escrito: {item!r} (usa «- nombre_paso: {{...}}»)")
+            raise ParamError(f"paso mal escrito: {item!r} (usa «- nombre_paso: {{opcion: valor}}»)")
+    salida = data.get("salida") or {}
+    if not isinstance(salida, dict):
+        raise ParamError("«salida:» debe tener opciones con nombre, por ejemplo «formato: webp»")
     recipe = Recipe(
         nombre=str(data["nombre"]),
         descripcion=str(data.get("descripcion", "")),
         pasos=pasos,
-        salida=dict(data.get("salida") or {}),
+        salida={str(k): v for k, v in salida.items()},
         origen=origen,
         texto=text,
     )
@@ -177,8 +206,10 @@ def available() -> list[Recipe]:
     for path in sorted(user_dir().glob("*.y*ml")):
         try:
             recipes[path.stem] = parse(path.read_text(encoding="utf-8"), path)
-        except (ParamError, yaml.YAMLError):
-            continue  # una receta rota no debe impedir abrir la app
+        except (ValueError, OSError, yaml.YAMLError):
+            # Una receta rota no debe impedir abrir la app. ValueError cubre ParamError
+            # y también un archivo que no está en UTF-8; OSError, uno que no se puede leer.
+            continue
     return list(recipes.values())
 
 

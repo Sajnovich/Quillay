@@ -87,9 +87,9 @@ def recortar(img: Image.Image, o: dict) -> Image.Image:
     w, h = img.size
     target = parse_ratio(o["proporcion"])
     if w / h > target:  # sobra ancho
-        nw, nh = round(h * target), h
+        nw, nh = max(1, round(h * target)), h
     else:  # sobra alto
-        nw, nh = w, round(w / target)
+        nw, nh = w, max(1, round(w / target))  # max: una imagen de 1 px de ancho no puede quedar en 0
     ax, ay = _ANCHOR[o["posicion"]]
     left, top = round((w - nw) * ax), round((h - nh) * ay)
     return img.crop((left, top, left + nw, top + nh))

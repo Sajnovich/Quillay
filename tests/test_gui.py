@@ -271,6 +271,18 @@ def test_formularios_en_ingles(app):
         idioma.establecer("es")
 
 
+def test_selector_de_archivo_muestra_el_tipo_que_pide_cada_campo(app):
+    """El certificado (.p12/.pfx) y los datos (Excel/CSV) se pueden elegir: antes solo se veían imágenes."""
+    from quillay.core.registry import TOOLS
+    from quillay.gui.widgets import file_filter
+
+    campos = {p.name: p for tool in ("firmar_pdf", "formularios_pdf", "marca_agua") for p in TOOLS[tool].params}
+    assert "*.p12 *.pfx" in file_filter(campos["certificado"])
+    assert "*.xlsx" in file_filter(campos["datos"]) and "*.csv" in file_filter(campos["datos"])
+    assert "*.png" in file_filter(campos["logo"]) and "*.svg" not in file_filter(campos["logo"])
+    assert all(file_filter(c).endswith("(*)") for c in campos.values() if c.kind == "file")
+
+
 def test_informe_en_ingles():
     """En inglés, el informe de una herramienta se traduce sin perder nombres ni números."""
     from quillay.gui import idioma

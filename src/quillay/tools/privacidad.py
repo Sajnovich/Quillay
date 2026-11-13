@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from quillay.core.imageio import SaveOptions, open_image, unique_path
+from quillay.core.imageio import SaveOptions, peek_image, unique_path
 from quillay.core.params import Param
 from quillay.core.pipeline import P_CALIDAD, P_SUFIJO, run_pipeline
 from quillay.core.registry import Context, Report, step, tool
@@ -100,8 +100,12 @@ def censor(img: Image.Image, boxes: list[Box], estilo: str, intensidad: int, ova
         x1, y1 = min(out.width, x + w + pad_w), min(out.height, y + h + pad_h)
         region = out.crop((x0, y0, x1, y1))
         if estilo == "pixelado":
-            blocks = max(2, round(24 / intensidad * 4))
-            small = region.resize((max(1, region.width // blocks), max(1, region.height // blocks)),
+            # Cuántos cuadros caben a lo ancho de la cara: de 13 (suave) a 4 (fuerte).
+            # Se mide en cuadros y no en píxeles para que tape igual una cara de 100 px
+            # que una de 2000 px; con un tamaño fijo en píxeles, una cara grande en una
+            # foto de alta resolución seguía reconocible.
+            cells = max(3, 14 - intensidad)
+            small = region.resize((cells, max(1, round(cells * region.height / max(1, region.width)))),
                                   Image.Resampling.BILINEAR)
             region = small.resize(region.size, Image.Resampling.NEAREST)
         elif estilo == "caja_negra":
@@ -130,10 +134,17 @@ DIFUMINAR_PARAMS = (
 
 @step("difuminar", "Difuminar caras/patentes", "Detecta y oculta caras o patentes.", DIFUMINAR_PARAMS)
 def difuminar(img: Image.Image, o: dict) -> Image.Image:
+    return _difuminar(img, o)[0]
+
+
+def _difuminar(img: Image.Image, o: dict) -> tuple[Image.Image, dict[str, int]]:
+    """Oculta lo detectado y devuelve también cuántas caras o patentes encontró."""
+    counts: dict[str, int] = {}
     for what in o["detectar"]:
         boxes = detect(img, what, o["sensibilidad"])
+        counts[what] = len(boxes)
         img = censor(img, boxes, o["estilo"], o["intensidad"], oval=(what == "caras"))
-    return img
+    return img, counts
 
 
 @tool(
@@ -148,18 +159,20 @@ def difuminar(img: Image.Image, o: dict) -> Image.Image:
 def difuminar_tool(ctx: Context) -> Report:
     o = ctx.options
     report = Report()
-    # Contamos detecciones para el informe antes de procesar.
-    for src in ctx.files:
-        try:
-            img = open_image(src)
-            counts = {w: len(detect(img, w, o["sensibilidad"])) for w in o["detectar"]}
-            report.lines.append(f"• {src.name}: " + ", ".join(f"{n} {w}" for w, n in counts.items()))
-        except Exception:
-            pass
-    step_opts = {k: o[k] for k in ("detectar", "estilo", "intensidad", "sensibilidad")}
-    run_pipeline(ctx, [("difuminar", step_opts)],
-                 SaveOptions(calidad=o["calidad"], quitar_metadatos=o["quitar_metadatos"],
-                             sufijo=o["sufijo"]), report)
+    if not o["detectar"]:
+        raise ValueError("elige qué detectar: caras, patentes o ambas")
+    found: list[str] = []
+
+    def hide(img: Image.Image, src: Path) -> Image.Image:
+        # La detección es lo más lento: se hace una sola vez por foto y de paso
+        # se anota cuánto encontró (antes se detectaba dos veces: contar y ocultar).
+        img, counts = _difuminar(img, o)
+        found.append(f"• {src.name}: " + ", ".join(f"{n} {w}" for w, n in counts.items()))
+        return img
+
+    run_pipeline(ctx, [], SaveOptions(calidad=o["calidad"], quitar_metadatos=o["quitar_metadatos"],
+                                      sufijo=o["sufijo"]), report, extra=hide)
+    report.lines[0:0] = found  # primero el conteo por foto, luego los archivos generados
     report.lines.append("Revisa el resultado: la detección automática puede omitir caras de perfil o pequeñas.")
     return report
 
@@ -191,7 +204,7 @@ def find_duplicates(files: list[Path], threshold: int, progress=lambda *a: None)
         progress(i, len(files), f.name)
         try:
             sha = hashlib.sha256(f.read_bytes()).hexdigest()
-            with Image.open(f) as im:
+            with peek_image(f) as im:
                 im.draft("RGB", (64, 64))  # en JPEG, decodifica a baja resolución: rapidísimo
                 hashes.append((f, dhash(im), sha))
         except Exception:
@@ -219,7 +232,7 @@ def find_duplicates(files: list[Path], threshold: int, progress=lambda *a: None)
 def _best(group: list[Path]) -> Path:
     """La "mejor" copia: mayor resolución y, a igualdad, mayor peso."""
     def score(p: Path):
-        with Image.open(p) as im:
+        with peek_image(p) as im:
             return (im.width * im.height, p.stat().st_size)
     return max(group, key=score)
 

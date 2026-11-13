@@ -52,9 +52,9 @@ class PageOrderDialog(QDialog):
 
         remove = QPushButton(t("Quitar seleccionadas"))
         remove.clicked.connect(self.remove_selected)
-        reverse = QPushButton("Invertir")
+        reverse = QPushButton(t("Invertir"))
         reverse.clicked.connect(self.reverse)
-        reset = QPushButton("Restablecer")
+        reset = QPushButton(t("Restablecer"))
         reset.clicked.connect(lambda: self.load(""))
         self.count = QLabel()
         self.count.setObjectName("Muted")
@@ -66,7 +66,7 @@ class PageOrderDialog(QDialog):
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.button(QDialogButtonBox.StandardButton.Ok).setText(t("Usar este orden"))
-        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancelar")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(t("Cancelar"))
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 

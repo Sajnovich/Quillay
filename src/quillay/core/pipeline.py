@@ -9,7 +9,11 @@ una receta es simplemente: una lista de pasos + opciones de salida.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
+
+from PIL import Image
 
 from quillay.core.imageio import (
     OUTPUT_FORMATS,
@@ -50,9 +54,15 @@ def run_pipeline(
     steps: list[tuple[str, dict[str, Any]]],
     save: SaveOptions,
     report: Report | None = None,
+    extra: Callable[[Image.Image, Path], Image.Image] | None = None,
 ) -> Report:
-    """Aplica ``steps`` a cada archivo de ``ctx`` y guarda el resultado."""
-    report = report or Report()
+    """Aplica ``steps`` a cada archivo de ``ctx`` y guarda el resultado.
+
+    ``extra`` es una transformación propia de la herramienta que se aplica después
+    de los pasos y además recibe la ruta del archivo (por ejemplo, para anotar en
+    el informe cuántas caras encontró en cada foto sin detectarlas dos veces).
+    """
+    report = report if report is not None else Report()
     # Validamos todos los pasos ANTES de empezar, para fallar rápido.
     resolved = []
     for step_id, raw in steps:
@@ -70,6 +80,8 @@ def run_pipeline(
             image = open_image(src)
             for st, opts in resolved:
                 image = st.apply(image, opts)
+            if extra is not None:
+                image = extra(image, src)
             dest = save_image(image, src, out_dir, save)
         except Cancelled:
             raise

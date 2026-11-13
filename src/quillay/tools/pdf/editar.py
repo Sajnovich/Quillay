@@ -11,7 +11,7 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from quillay.core.params import Param, color_to_rgba
 from quillay.core.registry import Context, Report, tool
 from quillay.tools.pasos import POSITIONS
-from quillay.tools.pdf.comun import PT_PER_MM, abrir, destino, guardar, linea, parse_pages, superponer
+from quillay.tools.pdf.comun import ERRORES, PT_PER_MM, abrir, destino, guardar, linea, motivo, parse_pages, superponer
 
 CAT = "PDF · Editar"
 
@@ -81,8 +81,8 @@ def numeros_pagina(ctx: Context) -> Report:
                     superponer(pdf, page, draw)
                 dest = guardar(pdf, destino(ctx, src, "-numerado"))
             report.add_output(dest, linea(src, dest, f"{max(numbered, 0)} página(s) numeradas"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
 
 
@@ -187,6 +187,6 @@ def marca_agua_pdf(ctx: Context) -> Report:
                     superponer(pdf, pdf.pages[i], draw, debajo=o["debajo"])
                 dest = guardar(pdf, destino(ctx, src, "-marca"))
             report.add_output(dest, linea(src, dest, f"{len(selected)} página(s)"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report

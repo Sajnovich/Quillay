@@ -10,7 +10,17 @@ from PIL import Image
 from quillay.core.imageio import human_size
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import abrir, destino, guardar, imagenes, limpiar_metadatos, linea
+from quillay.tools.pdf.comun import (
+    ERRORES,
+    PdfDeImagenes,
+    abrir,
+    destino,
+    guardar,
+    imagenes,
+    limpiar_metadatos,
+    linea,
+    motivo,
+)
 
 CAT = "PDF · Optimizar"
 
@@ -37,6 +47,11 @@ def _recompress_image(raw: pikepdf.Stream, page_px_limit: int, quality: int) -> 
     try:
         pil = pikepdf.PdfImage(raw).as_pil_image()
     except Exception:  # formato que no sabemos decodificar: lo dejamos igual
+        return 0
+
+    if pil.mode == "CMYK":
+        # Colores de imprenta: pasarlos a RGB sin su perfil de color los cambia a la
+        # vista (quedan más saturados). Preferimos no ahorrar a alterar los colores.
         return 0
 
     old_size = len(raw.read_raw_bytes())
@@ -98,8 +113,8 @@ def comprimir_pdf(ctx: Context) -> Report:
                 if ctx.options["quitar_metadatos"]:
                     limpiar_metadatos(pdf)
                 dest = guardar(pdf, destino(ctx, src, "-comprimido"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
             continue
         a, b = src.stat().st_size, dest.stat().st_size
         if b >= a and not ctx.options["quitar_metadatos"]:
@@ -151,24 +166,29 @@ def reparar_pdf(ctx: Context) -> Report:
         except Exception:  # noqa: BLE001
             report.fail(src, "no se pudo recuperar: el archivo está demasiado dañado o no es un PDF")
             continue
-        pages[0].save(dest, "PDF", save_all=True, append_images=pages[1:], resolution=150)
-        report.add_output(dest, linea(src, dest, f"rescatado como imágenes ({len(pages)} páginas)"))
+        count = len(pages)
+        pages.guardar(dest)
+        report.add_output(dest, linea(src, dest, f"rescatado como imágenes ({count} páginas)"))
     return report
 
 
-def _rescue_as_images(src) -> list[Image.Image]:
+def _rescue_as_images(src) -> PdfDeImagenes:
     import pypdfium2 as pdfium
 
-    doc = pdfium.PdfDocument(src)  # PDFium es muy tolerante con archivos dañados
+    pages = PdfDeImagenes()
     try:
-        pages = []
-        for i in range(len(doc)):
-            try:
-                pages.append(doc[i].render(scale=150 / 72).to_pil().convert("RGB"))
-            except Exception:  # noqa: BLE001 - una página ilegible no detiene el rescate
-                continue
-    finally:
-        doc.close()
-    if not pages:
-        raise ValueError("ninguna página es legible")
+        doc = pdfium.PdfDocument(src)  # PDFium es muy tolerante con archivos dañados
+        try:
+            for i in range(len(doc)):
+                try:
+                    pages.agregar(doc[i].render(scale=150 / 72).to_pil(), 150, quality=85)
+                except Exception:  # noqa: BLE001 - una página ilegible no detiene el rescate
+                    continue
+        finally:
+            doc.close()
+        if not len(pages):
+            raise ValueError("ninguna página es legible")
+    except BaseException:
+        pages.cerrar()
+        raise
     return pages

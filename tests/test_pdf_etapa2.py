@@ -216,6 +216,28 @@ def test_firma_digital_valida_y_detecta_cambios(informe, out, certificado):
             assert not (status.intact and status.coverage.name == "ENTIRE_FILE")
 
 
+def test_segunda_firma_digital_conserva_la_primera(informe, out, certificado):
+    """Firmar de nuevo (otra persona, solo con certificado) no invalida la firma que ya estaba."""
+    from asn1crypto import x509 as asn1_x509
+    from cryptography.hazmat.primitives.serialization import Encoding
+    from pyhanko.pdf_utils.reader import PdfFileReader
+    from pyhanko.sign.validation import validate_pdf_signature
+    from pyhanko_certvalidator import ValidationContext
+
+    p12, cert = certificado
+    primera = run("firmar_pdf", [informe], out, nombre="Persona de Prueba", certificado=str(p12),
+                  clave_certificado="clave123").outputs[0]
+    rep = run("firmar_pdf", [primera], out, certificado=str(p12), clave_certificado="clave123")
+    assert not rep.errors, rep.errors
+    trust = asn1_x509.Certificate.load(cert.public_bytes(Encoding.DER))
+    with rep.outputs[0].open("rb") as fh:
+        firmas = PdfFileReader(fh).embedded_signatures
+        assert [f.field_name for f in firmas] == ["FirmaQuillay", "FirmaQuillay2"]
+        for firma in firmas:
+            status = validate_pdf_signature(firma, ValidationContext(trust_roots=[trust]))
+            assert status.intact and status.valid, firma.field_name
+
+
 def test_firma_clave_incorrecta(informe, out, certificado):
     rep = run("firmar_pdf", [informe], out, certificado=str(certificado[0]), clave_certificado="mala")
     assert rep.errors and "certificado" in rep.errors[0][1]

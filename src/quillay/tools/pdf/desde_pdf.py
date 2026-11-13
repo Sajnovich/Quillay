@@ -27,8 +27,8 @@ import zipfile
 from pathlib import Path
 
 from quillay.core.params import Param
-from quillay.core.registry import Context, Report, tool
-from quillay.core.seguro import INICIO_FORMULA
+from quillay.core.registry import Cancelled, Context, Report, tool
+from quillay.core.seguro import INICIO_FORMULA, texto_xml
 from quillay.tools.pdf.comun import destino, linea, mensaje_pdf
 
 CAT = "PDF · Convertir"
@@ -43,14 +43,9 @@ def _open_plumber(src):
         raise ValueError(mensaje_pdf(src, exc)) from exc
 
 
-def _render_png(src, index: int, dpi: int) -> bytes:
-    import pypdfium2 as pdfium
-
-    doc = pdfium.PdfDocument(src)
-    try:
-        img = doc[index].render(scale=dpi / 72).to_pil().convert("RGB")
-    finally:
-        doc.close()
+def _render_png(doc, index: int, dpi: int) -> bytes:
+    """Dibuja una página de un documento de pypdfium2 ya abierto y la devuelve como PNG."""
+    img = doc[index].render(scale=dpi / 72).to_pil().convert("RGB")
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     return buf.getvalue()
@@ -75,10 +70,10 @@ def _blocks(page):
     for ln in lines:
         sizes = [c["size"] for c in ln["chars"]] or [10]
         bold = all("bold" in c.get("fontname", "").lower() for c in ln["chars"] if c["text"].strip())
-        items.append((ln["top"], "l", {"text": ln["text"], "size": max(sizes), "bold": bold,
+        items.append((ln["top"], "l", {"text": texto_xml(ln["text"]), "size": max(sizes), "bold": bold,
                                         "bottom": ln["bottom"]}))
     for t in tables:
-        rows = [[(cell or "").strip() for cell in row] for row in t.extract()]
+        rows = [[texto_xml(cell or "").strip() for cell in row] for row in t.extract()]
         if rows:
             items.append((t.bbox[1], "t", rows))
     for im in page.images:
@@ -216,17 +211,46 @@ def pdf_a_word(ctx: Context) -> Report:
             report.add_output(dest, linea(src, dest))
             continue
         nota = "sin LibreOffice: se usó «Texto continuo»" if modo == "diseno" else ""
-        _word_continuo(ctx, src, pdf, report, "imagen" if modo == "imagen" else "editable", nota)
+        try:
+            _word_continuo(ctx, src, pdf, report, "imagen" if modo == "imagen" else "editable", nota)
+        except (Cancelled, OSError):  # cancelar, o no poder escribir (disco lleno, permisos): no es culpa del PDF
+            raise
+        except ValueError as exc:  # nuestros avisos («el PDF no tiene páginas»)
+            report.fail(src, exc)
+        except Exception as exc:  # noqa: BLE001 - un PDF que falla a medio leer no detiene los demás
+            report.fail(src, mensaje_pdf(src, exc))
     return report
 
 
 def _word_continuo(ctx: Context, src: Path, pdf, report: Report, modo: str, nota: str) -> None:
     """Reconstruye el documento con pdfplumber + python-docx (no necesita programas externos)."""
+    import pypdfium2 as pdfium
     from docx import Document
     from docx.enum.section import WD_ORIENT
     from docx.shared import Pt
 
+    # Las páginas que van como imagen se dibujan con PDFium. El documento se abre
+    # una sola vez y solo si hace falta (antes se abría de nuevo por cada página).
+    dibujos: list = []
+
+    def dibujar(index: int, dpi: int) -> bytes:
+        if not dibujos:
+            dibujos.append(pdfium.PdfDocument(src))
+        return _render_png(dibujos[0], index, dpi)
+
+    try:
+        dest, scanned = _escribir_word(ctx, src, pdf, modo, dibujar, Document, WD_ORIENT, Pt)
+    finally:
+        for d in dibujos:
+            d.close()
+    extra = f"{scanned} página(s) escaneada(s) quedaron como imagen (requieren OCR)" if scanned else ""
+    report.add_output(dest, linea(src, dest, "; ".join(x for x in (nota, extra) if x)))
+
+
+def _escribir_word(ctx: Context, src: Path, pdf, modo: str, dibujar, Document, WD_ORIENT, Pt) -> tuple[Path, int]:  # noqa: N803
     with pdf:
+        if not pdf.pages:
+            raise ValueError("el PDF no tiene páginas")
         doc = Document()
         section = doc.sections[0]
         first = pdf.pages[0]
@@ -246,7 +270,7 @@ def _word_continuo(ctx: Context, src: Path, pdf, report: Report, modo: str, nota
                 doc.add_page_break()
             if modo == "imagen" or not page.chars:
                 scanned += not page.chars and modo == "editable"
-                doc.add_picture(io.BytesIO(_render_png(src, i, 150)), width=usable)
+                doc.add_picture(io.BytesIO(dibujar(i, 150)), width=usable)
                 continue
             dibujo = None  # la página dibujada, solo si hay imágenes que recortar
             for kind, data in _blocks(page):
@@ -254,7 +278,7 @@ def _word_continuo(ctx: Context, src: Path, pdf, report: Report, modo: str, nota
                     if dibujo is None:
                         from PIL import Image
 
-                        dibujo = Image.open(io.BytesIO(_render_png(src, i, 200)))
+                        dibujo = Image.open(io.BytesIO(dibujar(i, 200)))
                     k = 200 / 72
                     recorte = dibujo.crop(tuple(round(v * k) for v in data))
                     buf = io.BytesIO()
@@ -280,8 +304,7 @@ def _word_continuo(ctx: Context, src: Path, pdf, report: Report, modo: str, nota
                     doc.add_paragraph(text)
         dest = destino(ctx, src, "", ".docx")
         doc.save(dest)
-    extra = f"{scanned} página(s) escaneada(s) quedaron como imagen (requieren OCR)" if scanned else ""
-    report.add_output(dest, linea(src, dest, "; ".join(x for x in (nota, extra) if x)))
+    return dest, scanned
 
 
 # ---------------------------------------------------------------- PowerPoint
@@ -311,6 +334,8 @@ def pdf_a_powerpoint(ctx: Context) -> Report:
             report.fail(src, mensaje_pdf(src, exc))
             continue
         try:
+            if not len(doc):
+                raise ValueError("el PDF no tiene páginas")
             prs = Presentation()
             w, h = doc[0].get_size()  # en puntos; 1 pt = 12 700 EMU (la unidad de Office)
             prs.slide_width, prs.slide_height = Emu(int(w * 12700)), Emu(int(h * 12700))
@@ -326,12 +351,19 @@ def pdf_a_powerpoint(ctx: Context) -> Report:
                 if ctx.options["texto_en_notas"]:
                     # PDFium separa líneas con "\r\n" (estilo Windows); PowerPoint guardaría el
                     # "\r" como el texto literal "_x000D_", así que lo normalizamos a "\n".
-                    text = page.get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n").strip()
+                    text = page.get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n")
+                    text = texto_xml(text).strip()  # un carácter de control haría fallar el .pptx
                     if text:
                         slide.notes_slide.notes_text_frame.text = text
             dest = destino(ctx, src, "", ".pptx")
             prs.save(dest)
             pages = len(doc)
+        except ValueError as exc:
+            report.fail(src, exc)
+            continue
+        except pdfium.PdfiumError as exc:  # una página que PDFium no puede dibujar
+            report.fail(src, mensaje_pdf(src, exc))
+            continue
         finally:
             doc.close()
         report.add_output(dest, linea(src, dest, f"{pages} diapositiva(s)"))
@@ -351,6 +383,11 @@ def parse_number_cl(text: str):
     """
     raw = text.strip().replace(" ", " ")
     if not raw:
+        return None
+    # «007» o «0912»: un cero a la izquierda indica un código, no una cantidad.
+    # Como número perdería los ceros (7, 912), así que se deja como texto.
+    digits = raw.lstrip("$-% ")
+    if len(digits) > 1 and digits[0] == "0" and digits[1].isdigit():
         return None
     fmt = None
     if raw.startswith("$"):
@@ -408,7 +445,7 @@ def pdf_a_excel(ctx: Context) -> Report:
                     ws = wb.create_sheet(title[:31])
                     for r, row in enumerate(rows, 1):
                         for c, cell in enumerate(row, 1):
-                            value = (cell or "").strip()
+                            value = texto_xml(cell or "").strip()
                             parsed = parse_number_cl(value) if ctx.options["numeros"] and r > 1 else None
                             target = ws.cell(r, c, parsed[0] if parsed else value)
                             if not parsed and value.startswith(INICIO_FORMULA):

@@ -24,6 +24,7 @@ from pathlib import Path
 from quillay.core.imageio import human_size, unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
+from quillay.core.seguro import nombre_seguro
 
 CAT = "PDF · Convertir"
 
@@ -196,7 +197,7 @@ def html_a_pdf(ctx: Context) -> Report:
         url = o["url"].strip()
         if not url.startswith(("http://", "https://", "file://")):
             url = "https://" + url
-        targets.append((url, o["nombre"] or "pagina-web"))
+        targets.append((url, nombre_seguro(o["nombre"], "pagina-web")))
     if not targets:
         raise ValueError("escribe una dirección web o agrega archivos .html")
     browser = find_browser()

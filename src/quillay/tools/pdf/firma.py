@@ -28,7 +28,41 @@ CAT = "PDF · Seguridad"
 POSICIONES = ("abajo-derecha", "abajo-izquierda", "abajo-centro", "arriba-derecha", "arriba-izquierda")
 
 
-def _sign_digital(data: bytes, cert: Path, password: str, reason: str, location: str) -> bytes:
+def _campos(pdf: pikepdf.Pdf) -> list[pikepdf.Object]:
+    """Campos del formulario del PDF, incluidos los que están agrupados dentro de otro."""
+    form = pdf.Root.get("/AcroForm")
+    pendientes = list(form.get("/Fields", [])) if form is not None else []
+    campos: list[pikepdf.Object] = []
+    while pendientes and len(campos) < 10_000:  # tope: un PDF mal armado puede tener ciclos
+        campo = pendientes.pop()
+        if not isinstance(campo, pikepdf.Dictionary):
+            continue
+        campos.append(campo)
+        pendientes.extend(campo.get("/Kids", []))
+    return campos
+
+
+def _ya_firmado(pdf: pikepdf.Pdf) -> bool:
+    """¿El PDF ya tiene al menos una firma digital puesta?"""
+    return any(c.get("/FT") == pikepdf.Name.Sig and "/V" in c for c in _campos(pdf))
+
+
+def _campo_libre(pdf: pikepdf.Pdf) -> str:
+    """Nombre para el campo de la firma que no esté usado en el formulario del PDF.
+
+    Un PDF que ya se firmó con Quillay tiene un campo «FirmaQuillay»: la segunda
+    firma (otra persona que firma el mismo documento) va en «FirmaQuillay2», etc.
+    """
+    usados = {str(c.get("/T", "")) for c in _campos(pdf)}
+    n, nombre = 1, "FirmaQuillay"
+    while nombre in usados:
+        n += 1
+        nombre = f"FirmaQuillay{n}"
+    return nombre
+
+
+def _sign_digital(data: bytes, cert: Path, password: str, reason: str, location: str,
+                  field: str = "FirmaQuillay") -> bytes:
     from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
     from pyhanko.sign import signers
 
@@ -40,10 +74,14 @@ def _sign_digital(data: bytes, cert: Path, password: str, reason: str, location:
         raise ValueError("no se pudo abrir el certificado: revisa la clave")
     # Escritura *incremental*: la firma se agrega al final sin reescribir el PDF,
     # así cualquier cambio posterior queda en evidencia.
-    writer = IncrementalPdfFileWriter(io.BytesIO(data))
-    meta = signers.PdfSignatureMetadata(field_name="FirmaQuillay", reason=reason or None,
-                                        location=location or None, md_algorithm="sha256")
-    return signers.sign_pdf(writer, meta, signer=signer).getvalue()
+    try:
+        # strict=False: tolera los PDF con detalles fuera de norma, que son muchos.
+        writer = IncrementalPdfFileWriter(io.BytesIO(data), strict=False)
+        meta = signers.PdfSignatureMetadata(field_name=field, reason=reason or None,
+                                            location=location or None, md_algorithm="sha256")
+        return signers.sign_pdf(writer, meta, signer=signer).getvalue()
+    except Exception as exc:  # noqa: BLE001 - pyHanko tiene muchos tipos de error propios
+        raise ValueError(f"no se pudo aplicar la firma digital ({exc})") from exc
 
 
 @tool(
@@ -63,7 +101,7 @@ def _sign_digital(data: bytes, cert: Path, password: str, reason: str, location:
                              "Arriba a la derecha", "Arriba a la izquierda")),
         Param("ancho_mm", "Ancho de la firma (mm)", "float", 50, min=10, max=200),
         Param("margen_mm", "Distancia al borde (mm)", "float", 20, min=0, max=100),
-        Param("certificado", "Certificado digital (.p12/.pfx)", "file", "",
+        Param("certificado", "Certificado digital (.p12/.pfx)", "file", "", extensions=("p12", "pfx"),
               help="Opcional. Hazlo como último paso: cualquier cambio posterior invalida la firma."),
         Param("clave_certificado", "Clave del certificado", "password", ""),
         Param("motivo", "Motivo", "str", "Firmo este documento"),
@@ -104,18 +142,28 @@ def firmar_pdf(ctx: Context) -> Report:
     for src in ctx.files:
         try:
             with abrir(src) as pdf:
-                if visual:
-                    total = len(pdf.pages)
-                    targets = {"ultima": [total - 1], "primera": [0], "todas": range(total)}[o["pagina"]]
-                    for i in targets:
-                        superponer(pdf, pdf.pages[i], draw)
-                buf = io.BytesIO()
-                pdf.save(buf, compress_streams=True)
-            data = buf.getvalue()
+                campo = _campo_libre(pdf)
+                # Solo si el PDF ya trae firmas digitales y no hay que dibujar nada, se firma
+                # el archivo tal cual. En los demás casos se guarda primero con pikepdf, que
+                # además lo deja ordenado (pyHanko es estricto con los PDF fuera de norma)
+                # y sin cifrar (pyHanko no firma un PDF cifrado).
+                if visual or pdf.is_encrypted or not _ya_firmado(pdf):
+                    if visual:
+                        total = len(pdf.pages)
+                        targets = {"ultima": [total - 1], "primera": [0], "todas": range(total)}[o["pagina"]]
+                        for i in targets:
+                            superponer(pdf, pdf.pages[i], draw)
+                    buf = io.BytesIO()
+                    pdf.save(buf, compress_streams=True)
+                    data = buf.getvalue()
+                else:
+                    # Así las firmas que ya tiene (de otra persona) siguen válidas:
+                    # reescribir el PDF las habría invalidado todas.
+                    data = src.read_bytes()
             notes = ["firma visual"] if visual else []
             if o["certificado"]:
                 data = _sign_digital(data, Path(o["certificado"]).expanduser(), o["clave_certificado"],
-                                     o["motivo"], o["lugar"])
+                                     o["motivo"], o["lugar"], campo)
                 notes.append("firma digital con certificado")
             dest = destino(ctx, src, "-firmado")
             dest.write_bytes(data)

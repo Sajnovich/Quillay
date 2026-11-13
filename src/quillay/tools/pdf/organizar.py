@@ -8,7 +8,18 @@ import pikepdf
 from quillay.core.imageio import human_size, unique_path
 from quillay.core.params import Param
 from quillay.core.registry import Context, Report, tool
-from quillay.tools.pdf.comun import PT_PER_MM, abrir, destino, guardar, linea, parse_order, parse_pages
+from quillay.core.seguro import nombre_seguro
+from quillay.tools.pdf.comun import (
+    ERRORES,
+    PT_PER_MM,
+    abrir,
+    destino,
+    guardar,
+    linea,
+    motivo,
+    parse_order,
+    parse_pages,
+)
 
 CAT = "PDF · Organizar"
 
@@ -42,7 +53,7 @@ def unir_pdf(ctx: Context) -> Report:
                 if ctx.options["marcadores"]:
                     outline.root.append(pikepdf.OutlineItem(src.stem, start))
                 report.lines.append(f"✓ {src.name}: {len(pdf.pages)} página(s)")
-        dest = unique_path(ctx.output_dir() / f"{ctx.options['nombre'] or 'unido'}.pdf")
+        dest = unique_path(ctx.output_dir() / f"{nombre_seguro(ctx.options['nombre'], 'unido')}.pdf")
         guardar(out, dest)
     finally:
         for pdf in sources:
@@ -89,8 +100,8 @@ def dividir_pdf(ctx: Context) -> Report:
                     dest = guardar(part, unique_path(folder / f"{src.stem}-{label}.pdf"))
                     report.outputs.append(dest)
                 report.lines.append(f"✓ {src.name}: {len(groups)} archivo(s) en {folder.name}/")
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
 
 
@@ -125,8 +136,8 @@ def ordenar_pdf(ctx: Context) -> Report:
             removed = len(set(range(total)) - set(order))
             report.add_output(dest, linea(src, dest, f"{len(order)} páginas" +
                                            (f", {removed} eliminada(s)" if removed else "")))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
 
 
@@ -154,8 +165,8 @@ def rotar_pdf(ctx: Context) -> Report:
                     pdf.pages[i].rotate(int(ctx.options["grados"]), relative=True)
                 dest = guardar(pdf, destino(ctx, src, "-rotado"))
             report.add_output(dest, linea(src, dest, f"{len(selected)} página(s) giradas"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report
 
 
@@ -182,16 +193,10 @@ def _margins_to_box(box: pikepdf.Rectangle, rot: int, top: float, bottom: float,
     return pikepdf.Array([float(v) for v in (x0, y0, x1, y1)])  # pikepdf no acepta tipos de NumPy
 
 
-def _auto_margins(src_path, index: int, padding_pt: float) -> tuple[float, float, float, float]:
-    """Renderiza la página en baja resolución y mide el espacio en blanco."""
-    import pypdfium2 as pdfium
-
-    doc = pdfium.PdfDocument(src_path)
-    try:
-        scale = 50 / 72  # 50 DPI basta para encontrar los bordes del contenido
-        img = np.asarray(doc[index].render(scale=scale).to_pil().convert("L"))
-    finally:
-        doc.close()
+def _auto_margins(doc, index: int, padding_pt: float) -> tuple[float, float, float, float]:
+    """Renderiza la página (de un documento de pypdfium2) en baja resolución y mide el espacio en blanco."""
+    scale = 50 / 72  # 50 DPI basta para encontrar los bordes del contenido
+    img = np.asarray(doc[index].render(scale=scale).to_pil().convert("L"))
     ys, xs = np.nonzero(img < 245)
     if not len(xs):
         return 0, 0, 0, 0  # página en blanco: no se recorta
@@ -216,29 +221,38 @@ def _auto_margins(src_path, index: int, padding_pt: float) -> tuple[float, float
     accepts="pdf",
 )
 def recortar_pdf(ctx: Context) -> Report:
+    import pypdfium2 as pdfium
+
     o = ctx.options
     report = Report()
     for src in ctx.files:
         try:
             with abrir(src) as pdf:
                 selected = parse_pages(o["paginas"], len(pdf.pages))
-                for n, i in enumerate(selected):
-                    ctx.tick(n, len(selected), f"{src.name} p.{i + 1}")
-                    page = pdf.pages[i]
-                    if o["modo"] == "automatico":
-                        margins = _auto_margins(src, i, o["holgura_mm"] * PT_PER_MM)
-                    else:
-                        margins = tuple(o[k] * PT_PER_MM for k in ("arriba", "abajo", "izquierda", "derecha"))
-                    rot = int(page.obj.get("/Rotate", 0)) % 360
-                    new_box = _margins_to_box(pikepdf.Rectangle(page.cropbox), rot, *margins)
-                    # Cambiamos MediaBox y CropBox: así recortan igual el lector y la impresora.
-                    page.obj.MediaBox = new_box
-                    page.obj.CropBox = new_box
-                    for extra in ("/TrimBox", "/BleedBox", "/ArtBox"):
-                        if extra in page.obj:
-                            del page.obj[extra]
+                # El documento se abre una sola vez para medir todas sus páginas
+                # (antes se volvía a abrir por cada página: lento en PDF largos).
+                doc = pdfium.PdfDocument(src) if o["modo"] == "automatico" else None
+                try:
+                    for n, i in enumerate(selected):
+                        ctx.tick(n, len(selected), f"{src.name} p.{i + 1}")
+                        page = pdf.pages[i]
+                        if doc is not None:
+                            margins = _auto_margins(doc, i, o["holgura_mm"] * PT_PER_MM)
+                        else:
+                            margins = tuple(o[k] * PT_PER_MM for k in ("arriba", "abajo", "izquierda", "derecha"))
+                        rot = int(page.obj.get("/Rotate", 0)) % 360
+                        new_box = _margins_to_box(pikepdf.Rectangle(page.cropbox), rot, *margins)
+                        # Cambiamos MediaBox y CropBox: así recortan igual el lector y la impresora.
+                        page.obj.MediaBox = new_box
+                        page.obj.CropBox = new_box
+                        for extra in ("/TrimBox", "/BleedBox", "/ArtBox"):
+                            if extra in page.obj:
+                                del page.obj[extra]
+                finally:
+                    if doc is not None:
+                        doc.close()
                 dest = guardar(pdf, destino(ctx, src, "-recortado"))
             report.add_output(dest, linea(src, dest, f"{len(selected)} página(s)"))
-        except ValueError as exc:
-            report.fail(src, exc)
+        except ERRORES as exc:
+            report.fail(src, motivo(src, exc))
     return report

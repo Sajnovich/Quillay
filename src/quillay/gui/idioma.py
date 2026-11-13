@@ -424,6 +424,7 @@ EN.update({
     "Quita los seleccionados (tecla Supr)": "Removes the selected ones (Delete key)", "Todos los compatibles": "All supported",
     "Documentos de Office": "Office documents", "Páginas web": "Web pages", "Elegir archivos": "Choose files",
     "Elegir carpeta": "Choose folder", "Elegir color": "Choose color", "Ordenar con miniaturas…": "Reorder with thumbnails…",
+    "Todos los archivos": "All files", "Ver": "View", "Invertir": "Reverse", "Restablecer": "Reset",
     "Elegir archivo": "Choose file", "Elegir…": "Choose…", "(ninguno)": "(none)", "ej. 3,1,2,5-7": "e.g. 3,1,2,5-7",
     # Actualizaciones (pantalla de Qt Designer)
     "Mantén Quillay y LibreOffice al día: las versiones nuevas traen correcciones de seguridad.":
