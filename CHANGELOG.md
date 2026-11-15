@@ -2,7 +2,14 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones según [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [0.4.4] — 2026-11-15
+
+> La v0.4.3 se publicó sin subir el número de versión: sus descargables se llaman `Quillay-0.4.2-…` y la app se presenta como 0.4.2, así que «Buscar actualizaciones» siempre avisaba de una versión nueva. La 0.4.4 trae lo mismo con el número correcto, y desde ahora la publicación se detiene si la etiqueta no calza con la versión de la app.
+
+### Publicación
+- El workflow «Release» revisa, antes de construir, que la etiqueta calce con `__version__`, `CITATION.cff` y una sección fechada del `CHANGELOG.md` (`scripts/verificar_version.py`). Si no, se detiene y explica qué cambiar.
+- Las notas de cada Release en GitHub ahora son la sección de esa versión en el `CHANGELOG.md`, en vez de las automáticas de una línea.
+
 
 ### Corregido
 Revisión general del código: cada punto se confirmó con una prueba antes de corregirlo (`tests/test_mejoras.py`).
@@ -21,6 +28,7 @@ Revisión general del código: cada punto se confirmó con una prueba antes de c
 - «Recortar» ya no falla con imágenes de 1 px de ancho; «Renombrar» explica un patrón mal escrito (`{nombre`) y no pisa archivos temporales de una ejecución interrumpida; «Censurar datos» ignora las expresiones regulares que calzan con «nada».
 - «Comprimir PDF» ya no altera los colores de las imágenes CMYK (de imprenta): las deja como están.
 - Botones que quedaban en español con la ventana en inglés («Cancelar», «Ver», «Invertir», «Restablecer»).
+- Si el archivo que escribes en la terminal no existe, ahora dice «No existe: <ruta>» con una pista para encontrarlo; si existe pero es de otro tipo, dice qué extensiones acepta la herramienta. Antes solo decía «No se encontraron archivos compatibles».
 - **La terminal no abría con Python 3.14** (el que instala Homebrew en macOS): `quillay` fallaba al arrancar con «badly formed help string». Dos cambios de `argparse` en 3.14: revisa los textos de ayuda (un «%» suelto, como en «Opacidad (%)», ahora se escribe «%%») y no acepta opciones que ya empiezan con «no» en `BooleanOptionalAction` (`--no-agrandar` ahora tiene su contraria `--agrandar` armada a mano). La CI ahora prueba también Python 3.14.
 
 ### Rendimiento
@@ -195,6 +203,8 @@ Primera versión.
 - Integración continua en Windows, macOS y Linux; ejecutables con PyInstaller publicados al crear una etiqueta.
 - Archivos de comunidad: guía de contribución, código de conducta, política de seguridad, plantillas de issues y pull requests, Dependabot, `CITATION.cff` y README en inglés.
 
+[0.4.4]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.4
+[0.4.3]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.3
 [0.4.2]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.2
 [0.4.1]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.1
 [0.4.0]: https://github.com/Sajnovich/Quillay/releases/tag/v0.4.0

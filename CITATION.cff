@@ -6,8 +6,8 @@ type: software
 authors:
   - family-names: Sajnovich
     given-names: Eduardo
-version: 0.4.2
-date-released: 2026-11-09
+version: 0.4.4
+date-released: 2026-11-15
 license: MIT
 repository-code: "https://github.com/Sajnovich/Quillay"
 keywords:

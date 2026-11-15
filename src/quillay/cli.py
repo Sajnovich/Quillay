@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 from quillay import FIRMA, __url__, __version__
-from quillay.core.imageio import collect_files
+from quillay.core.imageio import ACCEPTS, collect_files
 from quillay.core.params import Param, ParamError
 from quillay.core.registry import TOOLS, Cancelled, Report, Tool, load_all, tools_by_category
 from quillay.core.seguro import para_terminal
@@ -156,10 +156,25 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+TIPOS = {"images": "imágenes", "pdf": "PDF", "office": "documentos de Office", "html": "páginas HTML"}
+
+
+def _por_que_no_hay_archivos(items: list[str], accepts: str) -> str:
+    """Explica por qué no se encontró nada: rutas que no existen o de otro tipo."""
+    tipo = TIPOS.get(accepts, "archivos")
+    no_existen = [i for i in items if not any(ch in i for ch in "*?[") and not Path(i).expanduser().exists()]
+    if no_existen:
+        lineas = [f"No existe: {para_terminal(i)}" for i in no_existen]
+        lineas.append("Revisa el nombre y la carpeta (por ejemplo con: ls ~/Downloads/*.pdf).")
+        return "\n".join(lineas)
+    exts = ", ".join(sorted(ACCEPTS.get(accepts, ())))
+    return f"No hay {tipo} entre los archivos indicados. Esta herramienta acepta: {exts}."
+
+
 def _run_tool(tool: Tool, args: argparse.Namespace) -> int:
     files = collect_files(args.archivos, tool.accepts, args.recursivo)
     if not files:
-        print("No se encontraron archivos compatibles.", file=sys.stderr)
+        print(_por_que_no_hay_archivos(args.archivos, tool.accepts), file=sys.stderr)
         return 2
     options = {p.name: getattr(args, p.name) for p in tool.params if getattr(args, p.name) is not None}
     if getattr(args, "vista_previa", False) and tool.preview:

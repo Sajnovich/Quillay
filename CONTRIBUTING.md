@@ -73,6 +73,10 @@ Al participar aceptas el [código de conducta](CODE_OF_CONDUCT.md). En resumen: 
 
 ## Publicar una versión (mantenedores)
 
-1. Actualiza `__version__` en `src/quillay/__init__.py`, `CITATION.cff` y el `CHANGELOG.md`.
-2. `git tag v0.2.0 && git push origin v0.2.0`
-3. GitHub Actions construye los ejecutables y crea la Release.
+1. Actualiza `__version__` en `src/quillay/__init__.py`, `CITATION.cff` y el `CHANGELOG.md` (pasa «Sin publicar» a «## [0.2.0] — fecha»).
+2. Revisa que calcen: `python scripts/verificar_version.py v0.2.0`
+3. Haz commit, súbelo y espera la CI en verde.
+4. `git tag v0.2.0 && git push origin v0.2.0`
+5. GitHub Actions vuelve a revisar la versión, construye los ejecutables y crea la Release con la sección del CHANGELOG como notas.
+
+Si una etiqueta ya publicada salió mal, no la muevas: publica la versión siguiente.

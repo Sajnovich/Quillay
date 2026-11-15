@@ -134,3 +134,16 @@ def test_opcion_que_empieza_con_no():
     assert parser.parse_args(["redimensionar", "x.jpg", "--no-agrandar"]).no_agrandar is True
     assert parser.parse_args(["redimensionar", "x.jpg", "--agrandar"]).no_agrandar is False
     assert parser.parse_args(["redimensionar", "x.jpg"]).no_agrandar is None  # usa el valor por defecto
+
+
+def test_mensaje_si_el_archivo_no_existe(tmp_path, capsys):
+    """Si la ruta no existe o es de otro tipo, el mensaje lo dice en vez de uno genérico."""
+    falta = tmp_path / "1.pdf"
+    assert main(["comprimir_pdf", str(falta)]) == 2
+    assert f"No existe: {falta}" in capsys.readouterr().err
+
+    foto = tmp_path / "foto.jpg"
+    foto.write_bytes(b"x")
+    assert main(["comprimir_pdf", str(foto)]) == 2
+    err = capsys.readouterr().err
+    assert "No hay PDF" in err and "pdf" in err

@@ -16,8 +16,27 @@ permissions:
   contents: read
 
 jobs:
+  # Antes de construir: la etiqueta tiene que calzar con la versión de la app,
+  # CITATION.cff y el CHANGELOG (la v0.4.3 salió diciendo 0.4.2 por dentro).
+  verificar:
+    name: Versión de la etiqueta
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Comparar etiqueta y versión
+        env:
+          ETIQUETA: ${{ github.ref_name }}
+        run: python scripts/verificar_version.py "$ETIQUETA"
+
   build:
     name: Ejecutable ${{ matrix.os }}
+    needs: verificar
+    # Con «Run workflow» a mano no hay etiqueta: «verificar» se salta y se construye igual.
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -58,6 +77,11 @@ jobs:
       contents: write   # necesario para crear la Release
     if: startsWith(github.ref, 'refs/tags/')
     steps:
+      - uses: actions/checkout@v7
+      - name: Notas de la versión desde el CHANGELOG
+        env:
+          ETIQUETA: ${{ github.ref_name }}
+        run: python3 scripts/verificar_version.py "$ETIQUETA" --notas notas.md
       - uses: actions/download-artifact@v8
         with:
           path: artefactos
@@ -65,5 +89,5 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           files: artefactos/*
-          generate_release_notes: true
+          body_path: notas.md   # la sección de esta versión en CHANGELOG.md
           prerelease: ${{ contains(github.ref_name, '-') }}   # v0.2.0-rc1 → pre-release
